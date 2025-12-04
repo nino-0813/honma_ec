@@ -1,0 +1,175 @@
+
+import React, { useEffect, useState } from 'react';
+import { useRoute, Link } from 'wouter';
+import { products } from '../data/products';
+import { IconChevronDown } from '../components/Icons';
+import { FadeInImage } from '../components/UI';
+
+const Category = () => {
+  const [match, params] = useRoute<{ category?: string }>("/collections/:category");
+  
+  const getFilterNameFromParam = (param: string) => {
+    if (param === 'rice') return 'お米';
+    if (param === 'crescent') return 'Crescentmoon';
+    if (param === 'other') return 'その他';
+    if (param === 'yearly') return '年間契約';
+    return 'ALL';
+  };
+
+  const currentCategory = match && params && params.category ? getFilterNameFromParam(params.category) : 'ALL';
+  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [sortOrder, setSortOrder] = useState('manual');
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    let result = [...products];
+    
+    if (currentCategory !== 'ALL') {
+      result = products.filter(p => {
+        return p.category === currentCategory || p.title.includes(currentCategory);
+      });
+    }
+
+    if (sortOrder === 'price-asc') {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortOrder === 'price-desc') {
+      result.sort((a, b) => b.price - a.price);
+    }
+
+    setFilteredProducts(result);
+  }, [currentCategory, sortOrder]);
+
+  const SidebarItem = ({ label, path, isActive }: { label: string, path: string, isActive: boolean }) => (
+    <li>
+      <Link href={path}>
+        <a className={`block py-2 text-sm tracking-widest transition-colors duration-300 relative pl-4 border-l-2 ${isActive ? 'border-black text-black font-medium' : 'border-transparent text-gray-500 hover:text-black'}`}>
+          {label}
+        </a>
+      </Link>
+    </li>
+  );
+
+  return (
+    <div className="pt-28 pb-32 min-h-screen bg-white">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
+        
+        {/* Page Header */}
+        <div className="text-center mb-16 md:mb-24 animate-fade-in">
+          <h1 className="text-3xl md:text-4xl font-serif tracking-[0.1em] text-primary mb-4">ALL ITEM</h1>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-12 lg:gap-20">
+          
+          {/* Sidebar (Desktop) */}
+          <aside className="w-full md:w-64 flex-shrink-0 animate-fade-in">
+            <div className="sticky top-32">
+              <h3 className="text-sm font-bold tracking-widest mb-6 uppercase border-b border-gray-200 pb-2 hidden md:block">Category</h3>
+              
+              <ul className="hidden md:flex flex-col space-y-1">
+                <SidebarItem label="ALL" path="/collections" isActive={currentCategory === 'ALL'} />
+                <SidebarItem label="お米" path="/collections/rice" isActive={currentCategory === 'お米'} />
+                <SidebarItem label="年間契約" path="/collections/yearly" isActive={currentCategory === '年間契約'} />
+                <SidebarItem label="Crescentmoon" path="/collections/crescent" isActive={currentCategory === 'Crescentmoon'} />
+                <SidebarItem label="その他" path="/collections/other" isActive={currentCategory === 'その他'} />
+              </ul>
+
+              {/* Mobile Horizontal Scroll Menu */}
+              <div className="md:hidden overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
+                <div className="flex gap-4 min-w-max">
+                   <Link href="/collections">
+                     <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'ALL' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>ALL</a>
+                   </Link>
+                   <Link href="/collections/rice">
+                     <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'お米' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>お米</a>
+                   </Link>
+                    <Link href="/collections/yearly">
+                     <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === '年間契約' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>年間契約</a>
+                   </Link>
+                   <Link href="/collections/crescent">
+                     <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'Crescentmoon' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>Crescentmoon</a>
+                   </Link>
+                   <Link href="/collections/other">
+                     <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'その他' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>その他</a>
+                   </Link>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Sort Bar */}
+            <div className="flex justify-end mb-8 animate-fade-in">
+               <div className="relative group inline-block text-left">
+                  <button className="inline-flex justify-center items-center w-full text-xs font-medium text-gray-700 hover:text-gray-900 tracking-widest">
+                    オススメ
+                    <IconChevronDown className="ml-2 h-3 w-3 transition-transform group-hover:rotate-180" />
+                  </button>
+                  <div className="origin-top-right absolute right-0 mt-2 w-40 rounded-sm shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 transform -translate-y-2 group-hover:translate-y-0">
+                    <div className="py-1">
+                      <button onClick={() => setSortOrder('manual')} className="block w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">オススメ</button>
+                      <button onClick={() => setSortOrder('price-asc')} className="block w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">価格が安い順</button>
+                      <button onClick={() => setSortOrder('price-desc')} className="block w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">価格が高い順</button>
+                    </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* Product Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-16">
+              {filteredProducts.map((product, index) => (
+                <Link key={product.id} href={`/products/${product.handle}`}>
+                  <a 
+                    className="group block opacity-0 animate-fade-in-up"
+                    style={{ animationDelay: `${index * 60}ms` }}
+                  >
+                    {/* Image Container */}
+                    <div className="relative aspect-square bg-[#f4f4f4] overflow-hidden mb-5">
+                      {/* Badges */}
+                      <div className="absolute top-2 left-2 z-20 flex flex-col gap-2">
+                        {product.soldOut && (
+                          <span className="bg-primary text-white px-3 py-1 text-[10px] font-bold tracking-widest uppercase shadow-sm">
+                            Sold Out
+                          </span>
+                        )}
+                         {product.title.includes('新米') && (
+                          <span className="bg-white text-primary border border-primary px-3 py-1 text-[10px] font-bold tracking-widest uppercase shadow-sm">
+                            新米
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Images with advanced FadeIn component */}
+                      <div className="absolute inset-0 z-10 transition-opacity duration-700 ease-in-out group-hover:opacity-0">
+                         <FadeInImage src={product.images[0]} alt={product.title} className="w-full h-full" />
+                      </div>
+                      
+                      {/* Secondary Image (Hover) */}
+                      <div className="absolute inset-0 z-0 transform scale-100 group-hover:scale-105 transition-transform duration-1000 ease-out">
+                         <FadeInImage src={product.images[1] || product.images[0]} alt={product.title} className="w-full h-full" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 text-center">
+                      <h2 className="text-sm font-medium text-primary leading-relaxed group-hover:text-gray-600 transition-colors line-clamp-2 min-h-[2.8em]">
+                        {product.title}
+                      </h2>
+                      <p className="text-sm text-gray-900 font-serif tracking-wide">
+                        ¥{product.price.toLocaleString()} {product.title.includes('〜') ? '〜' : ''}
+                      </p>
+                    </div>
+                  </a>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Category;

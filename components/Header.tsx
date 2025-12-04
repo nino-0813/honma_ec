@@ -1,0 +1,111 @@
+
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'wouter';
+import { IconBag, IconSearch, IconMenu, IconUser, IconChevronDown } from './Icons';
+
+interface HeaderProps {
+  onOpenCart: () => void;
+  onOpenMenu: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const isActive = (path: string) => location === path;
+
+  return (
+    <header 
+      className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${
+        isScrolled ? 'bg-white/95 backdrop-blur-md py-3 border-secondary shadow-sm' : 'bg-white py-5 border-transparent'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex-shrink-0 flex items-center z-50">
+            <Link href="/">
+              <a className="hover:opacity-70 transition-opacity block">
+                <img 
+                  src="https://v2ipkh-0d.myshopify.com/cdn/shop/files/8b1419e88ec5f1943032f6d467a8655b.png?v=1761138531&width=200" 
+                  alt="IKEVEGE" 
+                  className="h-8 md:h-10 w-auto object-contain"
+                />
+              </a>
+            </Link>
+          </div>
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex space-x-10 items-center">
+            <Link href="/">
+              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${isActive('/') ? 'text-black' : 'text-gray-500 hover:text-black'}`}>
+                HOME
+                <span className={`absolute -bottom-2 left-0 w-full h-px bg-black transition-transform duration-300 origin-left ${isActive('/') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+              </a>
+            </Link>
+            <Link href="/about">
+              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${isActive('/about') ? 'text-black' : 'text-gray-500 hover:text-black'}`}>
+                ABOUT US
+                <span className={`absolute -bottom-2 left-0 w-full h-px bg-black transition-transform duration-300 origin-left ${isActive('/about') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+              </a>
+            </Link>
+            <div className="relative group h-full flex items-center cursor-pointer">
+              <Link href="/collections">
+                <a className={`text-xs font-medium tracking-[0.15em] transition-colors flex items-center gap-1 ${isActive('/collections') ? 'text-black' : 'text-gray-500 group-hover:text-black'}`}>
+                  CATEGORY <IconChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+                </a>
+              </Link>
+              <div className="absolute left-1/2 -translate-x-1/2 top-full pt-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-out transform group-hover:translate-y-0 translate-y-2">
+                <div className="bg-white border border-gray-100 shadow-xl p-6 min-w-[240px] flex flex-col gap-4 text-center rounded-sm">
+                  <Link href="/collections"><a className="text-xs tracking-widest text-gray-500 hover:text-black transition-colors">ALL ITEMS</a></Link>
+                  <Link href="/collections/rice"><a className="text-xs tracking-widest text-gray-500 hover:text-black transition-colors">お米</a></Link>
+                  <Link href="/collections/crescent"><a className="text-xs tracking-widest text-gray-500 hover:text-black transition-colors">Crescentmoon</a></Link>
+                  <Link href="/collections/other"><a className="text-xs tracking-widest text-gray-500 hover:text-black transition-colors">その他</a></Link>
+                </div>
+              </div>
+            </div>
+            <Link href="/ambassador">
+              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${isActive('/ambassador') ? 'text-black' : 'text-gray-500 hover:text-black'}`}>
+                AMBASSADOR
+                <span className={`absolute -bottom-2 left-0 w-full h-px bg-black transition-transform duration-300 origin-left ${isActive('/ambassador') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+              </a>
+            </Link>
+            <Link href="/contact">
+              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${isActive('/contact') ? 'text-black' : 'text-gray-500 hover:text-black'}`}>
+                CONTACT
+                <span className={`absolute -bottom-2 left-0 w-full h-px bg-black transition-transform duration-300 origin-left ${isActive('/contact') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+              </a>
+            </Link>
+          </nav>
+
+          {/* Icons */}
+          <div className="flex items-center gap-5 sm:gap-6">
+            <button className="hidden sm:block text-primary hover:text-gray-500 transition-colors">
+              <IconUser className="w-5 h-5" />
+            </button>
+            <button className="text-primary hover:text-gray-500 transition-colors">
+              <IconSearch className="w-5 h-5" />
+            </button>
+            <button onClick={onOpenCart} className="text-primary hover:text-gray-500 transition-colors relative">
+              <IconBag className="w-5 h-5" />
+              <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] font-medium w-4 h-4 flex items-center justify-center rounded-full">0</span>
+            </button>
+            <button onClick={onOpenMenu} className="md:hidden text-primary hover:text-gray-500 transition-colors">
+              <IconMenu className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
