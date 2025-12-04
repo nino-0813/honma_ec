@@ -92,12 +92,20 @@ const ProductDetail = () => {
              {!product.soldOut && (
                <div className="flex items-center justify-between border border-gray-200 p-1 max-w-[140px]">
                   <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setQuantity(Math.max(1, quantity - 1));
+                    }}
                     className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-black transition-colors"
                   >−</button>
                   <span className="text-sm font-serif w-8 text-center">{quantity}</span>
                   <button 
-                    onClick={() => setQuantity(quantity + 1)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setQuantity(quantity + 1);
+                    }}
                     className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-black transition-colors"
                   >+</button>
                </div>

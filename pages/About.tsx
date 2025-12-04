@@ -46,7 +46,7 @@ const About = () => {
       <div className="relative w-full">
          {/* Text Section - Above Image */}
          <div className="relative z-10 bg-white pt-20 pb-12 flex flex-col items-center justify-center text-black">
-            <h1 className="text-5xl md:text-7xl font-serif tracking-[0.2em] font-medium mb-6">ABOUT US</h1>
+            <h1 className="text-4xl md:text-5xl font-serif tracking-[0.15em] font-normal mb-6">ABOUT US</h1>
             <p className="text-sm md:text-base tracking-widest font-light">私たちが目指す未来</p>
          </div>
          

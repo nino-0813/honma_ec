@@ -4,6 +4,7 @@ import Collections from '../components/Collections';
 import ParallaxSection from '../components/ParallaxSection';
 import ProductGrid from '../components/ProductGrid';
 import ContactSection from '../components/ContactSection';
+import Testimonials from '../components/Testimonials';
 
 const Home = () => {
   return (
@@ -44,6 +45,7 @@ const Home = () => {
 
       <ParallaxSection />
       <ProductGrid />
+      <Testimonials />
       <ContactSection />
     </div>
   );

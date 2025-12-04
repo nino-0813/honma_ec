@@ -58,22 +58,102 @@ export const MenuDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   <Drawer isOpen={isOpen} onClose={onClose} title="" position="right">
     <div className="flex flex-col px-8 py-6 gap-10">
       <nav className="flex flex-col gap-6 text-base font-serif tracking-widest">
-        <Link href="/"><a onClick={onClose} className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors">HOME</a></Link>
-        <Link href="/about"><a onClick={onClose} className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors">ABOUT US</a></Link>
+        <Link href="/">
+          <a 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }} 
+            className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block"
+          >
+            HOME
+          </a>
+        </Link>
+        <Link href="/about">
+          <a 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }} 
+            className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block"
+          >
+            ABOUT US
+          </a>
+        </Link>
         
         <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
           <span className="font-medium">CATEGORY</span>
           <div className="pl-4 flex flex-col gap-3 text-sm text-gray-500">
-             <Link href="/collections"><a onClick={onClose} className="hover:text-black transition-colors">ALL ITEMS</a></Link>
-             <Link href="/collections/rice"><a onClick={onClose} className="hover:text-black transition-colors">お米</a></Link>
-             <Link href="/collections/crescent"><a onClick={onClose} className="hover:text-black transition-colors">Crescentmoon</a></Link>
-             <Link href="/collections/other"><a onClick={onClose} className="hover:text-black transition-colors">その他</a></Link>
+             <Link href="/collections">
+               <a 
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   onClose();
+                 }} 
+                 className="hover:text-black transition-colors block py-1"
+               >
+                 ALL ITEMS
+               </a>
+             </Link>
+             <Link href="/collections/rice">
+               <a 
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   onClose();
+                 }} 
+                 className="hover:text-black transition-colors block py-1"
+               >
+                 お米
+               </a>
+             </Link>
+             <Link href="/collections/crescent">
+               <a 
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   onClose();
+                 }} 
+                 className="hover:text-black transition-colors block py-1"
+               >
+                 Crescentmoon
+               </a>
+             </Link>
+             <Link href="/collections/other">
+               <a 
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   onClose();
+                 }} 
+                 className="hover:text-black transition-colors block py-1"
+               >
+                 その他
+               </a>
+             </Link>
           </div>
         </div>
 
-        <Link href="/ambassador"><a onClick={onClose} className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors">AMBASSADOR</a></Link>
-        <Link href="/contact"><a onClick={onClose} className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors">CONTACT</a></Link>
-        <a href="#" className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors">ログイン</a>
+        <Link href="/ambassador">
+          <a 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }} 
+            className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block"
+          >
+            AMBASSADOR
+          </a>
+        </Link>
+        <Link href="/contact">
+          <a 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }} 
+            className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block"
+          >
+            CONTACT
+          </a>
+        </Link>
+        <a href="#" className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block">ログイン</a>
       </nav>
 
       <div className="flex gap-8 justify-center mt-4">
