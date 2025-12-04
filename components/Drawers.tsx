@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'wouter';
+import { useLocation } from 'wouter';
 import { IconClose, IconInstagram, IconYoutube } from './Icons';
 
 interface DrawerProps {
@@ -54,112 +54,57 @@ export const CartDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   </Drawer>
 );
 
-export const MenuDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
-  <Drawer isOpen={isOpen} onClose={onClose} title="" position="right">
-    <div className="flex flex-col px-8 py-6 gap-10">
-      <nav className="flex flex-col gap-6 text-base font-serif tracking-widest">
-        <Link href="/">
-          <a 
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }} 
-            className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block"
-          >
+export const MenuDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const [, setLocation] = useLocation();
+
+  const navigate = (href: string) => {
+    setLocation(href);
+    onClose();
+  };
+
+  return (
+    <Drawer isOpen={isOpen} onClose={onClose} title="" position="right">
+      <div className="flex flex-col px-8 py-6 gap-10">
+        <nav className="flex flex-col gap-6 text-base font-serif tracking-widest">
+          <button onClick={() => navigate('/')} className="text-left border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block w-full">
             HOME
-          </a>
-        </Link>
-        <Link href="/about">
-          <a 
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }} 
-            className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block"
-          >
+          </button>
+          <button onClick={() => navigate('/about')} className="text-left border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block w-full">
             ABOUT US
-          </a>
-        </Link>
-        
-        <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
-          <span className="font-medium">CATEGORY</span>
-          <div className="pl-4 flex flex-col gap-3 text-sm text-gray-500">
-             <Link href="/collections">
-               <a 
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   onClose();
-                 }} 
-                 className="hover:text-black transition-colors block py-1"
-               >
+          </button>
+          
+          <div className="flex flex-col gap-4 border-b border-gray-100 pb-4">
+            <span className="font-medium">CATEGORY</span>
+            <div className="pl-4 flex flex-col gap-3 text-sm text-gray-500">
+               <button onClick={() => navigate('/collections')} className="text-left hover:text-black transition-colors block py-1 w-full">
                  ALL ITEMS
-               </a>
-             </Link>
-             <Link href="/collections/rice">
-               <a 
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   onClose();
-                 }} 
-                 className="hover:text-black transition-colors block py-1"
-               >
+               </button>
+               <button onClick={() => navigate('/collections/rice')} className="text-left hover:text-black transition-colors block py-1 w-full">
                  お米
-               </a>
-             </Link>
-             <Link href="/collections/crescent">
-               <a 
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   onClose();
-                 }} 
-                 className="hover:text-black transition-colors block py-1"
-               >
+               </button>
+               <button onClick={() => navigate('/collections/crescent')} className="text-left hover:text-black transition-colors block py-1 w-full">
                  Crescentmoon
-               </a>
-             </Link>
-             <Link href="/collections/other">
-               <a 
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   onClose();
-                 }} 
-                 className="hover:text-black transition-colors block py-1"
-               >
+               </button>
+               <button onClick={() => navigate('/collections/other')} className="text-left hover:text-black transition-colors block py-1 w-full">
                  その他
-               </a>
-             </Link>
+               </button>
+            </div>
           </div>
-        </div>
 
-        <Link href="/ambassador">
-          <a 
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }} 
-            className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block"
-          >
+          <button onClick={() => navigate('/ambassador')} className="text-left border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block w-full">
             AMBASSADOR
-          </a>
-        </Link>
-        <Link href="/contact">
-          <a 
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }} 
-            className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block"
-          >
+          </button>
+          <button onClick={() => navigate('/contact')} className="text-left border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block w-full">
             CONTACT
-          </a>
-        </Link>
-        <a href="#" className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block">ログイン</a>
-      </nav>
+          </button>
+          <a href="#" className="border-b border-gray-100 pb-3 hover:text-gray-500 transition-colors block">ログイン</a>
+        </nav>
 
-      <div className="flex gap-8 justify-center mt-4">
-        <a href="#" className="text-primary hover:text-gray-500 transition-colors"><IconInstagram className="w-5 h-5" /></a>
-        <a href="#" className="text-primary hover:text-gray-500 transition-colors"><IconYoutube className="w-5 h-5" /></a>
+        <div className="flex gap-8 justify-center mt-4">
+          <a href="#" className="text-primary hover:text-gray-500 transition-colors"><IconInstagram className="w-5 h-5" /></a>
+          <a href="#" className="text-primary hover:text-gray-500 transition-colors"><IconYoutube className="w-5 h-5" /></a>
+        </div>
       </div>
-    </div>
-  </Drawer>
-);
+    </Drawer>
+  );
+};

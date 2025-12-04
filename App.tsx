@@ -61,7 +61,7 @@ const MainLayout = () => {
 
   return (
     <CartContext.Provider value={{ openCart }}>
-      <div className="min-h-screen bg-white flex flex-col font-sans text-primary selection:bg-black selection:text-white">
+      <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary selection:bg-black selection:text-white">
         <ScrollToTop />
         <Header 
           onOpenCart={() => setIsCartOpen(true)} 
