@@ -26,7 +26,11 @@ export interface DatabaseProduct {
   description: string | null;
   has_variants: boolean; // 種類選択の有無
   variants: string[] | null; // 選択肢リスト
+  variants_config: any; // 新しいバリエーション設定 (JSONB)
   status: 'active' | 'draft' | 'archived';
+  stock: number | null;
+  sku: string | null;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -46,11 +50,14 @@ export const convertDatabaseProductToProduct = (dbProduct: DatabaseProduct): Pro
     description: dbProduct.description || undefined,
     hasVariants: dbProduct.has_variants,
     variants: dbProduct.variants || [],
+    variants_config: dbProduct.variants_config || [],
+    sku: dbProduct.sku || undefined,
+    stock: dbProduct.stock || 0,
   };
 };
 
 // Product型をDatabase型に変換
-export const convertProductToDatabaseProduct = (product: Partial<Product> & { status?: 'active' | 'draft' | 'archived' }) => {
+export const convertProductToDatabaseProduct = (product: Partial<Product> & { status?: 'active' | 'draft' | 'archived', is_active?: boolean }) => {
   return {
     title: product.title,
     price: product.price,
@@ -63,7 +70,11 @@ export const convertProductToDatabaseProduct = (product: Partial<Product> & { st
     description: product.description || null,
     has_variants: product.hasVariants || false,
     variants: product.variants || null,
+    variants_config: product.variants_config || null,
     status: product.status || 'active',
+    stock: product.stock || 0,
+    sku: product.sku || null,
+    is_active: product.is_active ?? true,
   };
 };
 

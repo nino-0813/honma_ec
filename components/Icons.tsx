@@ -41,7 +41,8 @@ import {
   LogOut,
   Star,
   MessageCircle,
-  Send
+  Send,
+  Download
 } from 'lucide-react';
 
 export const IconBag = ({ className }: { className?: string }) => <ShoppingBag className={className} strokeWidth={1.5} />;
@@ -62,6 +63,7 @@ export const IconHome = ({ className }: { className?: string }) => <Home classNa
 export const IconArrowLeft = ({ className }: { className?: string }) => <ArrowLeft className={className} strokeWidth={1.5} />;
 export const IconArrowRight = ({ className }: { className?: string }) => <ArrowRight className={className} strokeWidth={1.5} />;
 export const IconUpload = ({ className }: { className?: string }) => <Upload className={className} strokeWidth={1.5} />;
+export const IconDownload = ({ className }: { className?: string }) => <Download className={className} strokeWidth={1.5} />;
 export const IconPlus = ({ className }: { className?: string }) => <Plus className={className} strokeWidth={1.5} />;
 export const IconFilter = ({ className }: { className?: string }) => <Filter className={className} strokeWidth={1.5} />;
 export const IconMore = ({ className }: { className?: string }) => <MoreVertical className={className} strokeWidth={1.5} />;
