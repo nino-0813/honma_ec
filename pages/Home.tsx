@@ -21,29 +21,12 @@ const Home = () => {
       </div>
 
       {/* Awards Section */}
-      <section className="py-12 md:py-20 bg-white">
+      <section className="py-6 md:py-10 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-8">
-            {/* Award 1 */}
-            <div className="text-center">
-              <p className="text-xs md:text-sm text-gray-500 mb-3 tracking-wider">第27回米・食味分析鑑定コンクール国際大会</p>
-              <p className="text-sm md:text-base text-gray-600 mb-2">国際総合部門</p>
-              <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900 mb-4">金賞受賞</h3>
-              <div className="w-24 h-px bg-gray-300 mx-auto"></div>
-            </div>
-
-            {/* Award 2 */}
-            <div className="text-center">
-              <p className="text-xs md:text-sm text-gray-500 mb-3 tracking-wider">米・食味分析鑑定コンクール(国際大会)</p>
-              <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900 mb-4">6年連続金賞受賞</h3>
-              <div className="w-24 h-px bg-gray-300 mx-auto"></div>
-            </div>
-
-            {/* Award 3 */}
-            <div className="text-center">
-              <p className="text-xs md:text-sm text-gray-500 mb-3 tracking-wider">ギネス世界記録「世界最高米(原料米)」</p>
-              <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900">4年連続認定</h3>
-            </div>
+          <div className="text-center">
+            <p className="text-xs md:text-sm text-gray-500 mb-3 tracking-wider">第27回米・食味分析鑑定コンクール国際大会</p>
+            <p className="text-sm md:text-base text-gray-600 mb-2">国際総合部門</p>
+            <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900">金賞受賞</h3>
           </div>
         </div>
       </section>
