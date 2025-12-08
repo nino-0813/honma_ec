@@ -9,10 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.5.3",
+    "@supabase/supabase-js": "^2.86.2",
+    "lucide-react": "0.263.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "wouter": "2.11.0",
-    "lucide-react": "0.263.1"
+    "resend": "^6.5.2",
+    "wouter": "2.11.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

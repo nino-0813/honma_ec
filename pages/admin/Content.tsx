@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import AdminLayout from './AdminLayout';
 import { IconPlus, IconSearch, IconFilter, IconMonitor, IconEdit, IconMore, IconEye, IconCheckCircle } from '../../components/Icons';
 
 interface Content {
@@ -55,17 +54,16 @@ const Content = () => {
   };
 
   return (
-    <AdminLayout 
-      title="コンテンツ"
-      actions={
+    <>
+      <div className="flex justify-end mb-6">
         <Link href="/admin/content/new">
-          <a className="bg-black text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 transition-all shadow-sm hover:shadow flex items-center gap-2">
+          <a className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm flex items-center gap-2">
             <IconPlus className="w-4 h-4" />
             コンテンツを作成
           </a>
         </Link>
-      }
-    >
+      </div>
+
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -202,7 +200,7 @@ const Content = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

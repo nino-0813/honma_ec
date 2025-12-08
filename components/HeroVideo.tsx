@@ -22,39 +22,61 @@ const HeroVideo = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-[100dvh] md:h-[80vh] overflow-hidden bg-gray-900">
-      {/* 読み込み中のプレースホルダー */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center z-10">
-          <div className="text-white text-sm animate-pulse">読み込み中...</div>
-        </div>
-      )}
+    <div className="relative w-full bg-gray-50">
+      {/* Mobile: h-[55vh] with object-cover like behavior */}
+      <div className="md:hidden w-full h-[55vh] relative overflow-hidden">
+         {isLoading && (
+            <div className="absolute inset-0 bg-gray-200 flex items-center justify-center z-10">
+              <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+         )}
+         {videoUrl && (
+            <div className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+              <iframe 
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[177vh] h-[55vh] max-w-none"
+                src={videoUrl}
+                title="IKEVEGE Hero Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                frameBorder="0"
+                allowFullScreen
+                onLoad={() => {
+                  setIsLoading(false);
+                  setIsLoaded(true);
+                }}
+              ></iframe>
+            </div>
+         )}
+      </div>
 
-      {/* YouTube動画 */}
-      {videoUrl && (
-        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-          <iframe 
-            ref={iframeRef}
-            className="w-full h-full scale-[300%] md:scale-150 pointer-events-none"
-            src={videoUrl}
-            title="IKEVEGE Hero Video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            frameBorder="0"
-            allowFullScreen
-            loading="eager"
-            onLoad={() => {
-              setIsLoading(false);
-              setIsLoaded(true);
-            }}
-          ></iframe>
-        </div>
-      )}
-      
-      {/* オーバーレイ */}
-      <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
-        <div className="text-center text-white p-4 animate-fade-in">
-          {/* Optional Text overlay if needed, the video has its own text usually */}
-        </div>
+      {/* Desktop: Full height, Scaled for immersion */}
+      <div className="hidden md:block relative w-full h-[80vh] overflow-hidden">
+        {isLoading && (
+          <div className="absolute inset-0 bg-gray-900 flex items-center justify-center z-10">
+            <div className="text-white text-sm animate-pulse">読み込み中...</div>
+          </div>
+        )}
+        
+        {videoUrl && (
+          <div className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+            <iframe 
+              ref={iframeRef}
+              className="w-full h-full scale-150 pointer-events-none"
+              src={videoUrl}
+              title="IKEVEGE Hero Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              frameBorder="0"
+              allowFullScreen
+              loading="eager"
+              onLoad={() => {
+                setIsLoading(false);
+                setIsLoaded(true);
+              }}
+            ></iframe>
+          </div>
+        )}
+        
+        {/* Overlay (PC only) */}
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none"></div>
       </div>
     </div>
   );

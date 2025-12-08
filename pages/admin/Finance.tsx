@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import AdminLayout from './AdminLayout';
 import { IconBuilding, IconCreditCard, IconTrendingUp, IconCalendar, IconCheckCircle } from '../../components/Icons';
 
 const Finance = () => {
@@ -17,7 +16,7 @@ const Finance = () => {
   const netRevenue = totalRevenue - totalFees;
 
   return (
-    <AdminLayout title="財務">
+    <>
       <div className="space-y-6">
         {/* Time Range Selector */}
         <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4">
@@ -134,7 +133,7 @@ const Finance = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

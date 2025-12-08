@@ -2,19 +2,48 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { Product } from '../types';
-import { products } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 import { FadeInImage } from './UI';
 
 const ProductGrid = () => {
+  const { products, loading, error } = useProducts();
+  const displayProducts = products.slice(0, 8);
+
   return (
-    <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-8 md:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
-        <p className="text-sm font-serif text-gray-500 mb-2 tracking-widest">IKEVEGE online</p>
-        <h3 className="text-2xl font-serif uppercase tracking-widest border-b border-gray-300 inline-block pb-1">All Items</h3>
+        <p className="text-xs font-serif text-gray-500 mb-2 tracking-[0.2em] uppercase">IKEVEGE online</p>
+        <h3 className="text-xl font-serif uppercase tracking-[0.1em] border-b border-gray-800 inline-block pb-0.5 text-black">ALL ITEM</h3>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
-        {products.slice(0, 8).map((product, index) => (
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-sm text-gray-500">商品を読み込み中...</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <p className="text-sm text-gray-500">商品の読み込みに失敗しました</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && displayProducts.length === 0 && (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <p className="text-sm text-gray-500">商品がありません</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && displayProducts.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 md:gap-x-6 md:gap-y-12">
+          {displayProducts.map((product, index) => (
           <Link key={product.id} href={`/products/${product.handle}`}>
             <a 
               className="group flex flex-col opacity-0 animate-fade-in-up"
@@ -27,21 +56,16 @@ const ProductGrid = () => {
                       Sold Out
                     </span>
                   )}
-                  {product.title.includes('新米') && (
-                    <span className="bg-white text-primary border border-primary px-3 py-1 text-[10px] font-bold tracking-widest uppercase shadow-sm">
-                      新米
-                    </span>
-                  )}
                 </div>
 
                 {/* Main Image with FadeIn */}
                 <div className="absolute inset-0 z-10 transition-opacity duration-700 ease-in-out group-hover:opacity-0">
-                  <FadeInImage src={product.images[0]} alt={product.title} className="w-full h-full" />
+                  <FadeInImage src={product.images && product.images.length > 0 ? product.images[0] : (product.image || '')} alt={product.title} className="w-full h-full object-cover" />
                 </div>
                 
                 {/* Secondary Image (Hover) */}
                 <div className="absolute inset-0 z-0 transform scale-100 group-hover:scale-105 transition-transform duration-1000 ease-out">
-                   <FadeInImage src={product.images[1] || product.images[0]} alt={product.title} className="w-full h-full" />
+                   <FadeInImage src={product.images && product.images.length > 1 ? product.images[1] : (product.images && product.images.length > 0 ? product.images[0] : (product.image || ''))} alt={product.title} className="w-full h-full object-cover" />
                 </div>
               </div>
               <div className="flex-1 flex flex-col gap-2 text-center">
@@ -54,16 +78,19 @@ const ProductGrid = () => {
               </div>
             </a>
           </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <div className="text-center mt-16">
-         <Link href="/collections">
-           <a className="inline-block bg-primary text-white px-12 py-4 text-sm tracking-widest hover:bg-gray-800 transition-all duration-300 uppercase border border-transparent hover:shadow-lg">
-             View All
-           </a>
-         </Link>
-      </div>
+      {!loading && !error && displayProducts.length > 0 && (
+        <div className="text-center mt-12">
+           <Link href="/collections">
+             <a className="inline-block bg-black text-white px-10 py-3 text-xs tracking-[0.2em] hover:opacity-80 transition-opacity uppercase">
+               View all
+             </a>
+           </Link>
+        </div>
+      )}
     </section>
   );
 };

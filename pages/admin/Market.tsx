@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import AdminLayout from './AdminLayout';
 import { IconStore, IconGlobe, IconCheckCircle, IconEdit, IconPlus } from '../../components/Icons';
 
 const Market = () => {
@@ -10,7 +9,7 @@ const Market = () => {
   ]);
 
   return (
-    <AdminLayout title="マーケット">
+    <>
       <div className="space-y-6">
         {/* Info Card */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -84,7 +83,7 @@ const Market = () => {
           </button>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

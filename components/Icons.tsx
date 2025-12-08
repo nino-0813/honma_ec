@@ -5,6 +5,7 @@ import {
   Menu, 
   X, 
   ChevronDown, 
+  ChevronRight,
   Instagram, 
   Youtube, 
   User,
@@ -13,6 +14,7 @@ import {
   Settings,
   Home,
   ArrowLeft,
+  ArrowRight,
   Upload,
   Plus,
   Filter,
@@ -31,7 +33,15 @@ import {
   Calendar,
   Edit,
   TrendingUp,
-  Eye
+  Eye,
+  Trash2,
+  Mail,
+  Lock,
+  Loader2,
+  LogOut,
+  Star,
+  MessageCircle,
+  Send
 } from 'lucide-react';
 
 export const IconBag = ({ className }: { className?: string }) => <ShoppingBag className={className} strokeWidth={1.5} />;
@@ -39,6 +49,7 @@ export const IconSearch = ({ className }: { className?: string }) => <Search cla
 export const IconMenu = ({ className }: { className?: string }) => <Menu className={className} strokeWidth={1.5} />;
 export const IconClose = ({ className }: { className?: string }) => <X className={className} strokeWidth={1.5} />;
 export const IconChevronDown = ({ className }: { className?: string }) => <ChevronDown className={className} strokeWidth={1.5} />;
+export const IconChevronRight = ({ className }: { className?: string }) => <ChevronRight className={className} strokeWidth={1.5} />;
 export const IconInstagram = ({ className }: { className?: string }) => <Instagram className={className} strokeWidth={1.5} />;
 export const IconYoutube = ({ className }: { className?: string }) => <Youtube className={className} strokeWidth={1.5} />;
 export const IconUser = ({ className }: { className?: string }) => <User className={className} strokeWidth={1.5} />;
@@ -49,6 +60,7 @@ export const IconPackage = ({ className }: { className?: string }) => <Package c
 export const IconSettings = ({ className }: { className?: string }) => <Settings className={className} strokeWidth={1.5} />;
 export const IconHome = ({ className }: { className?: string }) => <Home className={className} strokeWidth={1.5} />;
 export const IconArrowLeft = ({ className }: { className?: string }) => <ArrowLeft className={className} strokeWidth={1.5} />;
+export const IconArrowRight = ({ className }: { className?: string }) => <ArrowRight className={className} strokeWidth={1.5} />;
 export const IconUpload = ({ className }: { className?: string }) => <Upload className={className} strokeWidth={1.5} />;
 export const IconPlus = ({ className }: { className?: string }) => <Plus className={className} strokeWidth={1.5} />;
 export const IconFilter = ({ className }: { className?: string }) => <Filter className={className} strokeWidth={1.5} />;
@@ -70,3 +82,12 @@ export const IconCalendar = ({ className }: { className?: string }) => <Calendar
 export const IconEdit = ({ className }: { className?: string }) => <Edit className={className} strokeWidth={1.5} />;
 export const IconTrendingUp = ({ className }: { className?: string }) => <TrendingUp className={className} strokeWidth={1.5} />;
 export const IconEye = ({ className }: { className?: string }) => <Eye className={className} strokeWidth={1.5} />;
+export const IconTrash = ({ className }: { className?: string }) => <Trash2 className={className} strokeWidth={1.5} />;
+export const IconMail = ({ className }: { className?: string }) => <Mail className={className} strokeWidth={1.5} />;
+export const IconLock = ({ className }: { className?: string }) => <Lock className={className} strokeWidth={1.5} />;
+export const IconLoader2 = ({ className }: { className?: string }) => <Loader2 className={className} strokeWidth={1.5} />;
+export const IconLogOut = ({ className }: { className?: string }) => <LogOut className={className} strokeWidth={1.5} />;
+export const IconX = ({ className }: { className?: string }) => <X className={className} strokeWidth={1.5} />;
+export const IconStar = ({ className }: { className?: string }) => <Star className={className} strokeWidth={1.5} />;
+export const IconMessageCircle = ({ className }: { className?: string }) => <MessageCircle className={className} strokeWidth={1.5} />;
+export const IconSend = ({ className }: { className?: string }) => <Send className={className} strokeWidth={1.5} />;

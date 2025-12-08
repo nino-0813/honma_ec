@@ -1,7 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation } from 'wouter';
 import { IconBag, IconSearch, IconMenu, IconUser, IconChevronDown } from './Icons';
+import { CartContext } from '../App';
+import { supabase } from '../lib/supabase';
 
 interface HeaderProps {
   onOpenCart: () => void;
@@ -11,6 +13,29 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [location] = useLocation();
+  const { cartItems } = useContext(CartContext);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // カート内の商品の総数を計算
+  const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!supabase) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+
+    checkAuth();
+
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsLoggedIn(!!session);
+      });
+
+      return () => subscription.unsubscribe();
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,12 +45,17 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const isActive = (path: string) => location === path;
+  const isActive = (path: string) => {
+    if (path === '/collections') {
+      return location === '/collections' || location.startsWith('/collections/');
+    }
+    return location === path;
+  };
 
   return (
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${
-        isScrolled ? 'bg-white/95 backdrop-blur-md py-3 border-secondary shadow-sm' : 'bg-white py-5 border-transparent'
+        isScrolled ? 'bg-white/95 backdrop-blur-md py-3 border-secondary shadow-sm' : 'bg-transparent py-5 border-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
                 <img 
                   src="https://v2ipkh-0d.myshopify.com/cdn/shop/files/8b1419e88ec5f1943032f6d467a8655b.png?v=1761138531&width=200" 
                   alt="IKEVEGE" 
-                  className="h-8 md:h-10 w-auto object-contain"
+                  className="h-6 md:h-10 w-auto object-contain"
                 />
               </a>
             </Link>
@@ -88,15 +118,29 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
 
           {/* Icons */}
           <div className="flex items-center gap-5 sm:gap-6">
-            <button className="hidden sm:block text-primary hover:text-gray-500 transition-colors">
-              <IconUser className="w-5 h-5" />
-            </button>
+            {isLoggedIn ? (
+              <Link href="/account">
+                <a className="hidden sm:block text-primary hover:text-gray-500 transition-colors">
+                  <IconUser className="w-5 h-5" />
+                </a>
+              </Link>
+            ) : (
+              <Link href="/checkout">
+                <a className="hidden sm:block text-primary hover:text-gray-500 transition-colors" title="ログインが必要です">
+                  <IconUser className="w-5 h-5" />
+                </a>
+              </Link>
+            )}
             <button className="text-primary hover:text-gray-500 transition-colors">
               <IconSearch className="w-5 h-5" />
             </button>
             <button onClick={onOpenCart} className="text-primary hover:text-gray-500 transition-colors relative">
               <IconBag className="w-5 h-5" />
-              <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] font-medium w-4 h-4 flex items-center justify-center rounded-full">0</span>
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] font-medium w-4 h-4 flex items-center justify-center rounded-full">
+                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                </span>
+              )}
             </button>
             <button onClick={onOpenMenu} className="md:hidden text-primary hover:text-gray-500 transition-colors">
               <IconMenu className="w-5 h-5" />

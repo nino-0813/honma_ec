@@ -45,26 +45,26 @@ const About = () => {
       {/* Hero Image - Full Screen with Parallax feel */}
       <div className="relative w-full">
          {/* Text Section - Above Image */}
-         <div className="relative z-10 bg-white pt-20 pb-12 flex flex-col items-center justify-center text-black">
-            <h1 className="text-4xl md:text-5xl font-serif tracking-[0.15em] font-normal mb-6">ABOUT US</h1>
-            <p className="text-sm md:text-base tracking-widest font-light">私たちが目指す未来</p>
+         <div className="relative z-10 bg-white pt-32 md:pt-40 pb-2 flex flex-col items-center justify-center text-black">
+            <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-2">ABOUT US</h1>
          </div>
          
          {/* Image Section */}
-         <div className="relative w-full h-[80vh] overflow-hidden">
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-105"
-              style={{
-                backgroundImage: "url('/images/about/hero/IMG_9172.jpg')"
-              }}
-            />
+         <div className="relative w-full pb-4 flex justify-center">
+            <div className="relative w-full max-w-4xl h-[50vh] md:h-[60vh] overflow-hidden mx-auto">
+               <img 
+                 src="/images/about/hero/IMG_9172.jpg" 
+                 alt="IKEVEGE" 
+                 className="w-full h-full object-cover object-center"
+               />
+            </div>
          </div>
       </div>
 
       {/* Introduction / Philosophy */}
-      <section className="py-32 md:py-48 bg-white relative overflow-hidden">
+      <section className="pt-12 md:pt-16 pb-32 md:pb-48 bg-white relative overflow-hidden">
         {/* Decorative Vertical Text Background */}
-        <div className="absolute top-20 right-10 md:right-20 text-9xl font-serif opacity-[0.03] vertical-text pointer-events-none hidden md:block">
+        <div className="absolute top-20 right-10 md:right-20 text-7xl md:text-8xl font-serif opacity-[0.03] vertical-text pointer-events-none hidden md:block">
           自然と共に
         </div>
 
@@ -76,7 +76,7 @@ const About = () => {
                <span className="text-xl md:text-2xl mt-4 block text-gray-600">農業から社会をデザインする</span>
              </h2>
              
-             <div className="text-sm md:text-base leading-[2.8] text-gray-600 font-light font-serif space-y-8">
+             <div className="text-sm md:text-base leading-[2.8] text-gray-600 space-y-8">
                <p>
                  自然界では、多様な命が、無理なく、<br/>
                  あるがままに響き合い、永遠にめぐっている。
@@ -119,24 +119,23 @@ const About = () => {
                <div className="absolute -bottom-10 -right-10 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
             </FadeInSection>
             <FadeInSection className="w-full md:w-1/2 space-y-8">
-               <h3 className="text-2xl md:text-3xl font-serif tracking-widest">土を磨き、<br/>命を育む。</h3>
+               <h3 className="text-2xl md:text-3xl font-serif tracking-widest">作り手が楽しむ</h3>
                <div className="space-y-6 text-gray-600 leading-loose font-light font-serif">
                  <p>
-                   私たちの田んぼは、佐渡の豊かな自然の中にあります。<br/>
-                   山から流れ出る清らかな水、ミネラルを含んだ潮風、<br/>
-                   そして、多種多様な生き物たちが暮らす土壌。
+                   イケベジの田んぼではいつもスタッフのルカの大きな歌声が響いています。
                  </p>
                  <p>
-                   余計なものは足さない。<br/>
-                   あるがままの自然の力を借りて、<br/>
-                   お米一粒一粒に生命を吹き込んでいきます。
+                   作物は作り手の状態を鏡のように映し出すもの。
+                 </p>
+                 <p>
+                   だからこそ、田んぼではまず「自分らしく楽しむこと」を第一に心がけています。
                  </p>
                </div>
             </FadeInSection>
          </div>
 
          {/* Story 2 (Reverse) */}
-         <div className="flex flex-col md:flex-row-reverse gap-12 md:gap-24 items-center">
+         <div className="flex flex-col md:flex-row-reverse gap-12 md:gap-24 items-center mb-32">
             <FadeInSection className="w-full md:w-1/2 relative">
                <div className="aspect-square bg-gray-100 relative z-10">
                  <img src="/images/about/stories/P3A9707.jpg" alt="Sunset Rice Field" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
@@ -144,52 +143,67 @@ const About = () => {
                <div className="absolute -top-10 -left-10 w-2/3 h-1/2 bg-secondary z-0 hidden md:block"></div>
             </FadeInSection>
             <FadeInSection className="w-full md:w-1/2 space-y-8 text-right md:text-left">
-               <h3 className="text-2xl md:text-3xl font-serif tracking-widest">「ココに生まれてよかった」<br/>そう思える島へ。</h3>
+               <h3 className="text-2xl md:text-3xl font-serif tracking-widest">引き算のものづくり</h3>
                <div className="space-y-6 text-gray-600 leading-loose font-light font-serif">
                  <p>
-                   農業は、風景を作ります。<br/>
-                   美しい田園風景は、人々の心の原風景となります。
+                   "美味しい"とは、品種が持つ本来の味わいがまっすぐに伝わること。
                  </p>
                  <p>
-                   私たちが汗を流し、楽しみながら農業を続けることで、<br/>
-                   この島の魅力が少しでも伝われば嬉しい。<br/>
-                   それが、私たちの原動力です。
+                   味を邪魔する農薬や化学肥料を使わず、過剰施肥を避け、できる限り島からでる資源で土を育てます。
+                 </p>
+                 <p>
+                   小さな微生物を呼び込み、より大きな生き物が集まり、そして生き絶え、いのちの循環が幾重にも奏でられた良質なアミノ酸で育つお米が、イケてるお米を育みます。
+                 </p>
+                 <p>
+                   子どもを育てるように、それぞれの命がのびのびと命を全うする場を創り続けます。
+                 </p>
+               </div>
+            </FadeInSection>
+         </div>
+
+         {/* Story 3 */}
+         <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center mb-32">
+            <FadeInSection className="w-full md:w-1/2 relative">
+               <div className="aspect-[3/4] bg-gray-100 relative z-10">
+                 <img src="/images/about/stories/P3A0011.jpg" alt="Farmers" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+               </div>
+               <div className="absolute -bottom-10 -right-10 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
+            </FadeInSection>
+            <FadeInSection className="w-full md:w-1/2 space-y-8">
+               <h3 className="text-2xl md:text-3xl font-serif tracking-widest">農へのアクセスを良好に</h3>
+               <div className="space-y-6 text-gray-600 leading-loose font-light font-serif">
+                 <p>
+                   近年、島の子どもたちが暮らしの中で自然に触れる機会が減少しています。そこで私たちは、農へのアクセスを良好にし、農家ならではの学びの場を創出しています。
+                 </p>
+                 <p>
+                   稲刈りや田植えなど体験価値の高い繁忙期にも、依頼に応える体制を整備しました。
+                 </p>
+                 <p>
+                   こうして得られた"原体験"が、島の子どもたちの自然との豊かな関係を育み、未来を創る力へとつながることを願っています。
                  </p>
                </div>
             </FadeInSection>
          </div>
       </section>
 
-      {/* Company Profile */}
-      <div className="py-24 bg-white border-t border-gray-100">
-        <div className="max-w-2xl mx-auto px-6">
+      {/* Note Link Section */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <FadeInSection>
-            <h3 className="text-center text-lg font-serif tracking-[0.2em] mb-16">COMPANY PROFILE</h3>
-            <div className="grid grid-cols-1 gap-y-6 text-sm font-light font-sans">
-               <div className="flex flex-col md:flex-row border-b border-gray-100 pb-6">
-                  <span className="w-32 font-medium text-gray-900 tracking-widest mb-2 md:mb-0">屋号</span>
-                  <span className="text-gray-600">イケベジ / IKEVEGE</span>
-               </div>
-               <div className="flex flex-col md:flex-row border-b border-gray-100 pb-6">
-                  <span className="w-32 font-medium text-gray-900 tracking-widest mb-2 md:mb-0">代表</span>
-                  <span className="text-gray-600">佐藤 健太</span>
-               </div>
-               <div className="flex flex-col md:flex-row border-b border-gray-100 pb-6">
-                  <span className="w-32 font-medium text-gray-900 tracking-widest mb-2 md:mb-0">所在地</span>
-                  <span className="text-gray-600">〒952-0000 新潟県佐渡市...</span>
-               </div>
-               <div className="flex flex-col md:flex-row border-b border-gray-100 pb-6">
-                  <span className="w-32 font-medium text-gray-900 tracking-widest mb-2 md:mb-0">事業内容</span>
-                  <span className="text-gray-600 leading-relaxed">
-                     農産物の生産・販売<br/>
-                     農業体験の企画・運営<br/>
-                     地域活性化事業
-                  </span>
-               </div>
-            </div>
+            <a
+              href="https://note.com/ikevege"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-gray-900 hover:text-gray-700 transition-colors"
+            >
+              <div className="font-serif text-base md:text-lg leading-relaxed">
+                <p className="mb-2">read more</p>
+                <p className="underline underline-offset-4">note</p>
+              </div>
+            </a>
           </FadeInSection>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
