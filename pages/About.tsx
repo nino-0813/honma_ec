@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface FadeInSectionProps {
   children?: React.ReactNode;
@@ -32,6 +32,49 @@ const FadeInSection = ({ children, className = "" }: FadeInSectionProps) => {
     <div ref={domRef} className={`opacity-0 translate-y-10 transition-all duration-1000 ease-out ${className}`}>
       {children}
     </div>
+  );
+};
+
+interface ScrollGrayscaleImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+}
+
+const ScrollGrayscaleImage = ({ src, alt, className = "" }: ScrollGrayscaleImageProps) => {
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          setIsInView(entry.isIntersecting);
+        });
+      },
+      { 
+        threshold: 0.2, // 画像の20%が表示されたらカラーに（スマホでも反応しやすく）
+        rootMargin: '0px 0px 0px 0px' // マージンを削除して、より正確にビューポートに入った時を検知
+      }
+    );
+
+    const currentImg = imgRef.current;
+    if (currentImg) {
+      observer.observe(currentImg);
+    }
+
+    return () => {
+      if (currentImg) observer.unobserve(currentImg);
+    };
+  }, []);
+
+  return (
+    <img 
+      ref={imgRef}
+      src={src} 
+      alt={alt} 
+      className={`w-full h-full object-cover transition-all duration-1000 ${isInView ? 'grayscale-0' : 'grayscale'} ${className}`}
+    />
   );
 };
 
@@ -114,7 +157,7 @@ const About = () => {
          <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center mb-32">
             <FadeInSection className="w-full md:w-1/2 relative">
                <div className="aspect-[3/4] bg-gray-100 relative z-10">
-                 <img src="/images/about/stories/IMG_8832.jpg" alt="Farmer" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+                 <ScrollGrayscaleImage src="/images/about/stories/IMG_8832.jpg" alt="Farmer" />
                </div>
                <div className="absolute -bottom-10 -right-10 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
             </FadeInSection>
@@ -138,7 +181,7 @@ const About = () => {
          <div className="flex flex-col md:flex-row-reverse gap-12 md:gap-24 items-center mb-32">
             <FadeInSection className="w-full md:w-1/2 relative">
                <div className="aspect-square bg-gray-100 relative z-10">
-                 <img src="/images/about/stories/P3A9707.jpg" alt="Sunset Rice Field" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+                 <ScrollGrayscaleImage src="/images/about/stories/P3A9707.jpg" alt="Sunset Rice Field" />
                </div>
                <div className="absolute -top-10 -left-10 w-2/3 h-1/2 bg-secondary z-0 hidden md:block"></div>
             </FadeInSection>
@@ -165,7 +208,7 @@ const About = () => {
          <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center mb-32">
             <FadeInSection className="w-full md:w-1/2 relative">
                <div className="aspect-[3/4] bg-gray-100 relative z-10">
-                 <img src="/images/about/stories/P3A0011.jpg" alt="Farmers" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+                 <ScrollGrayscaleImage src="/images/about/stories/P3A0011.jpg" alt="Farmers" />
                </div>
                <div className="absolute -bottom-10 -right-10 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
             </FadeInSection>

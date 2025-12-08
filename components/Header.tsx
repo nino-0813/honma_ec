@@ -76,21 +76,33 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
           {/* Desktop Nav */}
           <nav className="hidden md:flex space-x-10 items-center">
             <Link href="/">
-              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${isActive('/') ? 'text-black' : 'text-gray-500 hover:text-black'}`}>
+              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${
+                isActive('/') 
+                  ? (isScrolled ? 'text-black' : 'text-white') 
+                  : (isScrolled ? 'text-gray-500 hover:text-black' : 'text-white hover:text-white/80')
+              }`}>
                 HOME
-                <span className={`absolute -bottom-2 left-0 w-full h-px bg-black transition-transform duration-300 origin-left ${isActive('/') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+                <span className={`absolute -bottom-2 left-0 w-full h-px ${isScrolled ? 'bg-black' : 'bg-white'} transition-transform duration-300 origin-left ${isActive('/') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
               </a>
             </Link>
             <Link href="/about">
-              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${isActive('/about') ? 'text-black' : 'text-gray-500 hover:text-black'}`}>
+              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${
+                isActive('/about') 
+                  ? (isScrolled ? 'text-black' : 'text-white') 
+                  : (isScrolled ? 'text-gray-500 hover:text-black' : 'text-white hover:text-white/80')
+              }`}>
                 ABOUT US
-                <span className={`absolute -bottom-2 left-0 w-full h-px bg-black transition-transform duration-300 origin-left ${isActive('/about') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+                <span className={`absolute -bottom-2 left-0 w-full h-px ${isScrolled ? 'bg-black' : 'bg-white'} transition-transform duration-300 origin-left ${isActive('/about') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
               </a>
             </Link>
             <div className="relative group h-full flex items-center cursor-pointer">
               <Link href="/collections">
-                <a className={`text-xs font-medium tracking-[0.15em] transition-colors flex items-center gap-1 ${isActive('/collections') ? 'text-black' : 'text-gray-500 group-hover:text-black'}`}>
-                  CATEGORY <IconChevronDown className="w-3 h-3 transition-transform group-hover:rotate-180" />
+                <a className={`text-xs font-medium tracking-[0.15em] transition-colors ${
+                  isActive('/collections') 
+                    ? (isScrolled ? 'text-black' : 'text-white') 
+                    : (isScrolled ? 'text-gray-500 group-hover:text-black' : 'text-white group-hover:text-white/80')
+                }`}>
+                  CATEGORY
                 </a>
               </Link>
               <div className="absolute left-1/2 -translate-x-1/2 top-full pt-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-out transform group-hover:translate-y-0 translate-y-2">
@@ -103,15 +115,23 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
               </div>
             </div>
             <Link href="/ambassador">
-              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${isActive('/ambassador') ? 'text-black' : 'text-gray-500 hover:text-black'}`}>
+              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${
+                isActive('/ambassador') 
+                  ? (isScrolled ? 'text-black' : 'text-white') 
+                  : (isScrolled ? 'text-gray-500 hover:text-black' : 'text-white hover:text-white/80')
+              }`}>
                 AMBASSADOR
-                <span className={`absolute -bottom-2 left-0 w-full h-px bg-black transition-transform duration-300 origin-left ${isActive('/ambassador') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+                <span className={`absolute -bottom-2 left-0 w-full h-px ${isScrolled ? 'bg-black' : 'bg-white'} transition-transform duration-300 origin-left ${isActive('/ambassador') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
               </a>
             </Link>
             <Link href="/contact">
-              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${isActive('/contact') ? 'text-black' : 'text-gray-500 hover:text-black'}`}>
+              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${
+                isActive('/contact') 
+                  ? (isScrolled ? 'text-black' : 'text-white') 
+                  : (isScrolled ? 'text-gray-500 hover:text-black' : 'text-white hover:text-white/80')
+              }`}>
                 CONTACT
-                <span className={`absolute -bottom-2 left-0 w-full h-px bg-black transition-transform duration-300 origin-left ${isActive('/contact') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+                <span className={`absolute -bottom-2 left-0 w-full h-px ${isScrolled ? 'bg-black' : 'bg-white'} transition-transform duration-300 origin-left ${isActive('/contact') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
               </a>
             </Link>
           </nav>
