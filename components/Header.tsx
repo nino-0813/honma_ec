@@ -68,7 +68,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
             <Link href="/">
               <a className="hover:opacity-70 transition-opacity block">
                 <img 
-                  src="https://v2ipkh-0d.myshopify.com/cdn/shop/files/8b1419e88ec5f1943032f6d467a8655b.png?v=1761138531&width=200" 
+                  src="/images/logo.png" 
                   alt="IKEVEGE" 
                   className={`w-auto object-contain transition-all duration-500 ${
                     isScrolled ? 'h-12 md:h-20' : 'h-6 md:h-10'
