@@ -53,8 +53,8 @@ const ScrollGrayscaleImage = ({ src, alt, className = "" }: ScrollGrayscaleImage
         });
       },
       { 
-        threshold: 0.2, // 画像の20%が表示されたらカラーに（スマホでも反応しやすく）
-        rootMargin: '0px 0px 0px 0px' // マージンを削除して、より正確にビューポートに入った時を検知
+        threshold: 0.6, // 画像の60%が表示されたらカラーに（カラーになるタイミングを遅らせる）
+        rootMargin: '0px 0px -100px 0px' // 下側にマージンを設定して、もっと下にスクロールしてからカラーになる
       }
     );
 
@@ -88,7 +88,7 @@ const About = () => {
       {/* Hero Image - Full Screen with Parallax feel */}
       <div className="relative w-full">
          {/* Text Section - Above Image */}
-         <div className="relative z-10 bg-white pt-32 md:pt-40 pb-2 flex flex-col items-center justify-center text-black">
+         <div className="relative z-10 bg-white pt-32 md:pt-40 pb-8 md:pb-12 flex flex-col items-center justify-center text-black">
             <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-2">ABOUT US</h1>
          </div>
          
@@ -113,7 +113,7 @@ const About = () => {
 
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
            <FadeInSection>
-             <p className="text-xs font-bold tracking-[0.3em] text-gray-400 uppercase mb-8">Philosophy</p>
+             <p className="text-xs font-bold tracking-[0.3em] text-gray-400 uppercase mb-8">CONCEPT</p>
              <h2 className="text-3xl md:text-4xl font-serif font-medium tracking-widest leading-relaxed mb-16">
                Farm to Social<br/>
                <span className="text-xl md:text-2xl mt-4 block text-gray-600">農業から社会をデザインする</span>

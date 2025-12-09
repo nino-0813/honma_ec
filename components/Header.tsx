@@ -79,7 +79,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
           {/* Desktop Nav */}
           <nav className="hidden md:flex space-x-10 items-center">
             <Link href="/">
-              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${
+              <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
                 isActive('/') 
                   ? (isHomePage && !isScrolled ? 'text-white' : 'text-black') 
                   : (isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-gray-500 hover:text-black')
@@ -89,7 +89,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
               </a>
             </Link>
             <Link href="/about">
-              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${
+              <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
                 isActive('/about') 
                   ? (isHomePage && !isScrolled ? 'text-white' : 'text-black') 
                   : (isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-gray-500 hover:text-black')
@@ -100,7 +100,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
             </Link>
             <div className="relative group h-full flex items-center cursor-pointer">
               <Link href="/collections">
-                <a className={`text-xs font-medium tracking-[0.15em] transition-colors ${
+                <a className={`text-sm font-medium tracking-[0.15em] transition-colors ${
                   isActive('/collections') 
                     ? (isHomePage && !isScrolled ? 'text-white' : 'text-black') 
                     : (isHomePage && !isScrolled ? 'text-white group-hover:text-white/80' : 'text-gray-500 group-hover:text-black')
@@ -118,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
               </div>
             </div>
             <Link href="/ambassador">
-              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${
+              <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
                 isActive('/ambassador') 
                   ? (isHomePage && !isScrolled ? 'text-white' : 'text-black') 
                   : (isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-gray-500 hover:text-black')
@@ -128,7 +128,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
               </a>
             </Link>
             <Link href="/contact">
-              <a className={`text-xs font-medium tracking-[0.15em] transition-colors relative group ${
+              <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
                 isActive('/contact') 
                   ? (isHomePage && !isScrolled ? 'text-white' : 'text-black') 
                   : (isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-gray-500 hover:text-black')

@@ -32,12 +32,12 @@ const ParallaxSection = () => {
             </h2>
             
             {/* Description */}
-            <p className="text-sm md:text-base font-medium md:font-normal leading-relaxed md:leading-relaxed text-gray-600 text-center px-2">
+            <p className="text-sm md:text-base font-medium md:font-normal leading-relaxed md:leading-relaxed text-gray-600 text-center px-2 mb-6 md:mb-8">
               私たちは、安全でおいしいお米を届けること、そして農家として社会に貢献すること。その二つを支える３つのスタンスを指針に、日々取り組んでいます。
             </p>
             
             {/* CTA Button */}
-            <div className="text-center">
+            <div className="text-center mb-6 md:mb-0">
               <Link href="/about">
                 <a className="inline-flex items-center gap-1.5 group">
                   <span className="text-primary font-serif tracking-[0.15em] text-[10px] uppercase border-b border-primary/50 pb-0.5 transition-all duration-300 group-hover:border-primary group-hover:text-gray-700">

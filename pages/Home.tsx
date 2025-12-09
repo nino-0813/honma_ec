@@ -11,7 +11,7 @@ const Home = () => {
     <div className="animate-fade-in">
       <HeroVideo />
       
-      <div className="py-8 md:py-16 text-center px-4 animate-slide-up bg-white">
+      <div className="pt-24 md:pt-32 pb-8 md:pb-16 text-center px-4 animate-slide-up bg-white">
         <div className="max-w-2xl mx-auto space-y-6">
           <h2 className="text-2xl md:text-3xl font-serif font-medium tracking-normal">余計なものは足さない</h2>
           <div className="text-sm md:text-base font-medium md:font-normal leading-relaxed md:leading-relaxed text-gray-600">
@@ -25,8 +25,8 @@ const Home = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="text-xs md:text-sm text-gray-500 mb-3 tracking-wider">第27回米・食味分析鑑定コンクール国際大会</p>
-            <p className="text-sm md:text-base text-gray-600 mb-2">国際総合部門</p>
-            <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900">金賞受賞</h3>
+            <p className="text-sm md:text-base text-gray-600 mb-6">国際総合部門</p>
+            <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900 border-t border-b border-gray-200 py-4 inline-block px-8">金賞受賞</h3>
           </div>
         </div>
       </section>
