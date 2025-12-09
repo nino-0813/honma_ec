@@ -106,7 +106,7 @@ const About = () => {
       </div>
 
       {/* Introduction / Philosophy */}
-      <section className="pt-12 md:pt-16 pb-32 md:pb-48 bg-white relative overflow-hidden">
+      <section className="pt-12 md:pt-16 pb-12 md:pb-20 bg-white relative overflow-hidden">
         {/* Decorative Vertical Text Background */}
         <div className="absolute top-20 right-10 md:right-20 text-7xl md:text-8xl font-serif opacity-[0.03] vertical-text pointer-events-none hidden md:block">
           自然と共に
@@ -114,36 +114,18 @@ const About = () => {
 
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
            <FadeInSection>
-             <p className="text-xs font-bold tracking-[0.3em] text-gray-400 uppercase mb-8">CONCEPT</p>
-             <h2 className="text-3xl md:text-4xl font-serif font-medium tracking-widest leading-relaxed mb-16">
+             <p className="text-xs font-bold tracking-[0.3em] text-gray-400 uppercase mb-4 md:mb-8">CONCEPT</p>
+             <h2 className="text-2xl md:text-4xl font-serif font-medium tracking-widest leading-relaxed mb-8 md:mb-16">
                Farm to Social<br/>
-               <span className="text-xl md:text-2xl mt-4 block text-gray-600">農から社会をデザインする</span>
+               <span className="text-base md:text-2xl mt-2 md:mt-4 block text-gray-600">農から社会へアプローチする</span>
              </h2>
              
-             <div className="text-sm md:text-base leading-[2.8] text-gray-600 space-y-8">
-               <p>
-                 自然界では、多様な命が、無理なく、<br/>
-                 あるがままに響き合い、永遠にめぐっている。
-               </p>
-               <p>
-                 そんな「ありのまま」が調和する世界を、<br/>
-                 私たちは“イケてる”と呼ぶことにした。
-               </p>
-               <p>
-                 それはきっと、人間社会の理想のかたち。<br/>
-                 小さな島の、小さな田畑から。<br/>
-                 「イケてる社会」を、少しずつ育てていく。
-               </p>
-               <p className="text-lg mt-8 border-t border-b border-gray-200 py-8 inline-block px-12">
-                 ― 子どもたちが「ココに生まれてよかった」と思える世界を、創りたい。
-               </p>
-             </div>
            </FadeInSection>
         </div>
       </section>
 
       {/* Three Stances Section */}
-      <section className="py-24 bg-secondary/30 relative">
+      <section className="py-8 md:py-16 bg-secondary/30 relative">
         <div className="max-w-6xl mx-auto px-6">
            <FadeInSection className="text-center">
              <h3 className="text-2xl font-serif tracking-widest mb-4">OUR 3 STANCES</h3>

@@ -27,7 +27,7 @@ const Home = () => {
             <div className="inline-block border-t border-b border-gray-200 pt-3 md:pt-4 pb-2 md:pb-3">
               <p className="text-xs md:text-sm text-gray-500 mb-3 tracking-wider">第27回米・食味分析鑑定コンクール国際大会</p>
               <p className="text-sm md:text-base text-gray-600 mb-6">国際総合部門</p>
-              <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900">金賞受賞</h3>
+              <h3 className="text-xl md:text-3xl font-serif font-medium text-gray-900">金賞受賞</h3>
             </div>
           </div>
         </div>
@@ -35,14 +35,6 @@ const Home = () => {
 
       <Collections />
       
-      <div className="pt-8 pb-8 md:pt-16 md:pb-16 text-center px-4 bg-white">
-         <div className="max-w-2xl mx-auto space-y-6">
-           <h2 className="text-2xl md:text-3xl font-serif font-medium tracking-normal">Brand Design</h2>
-          <div className="text-sm md:text-base font-medium md:font-normal leading-relaxed md:leading-relaxed text-gray-600">
-            <p>自然界では、多様な命が、無理なく、<br className="mb-2"/>あるがままに響き合い、永遠にめぐっている。<br className="mb-2"/><br className="mb-2"/>そんな「ありのまま」が調和する世界を、<br className="mb-2"/>私たちは"イケてる"と呼ぶことにした。<br className="mb-2"/><br className="mb-2"/>それはきっと、人間社会の理想のかたち。<br className="mb-2"/>小さな島の、小さな田畑から。<br className="mb-2"/><br className="mb-2"/>「イケてる社会」を、少しずつ育てていく。<br className="mb-2"/><br className="mb-2"/>― 子どもたちが「ココに生まれてよかった」と思える世界を、創りたい。</p>
-          </div>
-        </div>
-      </div>
 
       <ParallaxSection />
       <ProductGrid />

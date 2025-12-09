@@ -58,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
   return (
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${
-        isScrolled ? 'bg-white/95 backdrop-blur-md py-3 border-secondary shadow-sm' : 'bg-transparent py-5 border-transparent'
+        isScrolled ? 'bg-white/95 backdrop-blur-md py-4 md:py-5 border-secondary shadow-sm' : 'bg-transparent py-5 border-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -70,7 +70,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
                 <img 
                   src="https://v2ipkh-0d.myshopify.com/cdn/shop/files/8b1419e88ec5f1943032f6d467a8655b.png?v=1761138531&width=200" 
                   alt="IKEVEGE" 
-                  className="h-6 md:h-10 w-auto object-contain"
+                  className={`w-auto object-contain transition-all duration-500 ${
+                    isScrolled ? 'h-12 md:h-20' : 'h-6 md:h-10'
+                  }`}
                 />
               </a>
             </Link>
@@ -117,16 +119,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
                 </div>
               </div>
             </div>
-            <Link href="/ambassador">
-              <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
-                isActive('/ambassador') 
-                  ? (isHomePage && !isScrolled ? 'text-white' : 'text-black') 
-                  : (isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-gray-500 hover:text-black')
-              }`}>
-                AMBASSADOR
-                <span className={`absolute -bottom-2 left-0 w-full h-px ${isHomePage && !isScrolled ? 'bg-white' : 'bg-black'} transition-transform duration-300 origin-left ${isActive('/ambassador') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
-              </a>
-            </Link>
             <Link href="/blog">
               <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
                 isActive('/blog') 
@@ -135,6 +127,16 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
               }`}>
                 BLOG
                 <span className={`absolute -bottom-2 left-0 w-full h-px ${isHomePage && !isScrolled ? 'bg-white' : 'bg-black'} transition-transform duration-300 origin-left ${isActive('/blog') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+              </a>
+            </Link>
+            <Link href="/ambassador">
+              <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
+                isActive('/ambassador') 
+                  ? (isHomePage && !isScrolled ? 'text-white' : 'text-black') 
+                  : (isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-gray-500 hover:text-black')
+              }`}>
+                AMBASSADOR
+                <span className={`absolute -bottom-2 left-0 w-full h-px ${isHomePage && !isScrolled ? 'bg-white' : 'bg-black'} transition-transform duration-300 origin-left ${isActive('/ambassador') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
               </a>
             </Link>
             <Link href="/contact">
@@ -153,21 +155,29 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
           <div className="flex items-center gap-5 sm:gap-6">
             {isLoggedIn ? (
               <Link href="/account">
-                <a className="hidden sm:block text-primary hover:text-gray-500 transition-colors">
+                <a className={`hidden sm:block transition-colors ${
+                  isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
+                }`}>
                   <IconUser className="w-5 h-5" />
                 </a>
               </Link>
             ) : (
               <Link href="/checkout">
-                <a className="hidden sm:block text-primary hover:text-gray-500 transition-colors" title="ログインが必要です">
+                <a className={`hidden sm:block transition-colors ${
+                  isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
+                }`} title="ログインが必要です">
                   <IconUser className="w-5 h-5" />
                 </a>
               </Link>
             )}
-            <button className="text-primary hover:text-gray-500 transition-colors">
+            <button className={`transition-colors ${
+              isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
+            }`}>
               <IconSearch className="w-5 h-5" />
             </button>
-            <button onClick={onOpenCart} className="text-primary hover:text-gray-500 transition-colors relative">
+            <button onClick={onOpenCart} className={`transition-colors relative ${
+              isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
+            }`}>
               <IconBag className="w-5 h-5" />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] font-medium w-4 h-4 flex items-center justify-center rounded-full">
@@ -175,7 +185,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
                 </span>
               )}
             </button>
-            <button onClick={onOpenMenu} className="md:hidden text-primary hover:text-gray-500 transition-colors">
+            <button onClick={onOpenMenu} className={`md:hidden transition-colors ${
+              isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
+            }`}>
               <IconMenu className="w-5 h-5" />
             </button>
           </div>
