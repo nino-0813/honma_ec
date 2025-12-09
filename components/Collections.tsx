@@ -44,6 +44,8 @@ const Collections = () => {
                 <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-black/8 to-transparent"></div>
                 {/* 右下 */}
                 <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-gradient-to-tl from-black/8 to-transparent"></div>
+                {/* 下部に暗いオーバーレイ（白文字を見やすくするため） */}
+                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent"></div>
               </div>
               <div className="absolute inset-0 flex items-end justify-start p-4 md:p-6 z-10">
                 <h3 className="text-white text-lg md:text-xl font-serif tracking-wider font-bold relative inline-block drop-shadow-lg max-w-[90%]">
