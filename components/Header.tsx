@@ -127,6 +127,16 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
                 <span className={`absolute -bottom-2 left-0 w-full h-px ${isHomePage && !isScrolled ? 'bg-white' : 'bg-black'} transition-transform duration-300 origin-left ${isActive('/ambassador') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
               </a>
             </Link>
+            <Link href="/blog">
+              <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
+                isActive('/blog') 
+                  ? (isHomePage && !isScrolled ? 'text-white' : 'text-black') 
+                  : (isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-gray-500 hover:text-black')
+              }`}>
+                BLOG
+                <span className={`absolute -bottom-2 left-0 w-full h-px ${isHomePage && !isScrolled ? 'bg-white' : 'bg-black'} transition-transform duration-300 origin-left ${isActive('/blog') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
+              </a>
+            </Link>
             <Link href="/contact">
               <a className={`text-sm font-medium tracking-[0.15em] transition-colors relative group ${
                 isActive('/contact') 

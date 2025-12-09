@@ -9,6 +9,7 @@ import About from './pages/About';
 import Category from './pages/Category';
 import ProductDetail from './pages/ProductDetail';
 import Ambassador from './pages/Ambassador';
+import Blog from './pages/Blog';
 import ContactPage from './pages/ContactPage';
 import Terms from './pages/Terms';
 import FAQ from './pages/FAQ';
@@ -211,6 +212,7 @@ const MainLayout = () => {
             <Route path="/collections" component={Category} />
             <Route path="/products/:handle" component={ProductDetail} /> 
             <Route path="/ambassador" component={Ambassador} />
+            <Route path="/blog" component={Blog} />
             <Route path="/contact" component={ContactPage} />
             <Route path="/terms" component={Terms} />
             <Route path="/faq" component={FAQ} />
