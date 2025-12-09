@@ -116,7 +116,7 @@ const About = () => {
              <p className="text-xs font-bold tracking-[0.3em] text-gray-400 uppercase mb-8">CONCEPT</p>
              <h2 className="text-3xl md:text-4xl font-serif font-medium tracking-widest leading-relaxed mb-16">
                Farm to Social<br/>
-               <span className="text-xl md:text-2xl mt-4 block text-gray-600">農業から社会をデザインする</span>
+               <span className="text-xl md:text-2xl mt-4 block text-gray-600">農から社会をデザインする</span>
              </h2>
              
              <div className="text-sm md:text-base leading-[2.8] text-gray-600 space-y-8">

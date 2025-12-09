@@ -23,10 +23,10 @@ const Home = () => {
       {/* Awards Section */}
       <section className="py-6 md:py-10 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
+          <div className="text-center border-t border-b border-gray-200 py-6 md:py-8">
             <p className="text-xs md:text-sm text-gray-500 mb-3 tracking-wider">第27回米・食味分析鑑定コンクール国際大会</p>
             <p className="text-sm md:text-base text-gray-600 mb-6">国際総合部門</p>
-            <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900 border-t border-b border-gray-200 py-4 inline-block px-8">金賞受賞</h3>
+            <h3 className="text-2xl md:text-4xl font-serif font-medium text-gray-900">金賞受賞</h3>
           </div>
         </div>
       </section>

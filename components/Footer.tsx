@@ -33,7 +33,7 @@ const Footer = () => {
           <div className="flex flex-col items-center md:items-end gap-8">
              <div className="flex gap-6">
                 <a 
-                  href="https://www.instagram.com/ikevege_official?igsh=dTdjaWVseWZzd2Q3" 
+                  href="https://www.instagram.com/ikevege_official?igsh=MXg1amN3bWZjMHZuaQ%3D%3D&utm_source=qr" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-white hover:text-gray-400 transition-colors"
