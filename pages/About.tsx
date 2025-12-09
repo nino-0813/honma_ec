@@ -1,5 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'wouter';
 
 interface FadeInSectionProps {
   children?: React.ReactNode;
@@ -233,17 +234,14 @@ const About = () => {
       <section className="py-16 md:py-24 bg-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <FadeInSection>
-            <a
-              href="https://note.com/ikevege"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block text-gray-900 hover:text-gray-700 transition-colors"
-            >
+            <Link href="/blog">
+              <a className="inline-block text-gray-900 hover:text-gray-700 transition-colors">
               <div className="font-serif text-base md:text-lg leading-relaxed">
                 <p className="mb-2">read more</p>
-                <p className="underline underline-offset-4">note</p>
+                <p className="underline underline-offset-4">BLOG</p>
               </div>
-            </a>
+              </a>
+            </Link>
           </FadeInSection>
         </div>
       </section>
