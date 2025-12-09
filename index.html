@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>イケベジ | IKEVEGE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Times New Roman"', 'YuMincho', '"Yu Mincho"', '"Hiragino Mincho ProN"', 'serif'],
+              sans: ['"Helvetica Neue"', 'Helvetica', '"Hiragino Sans"', '"Hiragino Kaku Gothic ProN"', 'Arial', 'sans-serif'],
+            },
+            colors: {
+              primary: '#1c1d1d',
+              secondary: '#e8e8e1',
+              dim: '#f2f2f2',
+            },
+            letterSpacing: {
+              'widest-xl': '0.2em',
+            },
+            animation: {
+              'fade-in': 'fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+              'slide-up': 'slideUp 1s ease-out forwards',
+              'slide-up-delayed': 'slideUp 1s ease-out 0.3s forwards',
+              'fade-in-up': 'fadeInUp 1s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+              'spin': 'spin 1s linear infinite',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(40px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(40px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              spin: {
+                from: { transform: 'rotate(0deg)' },
+                to: { transform: 'rotate(360deg)' }
+              }
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      /* Minimal Premium Scrollbar - Ultra Thin */
+      ::-webkit-scrollbar {
+        width: 3px; /* Ultra thin */
+        height: 3px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d1d1d1;
+        border-radius: 2px;
+        transition: background 0.3s;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      
+      /* Hide scrollbar utility for clean horizontal scrolls */
+      .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+      }
+      .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
+
+      .parallax-bg {
+        background-attachment: fixed;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+      
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Vertical Text Utility */
+      .vertical-text {
+        writing-mode: vertical-rl;
+        text-orientation: upright;
+        letter-spacing: 0.2em;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+    "wouter": "https://esm.sh/wouter@2.11.0?external=react,react-dom",
+    "lucide-react": "https://esm.sh/lucide-react@0.263.1?external=react"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-white text-primary antialiased font-serif font-medium tracking-widest">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
