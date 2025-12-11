@@ -44,7 +44,10 @@ import {
   Star,
   MessageCircle,
   Send,
-  Download
+  Download,
+  RefreshCw,
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 
 export const IconBag = ({ className }: { className?: string }) => <ShoppingBag className={className} strokeWidth={1.5} />;
@@ -97,3 +100,6 @@ export const IconX = ({ className }: { className?: string }) => <X className={cl
 export const IconStar = ({ className }: { className?: string }) => <Star className={className} strokeWidth={1.5} />;
 export const IconMessageCircle = ({ className }: { className?: string }) => <MessageCircle className={className} strokeWidth={1.5} />;
 export const IconSend = ({ className }: { className?: string }) => <Send className={className} strokeWidth={1.5} />;
+export const IconRefreshCw = ({ className }: { className?: string }) => <RefreshCw className={className} strokeWidth={1.5} />;
+export const IconExternalLink = ({ className }: { className?: string }) => <ExternalLink className={className} strokeWidth={1.5} />;
+export const IconFileText = ({ className }: { className?: string }) => <FileText className={className} strokeWidth={1.5} />;

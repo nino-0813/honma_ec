@@ -32,6 +32,7 @@ import Inquiries from './pages/admin/Inquiries';
 import Reviews from './pages/admin/Reviews';
 import CustomerSupport from './pages/admin/CustomerSupport';
 import AdminLogin from './pages/admin/AdminLogin';
+import BlogManagement from './pages/admin/BlogManagement';
 
 // Cart Context
 interface CartContextType {
@@ -285,6 +286,7 @@ const AdminRoutes = () => {
         <Route path="/admin/inquiries" component={Inquiries} />
         <Route path="/admin/reviews" component={Reviews} />
         <Route path="/admin/customer-support" component={CustomerSupport} />
+        <Route path="/admin/blog" component={BlogManagement} />
         <Route path="/admin" component={Dashboard} />
         {/* Default to dashboard if no sub-route matches */}
         <Route component={Dashboard} />
