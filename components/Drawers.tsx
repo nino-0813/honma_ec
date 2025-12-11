@@ -355,7 +355,14 @@ export const MenuDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 
         <div className="flex gap-8 justify-center mt-8 pt-8 border-t border-gray-100">
           <a href="#" className="text-primary hover:text-gray-500 transition-colors"><IconInstagram className="w-5 h-5" /></a>
-          <a href="#" className="text-primary hover:text-gray-500 transition-colors"><IconYoutube className="w-5 h-5" /></a>
+          <a 
+            href="https://www.youtube.com/@ikevege" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:text-gray-500 transition-colors"
+          >
+            <IconYoutube className="w-5 h-5" />
+          </a>
         </div>
       </div>
     </Drawer>

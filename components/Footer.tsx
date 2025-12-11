@@ -41,7 +41,12 @@ const Footer = () => {
                 >
                   <IconInstagram className="w-5 h-5" />
                 </a>
-                <a href="#" className="text-white hover:text-gray-400 transition-colors">
+                <a 
+                  href="https://www.youtube.com/@ikevege" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-gray-400 transition-colors"
+                >
                   <IconYoutube className="w-5 h-5" />
                 </a>
              </div>
