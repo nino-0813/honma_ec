@@ -14,12 +14,14 @@ const Ambassador = () => {
       </div>
 
       {/* Hero Image */}
-      <div className="w-full h-[50vh] md:h-[60vh] overflow-hidden">
-        <img 
-          src="/images/about/hero/IMG_9172.jpg" 
-          alt="IKEVEGE" 
-          className="w-full h-full object-cover object-center"
-        />
+      <div className="relative w-full pb-4 flex justify-center">
+        <div className="relative w-full max-w-4xl h-[50vh] md:h-[60vh] overflow-hidden mx-auto">
+          <img 
+            src="/images/about/hero/IMG_9172.jpg" 
+            alt="IKEVEGE" 
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
       </div>
 
       {/* Introduction Text */}
@@ -30,26 +32,24 @@ const Ambassador = () => {
       </div>
 
       {/* Cloud Funding Section */}
-      <section className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 py-12 md:py-20">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-serif font-medium tracking-normal mb-4">クラファンについて</h2>
-        </div>
-        
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gray-50 rounded-lg p-8 md:p-12 text-center">
-            <div className="mb-6">
-              <p className="text-4xl mb-4">🚀</p>
-              <h3 className="text-xl md:text-2xl font-serif mb-4">クラウドファンディング</h3>
-              <p className="text-sm md:text-base text-gray-600 leading-relaxed mb-8">
-                イケベジのプロジェクトを支援し、一緒に「イケてる社会」を創りませんか？<br/>
-                キャンプファイヤーで詳細をご確認いただけます。
-              </p>
-            </div>
+      <section className="relative w-full pb-4 flex justify-center">
+        <div className="relative w-full max-w-4xl h-[50vh] md:h-[60vh] bg-gray-900 flex items-center justify-center overflow-hidden mx-auto">
+          <img 
+            src="/images/about/hero/IMG_9172.jpg" 
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            alt="Cloud Funding" 
+          />
+          <div className="relative z-10 text-center text-white p-6">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold tracking-[0.2em] mb-4">クラファンについて</h2>
+            <p className="text-sm md:text-base tracking-widest font-light mb-6">
+              イケベジのプロジェクトを支援し、一緒に「イケてる社会」を創りませんか？<br/>
+              キャンプファイヤーで詳細をご確認いただけます。
+            </p>
             <a 
               href="https://camp-fire.jp" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-block bg-orange-500 text-white px-8 py-3 text-sm tracking-widest hover:bg-orange-600 transition-colors uppercase rounded"
+              className="inline-block bg-orange-500 text-white px-8 py-3 text-sm tracking-widest hover:bg-orange-600 transition-colors uppercase"
             >
               Coming Soon
             </a>
@@ -58,10 +58,24 @@ const Ambassador = () => {
       </section>
 
       {/* Ambassador Section */}
-      <section className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 py-12 md:py-20 bg-white">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-serif font-medium tracking-normal mb-4">アンバサダーについて</h2>
+      <section className="relative w-full pb-4 flex justify-center">
+        <div className="relative w-full max-w-4xl h-[50vh] md:h-[60vh] bg-gray-900 flex items-center justify-center overflow-hidden mx-auto">
+          <img 
+            src="/images/about/hero/IMG_9172.jpg" 
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            alt="Ambassador" 
+          />
+          <div className="relative z-10 text-center text-white p-6">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold tracking-[0.2em] mb-4">アンバサダーについて</h2>
+            <p className="text-sm md:text-base tracking-widest font-light">
+              イケベジのある暮らしを、共に広げるパートナー
+            </p>
+          </div>
         </div>
+      </section>
+
+      {/* Ambassador Plans Section */}
+      <section className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 py-12 md:py-20 bg-white">
 
         <div className="max-w-5xl mx-auto">
           {/* Ambassador Product Cards */}
