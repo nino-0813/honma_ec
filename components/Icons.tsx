@@ -34,6 +34,8 @@ import {
   Edit,
   TrendingUp,
   Eye,
+  EyeOff,
+  GripVertical,
   Trash2,
   Mail,
   Lock,
@@ -84,6 +86,8 @@ export const IconCalendar = ({ className }: { className?: string }) => <Calendar
 export const IconEdit = ({ className }: { className?: string }) => <Edit className={className} strokeWidth={1.5} />;
 export const IconTrendingUp = ({ className }: { className?: string }) => <TrendingUp className={className} strokeWidth={1.5} />;
 export const IconEye = ({ className }: { className?: string }) => <Eye className={className} strokeWidth={1.5} />;
+export const IconEyeOff = ({ className }: { className?: string }) => <EyeOff className={className} strokeWidth={1.5} />;
+export const IconGripVertical = ({ className }: { className?: string }) => <GripVertical className={className} strokeWidth={1.5} />;
 export const IconTrash = ({ className }: { className?: string }) => <Trash2 className={className} strokeWidth={1.5} />;
 export const IconMail = ({ className }: { className?: string }) => <Mail className={className} strokeWidth={1.5} />;
 export const IconLock = ({ className }: { className?: string }) => <Lock className={className} strokeWidth={1.5} />;

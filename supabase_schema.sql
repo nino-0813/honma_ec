@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS public.products (
   sku TEXT, -- 商品番号
   is_active BOOLEAN DEFAULT true, -- 公開状態
   sold_out BOOLEAN DEFAULT false, -- 在庫切れフラグ (互換性のため維持、基本はstockで判断)
+  display_order INTEGER DEFAULT 0, -- 表示順序（小さい順に表示）
+  is_visible BOOLEAN DEFAULT true, -- 表示/非表示フラグ
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

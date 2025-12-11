@@ -31,6 +31,8 @@ export interface DatabaseProduct {
   stock: number | null;
   sku: string | null;
   is_active: boolean;
+  display_order: number | null;
+  is_visible: boolean | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +55,8 @@ export const convertDatabaseProductToProduct = (dbProduct: DatabaseProduct): Pro
     variants_config: dbProduct.variants_config || [],
     sku: dbProduct.sku || undefined,
     stock: dbProduct.stock || 0,
+    display_order: dbProduct.display_order ?? undefined,
+    is_visible: dbProduct.is_visible ?? true,
   };
 };
 
@@ -75,6 +79,8 @@ export const convertProductToDatabaseProduct = (product: Partial<Product> & { st
     stock: product.stock || 0,
     sku: product.sku || null,
     is_active: product.is_active ?? true,
+    display_order: product.display_order ?? null,
+    is_visible: product.is_visible ?? true,
   };
 };
 
@@ -243,7 +249,12 @@ export const getStockForVariant = (product: Product, selectedOptions: Record<str
       // 在庫管理方法に応じて在庫を返す
       if (type.stockManagement === 'individual') {
         // バリエーションごとに設定されている場合
-        return option.stock ?? null;
+        // 在庫がnullの場合は次のバリエーションタイプを確認（在庫管理が不要なバリエーション用）
+        if (option.stock !== null && option.stock !== undefined && option.stock > 0) {
+          return option.stock;
+        }
+        // 在庫がnullの場合は次のバリエーションタイプを確認するため、continue
+        continue;
       } else {
         // 基本在庫を共有する場合
         return product.stock ?? null;

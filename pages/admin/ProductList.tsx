@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
 import { supabase } from '../../lib/supabase';
-import { IconPlus, IconSearch, IconFilter, IconEdit, IconTrash, IconUpload, IconDownload } from '../../components/Icons';
+import { IconPlus, IconSearch, IconFilter, IconEdit, IconTrash, IconUpload, IconDownload, IconEye, IconEyeOff, IconGripVertical } from '../../components/Icons';
 import { FadeInImage } from '../../components/UI';
 
 interface Product {
@@ -19,6 +19,8 @@ interface Product {
   sku?: string;
   variants_config?: any;
   status?: string;
+  display_order?: number;
+  is_visible?: boolean;
 }
 
 const ProductList = () => {
@@ -29,6 +31,8 @@ const ProductList = () => {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -40,10 +44,92 @@ const ProductList = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .order('display_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProducts(data || []);
+      if (error) {
+        // カラムが存在しない場合のエラーを無視して続行
+        if (error.message.includes('column') && error.message.includes('does not exist')) {
+          console.warn('display_orderまたはis_visibleカラムが存在しません。データベースを更新してください。');
+          // カラムなしで再取得
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+          
+          if (fallbackError) throw fallbackError;
+          
+          const productsWithOrder = (fallbackData || []).map((product: any, index) => ({
+            ...product,
+            display_order: index,
+            is_visible: true
+          }));
+          
+          setProducts(productsWithOrder);
+          return;
+        }
+        throw error;
+      }
+      
+      // display_orderがnullまたは0の商品に初期値を設定（created_at順）
+      const sortedData = [...(data || [])].sort((a: any, b: any) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA; // 新しい順
+      });
+      
+      const productsWithOrder = sortedData.map((product: any, index) => ({
+        ...product,
+        display_order: product.display_order !== null && product.display_order !== undefined ? product.display_order : index,
+        is_visible: product.is_visible !== null && product.is_visible !== undefined ? product.is_visible : true
+      }));
+      
+      // 初期化が必要な商品を更新（display_orderがnull、undefined、またはすべて0の場合）
+      const allHaveSameOrder = productsWithOrder.every((p: any) => p.display_order === 0);
+      const needsUpdate = productsWithOrder.filter((p: any, i: number) => 
+        p.display_order === null || 
+        p.display_order === undefined || 
+        (allHaveSameOrder && p.display_order === 0) ||
+        p.is_visible === null || 
+        p.is_visible === undefined
+      );
+      
+      if (needsUpdate.length > 0) {
+        // バックグラウンドで更新（エラーは無視）
+        for (const product of needsUpdate) {
+          try {
+            const newOrder = allHaveSameOrder ? productsWithOrder.indexOf(product) : (product.display_order ?? productsWithOrder.indexOf(product));
+            await supabase
+              .from('products')
+              .update({ 
+                display_order: newOrder,
+                is_visible: product.is_visible ?? true
+              })
+              .eq('id', product.id);
+          } catch (updateError) {
+            // カラムが存在しない場合は無視
+            console.warn('商品の初期化に失敗しました（カラムが存在しない可能性があります）:', updateError);
+          }
+        }
+        // 更新後に再取得
+        const { data: refreshedData, error: refreshError } = await supabase
+          .from('products')
+          .select('*')
+          .order('display_order', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: false });
+        
+        if (!refreshError && refreshedData) {
+          const refreshedProducts = refreshedData.map((product: any, index) => ({
+            ...product,
+            display_order: product.display_order ?? index,
+            is_visible: product.is_visible ?? true
+          }));
+          setProducts(refreshedProducts);
+          return;
+        }
+      }
+      
+      setProducts(productsWithOrder);
     } catch (error) {
       console.error('商品データの取得に失敗しました:', error);
       alert('商品データの取得に失敗しました');
@@ -72,10 +158,18 @@ const ProductList = () => {
     }
   };
 
-  const filteredProducts = products.filter(product => 
-    product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.handle.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products
+    .filter(product => 
+      product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.handle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.sku && product.sku.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+    .sort((a, b) => {
+      // 表示順でソート（display_orderが小さい順、nullは最後）
+      const orderA = a.display_order ?? 999999;
+      const orderB = b.display_order ?? 999999;
+      return orderA - orderB;
+    });
 
   const toggleSelectAll = () => {
     if (selectedProducts.length === filteredProducts.length) {
@@ -90,6 +184,129 @@ const ProductList = () => {
       setSelectedProducts(selectedProducts.filter(pid => pid !== id));
     } else {
       setSelectedProducts([...selectedProducts, id]);
+    }
+  };
+
+  // ドラッグ&ドロップ処理
+  const handleDragStart = (e: React.DragEvent, productId: string) => {
+    setDraggedItem(productId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, productId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedItem && draggedItem !== productId) {
+      setDragOverItem(productId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverItem(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetProductId: string) => {
+    e.preventDefault();
+    setDragOverItem(null);
+
+    if (!draggedItem || draggedItem === targetProductId) {
+      setDraggedItem(null);
+      return;
+    }
+
+    // filteredProductsのインデックスを取得（表示されている順序）
+    const draggedIndex = filteredProducts.findIndex(p => p.id === draggedItem);
+    const targetIndex = filteredProducts.findIndex(p => p.id === targetProductId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedItem(null);
+      return;
+    }
+
+    // filteredProductsの順序を変更（表示されている順序に基づく）
+    const newFilteredProducts = [...filteredProducts];
+    const [removed] = newFilteredProducts.splice(draggedIndex, 1);
+    newFilteredProducts.splice(targetIndex, 0, removed);
+
+    // 現在のproducts全体をソート
+    const sortedProducts = [...products].sort((a, b) => {
+      const orderA = a.display_order ?? 999999;
+      const orderB = b.display_order ?? 999999;
+      return orderA - orderB;
+    });
+
+    // filteredProductsの新しい順序に基づいて、全商品のdisplay_orderを再計算
+    // まず、filteredProducts内の商品の新しい順序を決定
+    const filteredProductIds = newFilteredProducts.map(p => p.id);
+    
+    // 全商品のdisplay_orderを更新
+    // filteredProducts内の商品は、filteredProducts内での順序に基づいてdisplay_orderを設定
+    // filteredProducts外の商品は、元のdisplay_orderを維持
+    const updates: { id: string; display_order: number }[] = [];
+    let currentOrder = 0;
+
+    // filteredProducts内の商品を新しい順序で更新
+    for (const filteredProduct of newFilteredProducts) {
+      updates.push({
+        id: filteredProduct.id,
+        display_order: currentOrder
+      });
+      currentOrder++;
+    }
+
+    // filteredProducts外の商品は、元の順序を維持（ただし、filteredProductsの後に配置）
+    for (const product of sortedProducts) {
+      if (!filteredProductIds.includes(product.id)) {
+        updates.push({
+          id: product.id,
+          display_order: currentOrder
+        });
+        currentOrder++;
+      }
+    }
+
+    try {
+      // 一括更新
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('products')
+          .update({ display_order: update.display_order })
+          .eq('id', update.id);
+        
+        if (error) {
+          console.error('更新エラー:', update, error);
+          throw error;
+        }
+      }
+
+      // ローカル状態を更新（再取得）
+      await fetchProducts();
+      alert('表示順を更新しました。フロントエンドをリロードしてください。');
+    } catch (error) {
+      console.error('順序更新エラー:', error);
+      alert('表示順の更新に失敗しました: ' + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setDraggedItem(null);
+    }
+  };
+
+  // 表示/非表示のトグル
+  const toggleVisibility = async (productId: string, currentVisibility: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_visible: !currentVisibility })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      // ローカル状態を更新
+      setProducts(products.map(p => 
+        p.id === productId ? { ...p, is_visible: !currentVisibility } : p
+      ));
+    } catch (error) {
+      console.error('表示状態の更新エラー:', error);
+      alert('表示状態の更新に失敗しました');
     }
   };
 
@@ -424,6 +641,7 @@ const ProductList = () => {
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50/50 text-gray-500 font-medium border-b border-gray-100">
                 <tr>
+                  <th className="px-6 py-3 w-12"></th>
                   <th className="px-6 py-3 w-16">
                      <input 
                        type="checkbox" 
@@ -438,26 +656,59 @@ const ProductList = () => {
                   <th className="px-6 py-3">在庫</th>
                   <th className="px-6 py-3">カテゴリー</th>
                   <th className="px-6 py-3 text-right">価格</th>
-                  <th className="px-6 py-3 w-20"></th>
+                  <th className="px-6 py-3 w-24"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredProducts.map((product) => (
                   <tr 
                     key={product.id} 
-                    className="group hover:bg-gray-50/80 transition-colors cursor-pointer"
+                    className={`group hover:bg-gray-50/80 transition-colors cursor-pointer ${
+                      draggedItem === product.id ? 'opacity-50' : ''
+                    } ${
+                      dragOverItem === product.id ? 'bg-blue-50 border-t-2 border-blue-400' : ''
+                    }`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, product.id)}
+                    onDragOver={(e) => handleDragOver(e, product.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, product.id)}
                     onClick={(e) => {
-                      if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('input[type="checkbox"]')) return;
+                      if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('input[type="checkbox"]') || (e.target as HTMLElement).closest('.drag-handle')) return;
                       setLocation(`/admin/products/${product.handle}`);
                     }}
                   >
+                    <td className="px-2 py-4 cursor-move drag-handle" onClick={(e) => e.stopPropagation()}>
+                      <IconGripVertical className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                    </td>
                     <td className="px-6 py-4">
-                      <input 
-                        type="checkbox" 
-                        className="rounded border-gray-300 text-black focus:ring-black" 
-                        checked={selectedProducts.includes(product.id)}
-                        onChange={() => toggleSelect(product.id)}
-                      />
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-gray-300 text-black focus:ring-black" 
+                          checked={selectedProducts.includes(product.id)}
+                          onChange={() => toggleSelect(product.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleVisibility(product.id, product.is_visible ?? true);
+                          }}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                            product.is_visible !== false 
+                              ? 'bg-purple-600' 
+                              : 'bg-gray-200'
+                          }`}
+                          title={product.is_visible !== false ? '非表示にする' : '表示する'}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                              product.is_visible !== false ? 'translate-x-4' : 'translate-x-0.5'
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
@@ -497,14 +748,20 @@ const ProductList = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                          <button 
-                           onClick={() => setLocation(`/admin/products/${product.handle}`)}
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setLocation(`/admin/products/${product.handle}`);
+                           }}
                            className="p-1 text-gray-400 hover:text-gray-600"
                            title="編集"
                          >
                            <IconEdit className="w-4 h-4" />
                          </button>
                          <button 
-                           onClick={() => handleDelete(product.id)}
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             handleDelete(product.id);
+                           }}
                            className="p-1 text-gray-400 hover:text-red-600"
                            title="削除"
                          >

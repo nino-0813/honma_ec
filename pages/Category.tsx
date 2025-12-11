@@ -96,11 +96,24 @@ const Category = () => {
       });
     }
 
-    if (sortOrder === 'price-asc') {
-      result.sort((a, b) => a.price - b.price);
-    } else if (sortOrder === 'price-desc') {
-      result.sort((a, b) => b.price - a.price);
-    }
+    // 表示順でソート（display_orderが小さい順、nullは最後）
+    result.sort((a, b) => {
+      const orderA = a.display_order ?? 999999;
+      const orderB = b.display_order ?? 999999;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      // display_orderが同じ場合は価格順
+      if (sortOrder === 'price-asc') {
+        return a.price - b.price;
+      } else if (sortOrder === 'price-desc') {
+        return b.price - a.price;
+      }
+      return 0;
+    });
+
+    // 表示/非表示フィルタ（is_visibleがfalseの場合は除外）
+    result = result.filter(p => p.is_visible !== false);
 
     setFilteredProducts(result);
   }, [currentCategory, currentSubcategory, sortOrder, supabaseProducts, loading]);

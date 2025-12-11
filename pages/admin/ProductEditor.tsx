@@ -199,10 +199,16 @@ const ProductEditor = () => {
 
   // Variation Logic
   const addVariationType = () => {
+    const newId = Math.random().toString(36).substr(2, 9);
     setVariationTypes([...variationTypes, {
-      id: Math.random().toString(36).substr(2, 9),
-      name: '',
-      options: [],
+      id: newId,
+      name: '種類',
+      options: [{
+        id: Math.random().toString(36).substr(2, 9),
+        value: '',
+        priceAdjustment: 0,
+        stock: null
+      }],
       stockManagement: 'shared'
     }]);
   };
@@ -218,10 +224,18 @@ const ProductEditor = () => {
     
     setVariationTypes(newVariationTypes);
     
-    // 在庫管理方法が変更された場合、バリデーションを実行
+    // 在庫管理方法が変更された場合、バリデーションを実行し、基本在庫を自動更新
     if (field === 'stockManagement') {
       const error = validateStock(stock, newVariationTypes);
       setStockValidationError(error);
+      
+      // バリエーションごとに設定に変更した場合、基本在庫を自動計算
+      if (value === 'individual') {
+        const totalStock = calculateTotalVariantStockForTypes(newVariationTypes);
+        if (totalStock > 0) {
+          setStock(totalStock.toString());
+        }
+      }
     }
   };
 
@@ -257,15 +271,41 @@ const ProductEditor = () => {
     
     setVariationTypes(newVariationTypes);
     
-    // 在庫フィールドが変更された場合、バリデーションを実行
+    // 在庫フィールドが変更された場合、バリデーションを実行し、基本在庫を自動更新
     if (field === 'stock') {
       const error = validateStock(stock, newVariationTypes);
       setStockValidationError(error);
+      
+      // バリエーションごとに設定の場合、基本在庫を自動計算
+      const hasIndividualStock = newVariationTypes.some(vt => vt.stockManagement === 'individual');
+      if (hasIndividualStock) {
+        const totalStock = calculateTotalVariantStockForTypes(newVariationTypes);
+        if (totalStock > 0) {
+          setStock(totalStock.toString());
+        }
+      }
     }
+  };
+  
+  // バリエーション在庫の合計を計算（引数でタイプを指定可能）
+  // 在庫数がnullの場合は計算から除外（在庫管理が不要なバリエーション用）
+  const calculateTotalVariantStockForTypes = (types: VariationType[]): number => {
+    let total = 0;
+    for (const vt of types) {
+      if (vt.stockManagement === 'individual') {
+        for (const opt of vt.options) {
+          // nullまたはundefinedの場合はスキップ（在庫管理が不要なバリエーション）
+          if (opt.stock !== null && opt.stock !== undefined && opt.stock > 0) {
+            total += opt.stock;
+          }
+        }
+      }
+    }
+    return total;
   };
 
   const removeOption = (typeId: string, optionId: string) => {
-    setVariationTypes(variationTypes.map(vt => {
+    const newVariationTypes = variationTypes.map(vt => {
       if (vt.id === typeId) {
         return {
           ...vt,
@@ -273,7 +313,20 @@ const ProductEditor = () => {
         };
       }
       return vt;
-    }));
+    });
+    
+    setVariationTypes(newVariationTypes);
+    
+    // バリエーションごとに設定の場合、基本在庫を自動計算
+    const hasIndividualStock = newVariationTypes.some(vt => vt.stockManagement === 'individual');
+    if (hasIndividualStock) {
+      const totalStock = calculateTotalVariantStockForTypes(newVariationTypes);
+      if (totalStock > 0) {
+        setStock(totalStock.toString());
+      }
+      const error = validateStock(stock, newVariationTypes);
+      setStockValidationError(error);
+    }
   };
 
   // バリエーション在庫の合計を計算
@@ -306,19 +359,20 @@ const ProductEditor = () => {
       return ''; // バリエーションがない場合はバリデーション不要
     }
 
-    // バリエーション在庫の合計を計算
+    // バリエーション在庫の合計を計算（nullの場合は除外）
     let variantStockTotal = 0;
     for (const vt of types) {
       if (vt.stockManagement === 'individual') {
         for (const opt of vt.options) {
-          if (opt.stock !== null && opt.stock !== undefined) {
+          // nullまたはundefinedの場合はスキップ（在庫管理が不要なバリエーション）
+          if (opt.stock !== null && opt.stock !== undefined && opt.stock > 0) {
             variantStockTotal += opt.stock;
           }
         }
       }
     }
 
-    // 基本在庫 = バリエーション在庫の合計である必要がある
+    // 在庫が設定されているバリエーションがある場合のみ、基本在庫との一致をチェック
     if (variantStockTotal > 0 && baseStock !== variantStockTotal) {
       return `基本在庫数（${baseStock}）は、バリエーション在庫の合計（${variantStockTotal}）と一致する必要があります。`;
     }
@@ -496,6 +550,14 @@ const ProductEditor = () => {
              
              {hasVariants && (
                <div className="space-y-8 animate-fade-in">
+                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                   <p className="text-sm text-blue-800">
+                     <strong>使い方:</strong> 「バリエーションタイプを追加」をクリックすると、デフォルトで1つの選択肢が追加されます。選択肢名を入力し、「+ 選択肢を追加」で追加の選択肢を追加できます。
+                   </p>
+                   <p className="text-sm text-blue-800 mt-2">
+                     <strong>在庫管理:</strong> 「基本在庫を共有」は簡単（基本在庫から減算）、「バリエーションごとに設定」は各選択肢ごとに在庫を設定できます（基本在庫は自動計算されます）。
+                   </p>
+                 </div>
                  {variationTypes.map((vt, vtIndex) => (
                    <div key={vt.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 relative">
                      <button 
@@ -566,9 +628,10 @@ const ProductEditor = () => {
                                  className={`w-full p-2 border rounded text-sm text-right bg-white ${
                                    stockValidationError ? 'border-red-500' : 'border-gray-300'
                                  }`}
-                                 placeholder="0"
+                                 placeholder="未設定"
                                  min="0"
                                />
+                               <p className="text-[10px] text-gray-400 mt-0.5 text-right">在庫不要なら空欄</p>
                              </div>
                            )}
                            <button 

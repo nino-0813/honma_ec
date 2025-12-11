@@ -25,6 +25,7 @@ export const useProducts = () => {
           .from('products')
           .select('*')
           .eq('status', 'active')
+          .order('display_order', { ascending: true, nullsFirst: false })
           .order('created_at', { ascending: false });
 
         if (fetchError) {
@@ -32,9 +33,40 @@ export const useProducts = () => {
         }
 
         if (data && data.length > 0) {
-          const convertedProducts = data.map((dbProduct: DatabaseProduct) =>
-            convertDatabaseProductToProduct(dbProduct)
-          );
+          const convertedProducts = data
+            .map((dbProduct: DatabaseProduct) => {
+              const product = convertDatabaseProductToProduct(dbProduct);
+              // display_orderがnullの場合は、配列のインデックスを使用
+              if (product.display_order === undefined || product.display_order === null) {
+                product.display_order = 999999;
+              }
+              return product;
+            })
+            // is_visibleがfalseの商品を除外
+            .filter(product => product.is_visible !== false)
+            // display_orderでソート（クライアント側でも確実にソート）
+            .sort((a, b) => {
+              const orderA = a.display_order ?? 999999;
+              const orderB = b.display_order ?? 999999;
+              if (orderA !== orderB) {
+                return orderA - orderB;
+              }
+              // display_orderが同じ場合はcreated_atでソート
+              return 0;
+            });
+          
+          // デバッグ用：取得した商品のdisplay_orderを確認
+          console.log('=== 商品データ取得デバッグ ===');
+          console.log('取得した商品数:', convertedProducts.length);
+          console.log('各商品のdisplay_order:', convertedProducts.map(p => ({ 
+            id: p.id.substring(0, 8) + '...', 
+            title: p.title.substring(0, 20) + '...', 
+            display_order: p.display_order,
+            is_visible: p.is_visible
+          })));
+          console.log('ソート後の順序:', convertedProducts.map(p => p.title.substring(0, 20) + '...'));
+          console.log('========================');
+          
           setProducts(convertedProducts);
         } else {
           // データがない場合は空配列

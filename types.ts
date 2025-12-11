@@ -24,6 +24,8 @@ export interface Product {
   }[];
   sku?: string;
   stock?: number;
+  display_order?: number; // 表示順序
+  is_visible?: boolean; // 表示/非表示
 }
 
 export interface Collection {

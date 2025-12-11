@@ -7,7 +7,17 @@ import { FadeInImage } from './UI';
 
 const ProductGrid = () => {
   const { products, loading, error } = useProducts();
-  const displayProducts = products.slice(0, 8);
+  // useProductsで既にソートされているが、念のため再度ソート
+  // display_orderが小さい順、nullは最後
+  const sortedProducts = [...products].sort((a, b) => {
+    const orderA = a.display_order ?? 999999;
+    const orderB = b.display_order ?? 999999;
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    return 0;
+  });
+  const displayProducts = sortedProducts.slice(0, 8);
 
   return (
     <section className="py-8 md:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
