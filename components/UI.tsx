@@ -22,14 +22,16 @@ export const FadeInImage = ({ src, alt, className = '', priority = false }: { sr
   
   return (
     <div className={`relative overflow-hidden ${bgColor} w-full h-full`}>
-      {/* Placeholder / Skeleton */}
-      <div className={`absolute inset-0 ${bgColor} transition-opacity duration-700 ease-out ${isLoaded ? 'opacity-0' : 'opacity-100'}`} />
+      {/* Placeholder / Skeleton (クリックをブロックしないよう pointer-events-none) */}
+      <div className={`absolute inset-0 ${bgColor} transition-opacity duration-700 ease-out pointer-events-none ${isLoaded ? 'opacity-0' : 'opacity-100'}`} />
       
       <img
         src={src}
         alt={alt}
         loading={priority ? "eager" : "lazy"}
-        className={`w-full h-full ${defaultObjectFit} transition-all duration-1000 ease-out transform ${className} ${
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setIsLoaded(true)}
+        className={`relative z-10 w-full h-full ${defaultObjectFit} transition-all duration-1000 ease-out transform ${className} ${
           isLoaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-sm'
         }`}
       />

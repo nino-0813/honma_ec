@@ -238,7 +238,10 @@ export const getStockForVariant = (product: Product, selectedOptions: Record<str
 
   // 新しいvariants_configがある場合
   if (product.variants_config && product.variants_config.length > 0) {
-    // 各バリエーションタイプを確認
+    let minStock: number | null = null;
+    const baseStock = product.stock ?? null;
+
+    // 各バリエーションタイプを確認し、在庫の最小値を採用
     for (const type of product.variants_config) {
       const selectedOptionId = selectedOptions[type.id];
       if (!selectedOptionId) continue;
@@ -246,22 +249,23 @@ export const getStockForVariant = (product: Product, selectedOptions: Record<str
       const option = type.options.find(o => o.id === selectedOptionId);
       if (!option) continue;
 
-      // 在庫管理方法に応じて在庫を返す
       if (type.stockManagement === 'individual') {
-        // バリエーションごとに設定されている場合
-        // 在庫がnullの場合は次のバリエーションタイプを確認（在庫管理が不要なバリエーション用）
-        if (option.stock !== null && option.stock !== undefined && option.stock > 0) {
-          return option.stock;
+        // 個別在庫の場合: 数値が設定されていれば候補に含める（0も有効な在庫）
+        if (option.stock !== null && option.stock !== undefined) {
+          const stockValue = Number(option.stock);
+          minStock = minStock === null ? stockValue : Math.min(minStock, stockValue);
         }
-        // 在庫がnullの場合は次のバリエーションタイプを確認するため、continue
-        continue;
+        // null/undefined は在庫管理しないオプションとして無視
       } else {
-        // 基本在庫を共有する場合
-        return product.stock ?? null;
+        // 共有在庫の場合は基本在庫を候補に含める
+        if (baseStock !== null) {
+          minStock = minStock === null ? baseStock : Math.min(minStock, baseStock);
+        }
       }
     }
-    // 選択されたオプションが見つからない場合は基本在庫を返す
-    return product.stock ?? null;
+
+    // いずれかで在庫が決まった場合はその最小値、決まらない場合は基本在庫
+    return minStock !== null ? minStock : baseStock;
   }
 
   // 旧形式のvariantsがある場合（基本在庫を使用）

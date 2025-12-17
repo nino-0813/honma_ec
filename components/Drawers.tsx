@@ -129,13 +129,18 @@ export const CartDrawer = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuant
                         onClick={(e) => {
                           e.preventDefault();
                           const newQuantity = item.quantity + 1;
-                          // 簡易的な在庫チェック（バリエーション情報がないため、基本在庫のみ）
-                          const stock = item.product.stock ?? null;
-                          if (stock !== null && newQuantity > stock) {
-                            const itemKey = `${item.product.id}-${item.variant || ''}`;
+                          const itemKey = `${item.product.id}-${item.variant || ''}`;
+                          const selectedOptions = item.selectedOptions ?? {};
+                          const stockCheck = checkStockAvailability(
+                            item.product,
+                            selectedOptions,
+                            newQuantity,
+                            0
+                          );
+                          if (!stockCheck.available) {
                             setStockErrors(prev => ({
                               ...prev,
-                              [itemKey]: `在庫が不足しています。追加可能な数量は${stock}個です。`
+                              [itemKey]: stockCheck.message || '在庫が不足しています。'
                             }));
                             setTimeout(() => {
                               setStockErrors(prev => {
@@ -148,7 +153,7 @@ export const CartDrawer = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuant
                           }
                           setStockErrors(prev => {
                             const newErrors = { ...prev };
-                            delete newErrors[`${item.product.id}-${item.variant || ''}`];
+                            delete newErrors[itemKey];
                             return newErrors;
                           });
                           onUpdateQuantity(item.product.id, newQuantity, item.variant);

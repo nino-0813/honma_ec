@@ -51,6 +51,7 @@ export interface CartItem {
   quantity: number;
   variant?: string; // 選択された種類
   finalPrice?: number; // バリエーション価格調整後の最終価格（カート追加時に固定）
+  selectedOptions?: Record<string, string>; // 選択したオプション（在庫チェック用）
 }
 
 export interface Review {

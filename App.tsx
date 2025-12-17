@@ -34,6 +34,7 @@ import Reviews from './pages/admin/Reviews';
 import CustomerSupport from './pages/admin/CustomerSupport';
 import AdminLogin from './pages/admin/AdminLogin';
 import BlogManagement from './pages/admin/BlogManagement';
+import BlogEditor from './pages/admin/BlogEditor';
 
 // Cart Context
 interface CartContextType {
@@ -137,11 +138,12 @@ const MainLayout = () => {
           ...newCart[existingItemIndex],
           quantity: newQuantity,
           // 既存アイテムのfinalPriceを保持（価格変更を防ぐ）
-          finalPrice: newCart[existingItemIndex].finalPrice ?? price
+          finalPrice: newCart[existingItemIndex].finalPrice ?? price,
+          selectedOptions: newCart[existingItemIndex].selectedOptions ?? selectedOptions
         };
         return newCart;
       }
-      return [...prev, { product, quantity, variant, finalPrice: price }];
+      return [...prev, { product, quantity, variant, finalPrice: price, selectedOptions }];
     });
   };
 
@@ -160,20 +162,22 @@ const MainLayout = () => {
     setCartItems(prev => {
       const item = prev.find(i => i.product.id === productId && i.variant === variant);
       if (!item) return prev;
-      
-      // バリエーションがある場合、選択されたオプションを再構築
-      // 注意: variant文字列からselectedOptionsを再構築するのは難しいため、
-      // ここでは簡易的に在庫チェックをスキップするか、product.stockのみをチェック
-      // より正確な実装には、CartItemにselectedOptionsも保存する必要がある
-      if (item.product.hasVariants && item.product.variants_config && item.product.variants_config.length > 0) {
-        // バリエーションがある場合、簡易的に基本在庫のみチェック
-        const stock = item.product.stock ?? null;
-        if (stock !== null && quantity > stock) {
-          console.warn('在庫不足');
+
+      // 在庫チェック（selectedOptionsがある場合は厳密に判定）
+      const selectedOptions = item.selectedOptions;
+      if (selectedOptions && Object.keys(selectedOptions).length > 0) {
+        const stockCheck = checkStockAvailability(
+          item.product,
+          selectedOptions,
+          quantity,
+          0 // 絶対数量としてチェック
+        );
+        if (!stockCheck.available) {
+          console.warn('在庫不足:', stockCheck.message);
           return prev; // カートを更新しない
         }
       } else {
-        // バリエーションがない場合
+        // バリエーション情報がない場合は基本在庫でチェック
         const stock = item.product.stock ?? null;
         if (stock !== null && quantity > stock) {
           console.warn('在庫不足');
@@ -288,6 +292,8 @@ const AdminRoutes = () => {
         <Route path="/admin/inquiries" component={Inquiries} />
         <Route path="/admin/reviews" component={Reviews} />
         <Route path="/admin/customer-support" component={CustomerSupport} />
+        <Route path="/admin/blog/new" component={BlogEditor} />
+        <Route path="/admin/blog/:id" component={BlogEditor} />
         <Route path="/admin/blog" component={BlogManagement} />
         <Route path="/admin" component={Dashboard} />
         {/* Default to dashboard if no sub-route matches */}

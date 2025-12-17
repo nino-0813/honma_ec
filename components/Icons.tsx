@@ -47,7 +47,19 @@ import {
   Download,
   RefreshCw,
   ExternalLink,
-  FileText
+  FileText,
+  Hash,
+  Quote,
+  Image,
+  List,
+  Code,
+  Minus,
+  Paperclip,
+  TableProperties,
+  Mic,
+  Sparkles,
+  DollarSign,
+  Link
 } from 'lucide-react';
 
 export const IconBag = ({ className }: { className?: string }) => <ShoppingBag className={className} strokeWidth={1.5} />;
@@ -103,3 +115,15 @@ export const IconSend = ({ className }: { className?: string }) => <Send classNa
 export const IconRefreshCw = ({ className }: { className?: string }) => <RefreshCw className={className} strokeWidth={1.5} />;
 export const IconExternalLink = ({ className }: { className?: string }) => <ExternalLink className={className} strokeWidth={1.5} />;
 export const IconFileText = ({ className }: { className?: string }) => <FileText className={className} strokeWidth={1.5} />;
+export const IconHash = ({ className }: { className?: string }) => <Hash className={className} strokeWidth={1.5} />;
+export const IconQuote = ({ className }: { className?: string }) => <Quote className={className} strokeWidth={1.5} />;
+export const IconImage = ({ className }: { className?: string }) => <Image className={className} strokeWidth={1.5} />;
+export const IconList = ({ className }: { className?: string }) => <List className={className} strokeWidth={1.5} />;
+export const IconCode = ({ className }: { className?: string }) => <Code className={className} strokeWidth={1.5} />;
+export const IconMinus = ({ className }: { className?: string }) => <Minus className={className} strokeWidth={1.5} />;
+export const IconPaperclip = ({ className }: { className?: string }) => <Paperclip className={className} strokeWidth={1.5} />;
+export const IconTable = ({ className }: { className?: string }) => <TableProperties className={className} strokeWidth={1.5} />;
+export const IconMic = ({ className }: { className?: string }) => <Mic className={className} strokeWidth={1.5} />;
+export const IconSparkles = ({ className }: { className?: string }) => <Sparkles className={className} strokeWidth={1.5} />;
+export const IconDollarSign = ({ className }: { className?: string }) => <DollarSign className={className} strokeWidth={1.5} />;
+export const IconLink = ({ className }: { className?: string }) => <Link className={className} strokeWidth={1.5} />;

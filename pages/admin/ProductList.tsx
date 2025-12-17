@@ -33,6 +33,9 @@ const ProductList = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [hasUnsavedReorder, setHasUnsavedReorder] = useState(false);
+  const originalOrderRef = useRef<Product[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -189,11 +192,13 @@ const ProductList = () => {
 
   // ドラッグ&ドロップ処理
   const handleDragStart = (e: React.DragEvent, productId: string) => {
+    if (!isReorderMode) return;
     setDraggedItem(productId);
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e: React.DragEvent, productId: string) => {
+    if (!isReorderMode) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     if (draggedItem && draggedItem !== productId) {
@@ -208,6 +213,11 @@ const ProductList = () => {
   const handleDrop = async (e: React.DragEvent, targetProductId: string) => {
     e.preventDefault();
     setDragOverItem(null);
+
+    if (!isReorderMode) {
+      setDraggedItem(null);
+      return;
+    }
 
     if (!draggedItem || draggedItem === targetProductId) {
       setDraggedItem(null);
@@ -265,28 +275,122 @@ const ProductList = () => {
       }
     }
 
+    // ローカル状態のみ更新（保存時にまとめて反映）
+    const updatedProducts = updates.map(u => {
+      const target = products.find(p => p.id === u.id);
+      return target ? { ...target, display_order: u.display_order } : null;
+    }).filter(Boolean) as Product[];
+
+    // 未更新の商品を既存順序で後ろに付ける
+    const untouchedProducts = products
+      .filter(p => !updates.find(u => u.id === p.id))
+      .sort((a, b) => (a.display_order ?? 999999) - (b.display_order ?? 999999));
+
+    const merged = [...updatedProducts, ...untouchedProducts].map((p, idx) => ({
+      ...p,
+      display_order: idx
+    }));
+
+    setProducts(merged);
+    setHasUnsavedReorder(true);
+    setDraggedItem(null);
+  };
+
+  // 並び替えモード
+  const startReorderMode = () => {
+    originalOrderRef.current = [...products];
+    setIsReorderMode(true);
+    setHasUnsavedReorder(false);
+    setDraggedItem(null);
+    setDragOverItem(null);
+  };
+
+  const cancelReorder = () => {
+    if (originalOrderRef.current.length > 0) {
+      setProducts(originalOrderRef.current);
+    }
+    setIsReorderMode(false);
+    setHasUnsavedReorder(false);
+    setDraggedItem(null);
+    setDragOverItem(null);
+  };
+
+  const saveReorder = async () => {
+    if (!hasUnsavedReorder) {
+      setIsReorderMode(false);
+      return;
+    }
+
+    if (!supabase) {
+      alert('保存に失敗しました（Supabase未設定）');
+      return;
+    }
+
+    const ordered = [...products].sort((a, b) => (a.display_order ?? 999999) - (b.display_order ?? 999999));
+
     try {
-      // 一括更新
-      for (const update of updates) {
+      // RLSでINSERTが禁止されている場合があるため、upsertではなく個別updateで対応
+      for (let idx = 0; idx < ordered.length; idx++) {
+        const item = ordered[idx];
         const { error } = await supabase
           .from('products')
-          .update({ display_order: update.display_order })
-          .eq('id', update.id);
-        
+          .update({ display_order: idx })
+          .eq('id', item.id);
         if (error) {
-          console.error('更新エラー:', update, error);
-          throw error;
+          throw new Error(error.message || '更新エラー');
         }
       }
 
-      // ローカル状態を更新（再取得）
       await fetchProducts();
-      alert('表示順を更新しました。フロントエンドをリロードしてください。');
+      setIsReorderMode(false);
+      setHasUnsavedReorder(false);
+      alert('表示順を保存しました。');
     } catch (error) {
-      console.error('順序更新エラー:', error);
-      alert('表示順の更新に失敗しました: ' + (error instanceof Error ? error.message : String(error)));
-    } finally {
-      setDraggedItem(null);
+      console.error('並び替え保存エラー:', error);
+      const message = error instanceof Error ? error.message : JSON.stringify(error);
+      alert(`表示順の保存に失敗しました: ${message}`);
+    }
+  };
+
+  // 一括操作
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) {
+      alert('商品を選択してください');
+      return;
+    }
+    if (!window.confirm('選択した商品を削除しますか？\nこの操作は取り消せません。')) return;
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .in('id', selectedProducts);
+      if (error) throw error;
+      setProducts(products.filter(p => !selectedProducts.includes(p.id)));
+      setSelectedProducts([]);
+      alert('削除しました');
+    } catch (error) {
+      console.error('一括削除エラー:', error);
+      alert('削除に失敗しました');
+    }
+  };
+
+  const handleBulkVisibility = async (visible: boolean) => {
+    if (selectedProducts.length === 0) {
+      alert('商品を選択してください');
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_visible: visible })
+        .in('id', selectedProducts);
+      if (error) throw error;
+      setProducts(products.map(p => selectedProducts.includes(p.id) ? { ...p, is_visible: visible } : p));
+      setSelectedProducts([]);
+      alert(visible ? '公開にしました' : '非公開にしました');
+    } catch (error) {
+      console.error('一括公開/非公開エラー:', error);
+      alert('更新に失敗しました');
     }
   };
 
@@ -618,7 +722,7 @@ const ProductList = () => {
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-gray-100 flex gap-4">
+        <div className="p-4 border-b border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:gap-4 md:justify-between">
           <div className="flex-1 relative">
              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
              <input 
@@ -628,6 +732,55 @@ const ProductList = () => {
                onChange={(e) => setSearchQuery(e.target.value)}
                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all bg-white"
              />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handleBulkVisibility(true)}
+              className="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
+              disabled={selectedProducts.length === 0}
+            >
+              一括公開
+            </button>
+            <button
+              onClick={() => handleBulkVisibility(false)}
+              className="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
+              disabled={selectedProducts.length === 0}
+            >
+              一括非公開
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              className="px-3 py-2 text-xs md:text-sm rounded-md border border-red-200 text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
+              disabled={selectedProducts.length === 0}
+            >
+              一括削除
+            </button>
+            {!isReorderMode ? (
+              <button
+                onClick={startReorderMode}
+                className="px-3 py-2 text-xs md:text-sm rounded-md border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all"
+              >
+                並び替えモード
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={saveReorder}
+                  className="px-3 py-2 text-xs md:text-sm rounded-md border border-purple-600 text-white bg-purple-600 hover:bg-purple-700 transition-all"
+                >
+                  保存
+                </button>
+                <button
+                  onClick={cancelReorder}
+                  className="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all"
+                >
+                  キャンセル
+                </button>
+                {hasUnsavedReorder && (
+                  <span className="text-xs text-purple-700 self-center px-2">未保存の変更あり</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -667,8 +820,8 @@ const ProductList = () => {
                       draggedItem === product.id ? 'opacity-50' : ''
                     } ${
                       dragOverItem === product.id ? 'bg-blue-50 border-t-2 border-blue-400' : ''
-                    }`}
-                    draggable
+                    } ${isReorderMode ? 'cursor-move' : ''}`}
+                    draggable={isReorderMode}
                     onDragStart={(e) => handleDragStart(e, product.id)}
                     onDragOver={(e) => handleDragOver(e, product.id)}
                     onDragLeave={handleDragLeave}

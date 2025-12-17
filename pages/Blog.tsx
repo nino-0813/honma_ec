@@ -65,7 +65,7 @@ const Blog = () => {
 
   return (
     <div className="pt-28 pb-24 min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-6 md:px-12">
+      <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="mb-12">
           <h1 className="text-3xl md:text-4xl font-serif tracking-widest text-primary mb-4">BLOG</h1>
           <div className="w-12 h-px bg-primary"></div>
@@ -91,42 +91,41 @@ const Blog = () => {
         )}
 
         {!loading && !error && articles.length > 0 && (
-          <div className="space-y-12">
+          <div className="grid gap-8 md:gap-10 sm:grid-cols-2 lg:grid-cols-3">
             {articles.map((article) => (
-              <article key={article.id} className="border-b border-gray-100 pb-12 last:border-b-0">
-                <Link href={`/blog/${article.id}`}>
-                  <a className="block group">
-                    {article.image_url && (
-                      <div className="mb-6 aspect-video overflow-hidden rounded-lg bg-gray-100">
-                        <FadeInImage
-                          src={article.image_url}
-                          alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
+              <Link key={article.id} href={`/blog/${article.id}`}>
+                <a className="group block h-full rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                  <div className="aspect-[4/3] overflow-hidden bg-gray-50">
+                    {article.image_url ? (
+                      <FadeInImage
+                        src={article.image_url}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50" />
                     )}
-                    <div className="mb-4">
-                      {article.published_at && (
-                        <time className="text-sm text-gray-500">
-                          {formatDate(article.published_at)}
-                        </time>
-                      )}
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-serif font-medium text-gray-900 mb-4 group-hover:text-gray-600 transition-colors">
+                  </div>
+                  <div className="px-4 pt-4 pb-5 flex flex-col gap-3">
+                    {article.published_at && (
+                      <time className="text-xs text-gray-500">
+                        {formatDate(article.published_at)}
+                      </time>
+                    )}
+                    <h2 className="text-lg md:text-xl font-semibold text-gray-900 leading-snug line-clamp-2 group-hover:text-gray-700 transition-colors">
                       {article.title}
                     </h2>
                     {article.excerpt && (
-                      <p className="text-gray-600 leading-relaxed mb-4 line-clamp-3">
+                      <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
                         {article.excerpt}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
-                      <span>続きを読む</span>
-                      <span>→</span>
+                    <div className="text-sm text-primary font-medium mt-auto">
+                      続きを読む →
                     </div>
-                  </a>
-                </Link>
-              </article>
+                  </div>
+                </a>
+              </Link>
             ))}
           </div>
         )}
