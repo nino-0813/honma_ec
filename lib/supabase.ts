@@ -253,12 +253,18 @@ export const getStockForVariant = (product: Product, selectedOptions: Record<str
         // 在庫管理しない場合はスキップ
         continue;
       } else if (type.stockManagement === 'individual') {
-        // 個別在庫の場合: 数値が設定されていれば候補に含める（0も有効な在庫）
-        if (option.stock !== null && option.stock !== undefined) {
-          const stockValue = Number(option.stock);
-          minStock = minStock === null ? stockValue : Math.min(minStock, stockValue);
+        // 在庫共有が有効な場合
+        if (type.sharedStock !== null && type.sharedStock !== undefined) {
+          const sharedStockValue = Number(type.sharedStock);
+          minStock = minStock === null ? sharedStockValue : Math.min(minStock, sharedStockValue);
+        } else {
+          // 個別在庫の場合: 数値が設定されていれば候補に含める（0も有効な在庫）
+          if (option.stock !== null && option.stock !== undefined) {
+            const stockValue = Number(option.stock);
+            minStock = minStock === null ? stockValue : Math.min(minStock, stockValue);
+          }
+          // null/undefined は在庫管理しないオプションとして無視
         }
-        // null/undefined は在庫管理しないオプションとして無視
       } else if (type.stockManagement === 'shared') {
         // 基本在庫を共有する場合（互換性のため残しているが、基本在庫は使用しない）
         // 基本在庫を使用しないため、在庫チェックをスキップ（nullを返す）

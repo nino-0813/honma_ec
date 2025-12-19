@@ -21,6 +21,7 @@ type VariationType = {
   name: string;
   options: VariationOption[];
   stockManagement: 'shared' | 'individual' | 'none';
+  sharedStock?: number | null; // 在庫共有時の共有在庫数
 };
 
 const ProductEditor = () => {
@@ -63,7 +64,8 @@ const ProductEditor = () => {
           id: Math.random().toString(36).substr(2, 9),
           name: '種類',
           options: [],
-          stockManagement: 'shared'
+          stockManagement: 'shared',
+          sharedStock: null
         }
       ]);
     }
@@ -118,14 +120,16 @@ const ProductEditor = () => {
               priceAdjustment: 0,
               stock: null
             })),
-            stockManagement: 'shared'
+            stockManagement: 'shared',
+            sharedStock: null
           }]);
         } else {
           setVariationTypes([{
             id: Math.random().toString(36).substr(2, 9),
             name: '種類',
             options: [],
-            stockManagement: 'shared'
+            stockManagement: 'shared',
+            sharedStock: null
           }]);
         }
         
@@ -209,7 +213,8 @@ const ProductEditor = () => {
         priceAdjustment: 0,
         stock: null
       }],
-      stockManagement: 'shared'
+      stockManagement: 'shared',
+      sharedStock: null
     }]);
   };
 
@@ -551,11 +556,19 @@ const ProductEditor = () => {
                        <div className="text-xs font-medium text-gray-500 flex gap-4 px-2">
                          <span className="flex-1">選択肢名</span>
                          <span className="w-24 text-right">追加価格</span>
-                         {vt.stockManagement === 'individual' && (
+                         {vt.stockManagement === 'individual' && vt.sharedStock === null && (
                            <span className="w-24 text-right">
                              在庫数
                              <span className="block text-[10px] text-gray-400 font-normal mt-0.5">
                                (合計: {vt.options.reduce((sum, o) => sum + (o.stock ?? 0), 0)})
+                             </span>
+                           </span>
+                         )}
+                         {vt.stockManagement === 'individual' && vt.sharedStock !== null && (
+                           <span className="w-24 text-right">
+                             在庫数
+                             <span className="block text-[10px] text-gray-400 font-normal mt-0.5">
+                               (共有: {vt.sharedStock ?? 0})
                              </span>
                            </span>
                          )}
@@ -579,7 +592,7 @@ const ProductEditor = () => {
                              />
                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">円</span>
                            </div>
-                           {vt.stockManagement === 'individual' && (
+                           {vt.stockManagement === 'individual' && vt.sharedStock === null && (
                              <div className="w-24">
                                <input 
                                  type="number" 
@@ -597,6 +610,11 @@ const ProductEditor = () => {
                                <p className="text-[10px] text-gray-400 mt-0.5 text-right">在庫不要なら空欄</p>
                              </div>
                            )}
+                           {vt.stockManagement === 'individual' && vt.sharedStock !== null && (
+                             <div className="w-24 text-center text-sm text-gray-500">
+                               共有在庫
+                             </div>
+                           )}
                            <button 
                              onClick={() => removeOption(vt.id, opt.id)}
                              className="w-8 flex justify-center text-gray-400 hover:text-red-500"
@@ -612,6 +630,46 @@ const ProductEditor = () => {
                          <IconPlus className="w-4 h-4" />
                          選択肢を追加
                        </button>
+                       
+                       {/* 在庫共有設定（在庫設定をするを選んだ場合のみ表示） */}
+                       {vt.stockManagement === 'individual' && (
+                         <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-end gap-4">
+                           <label className="flex items-center gap-2 text-sm text-gray-700">
+                             <input
+                               type="checkbox"
+                               checked={vt.sharedStock !== null && vt.sharedStock !== undefined}
+                               onChange={(e) => {
+                                 if (e.target.checked) {
+                                   // 在庫共有を有効にする（デフォルト値は0）
+                                   updateVariationType(vt.id, 'sharedStock', 0);
+                                 } else {
+                                   // 在庫共有を無効にする
+                                   updateVariationType(vt.id, 'sharedStock', null);
+                                 }
+                               }}
+                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                             />
+                             <span>在庫共有をする</span>
+                           </label>
+                           {vt.sharedStock !== null && vt.sharedStock !== undefined && (
+                             <div className="flex items-center gap-2">
+                               <label className="text-sm text-gray-700">共有在庫数:</label>
+                               <input
+                                 type="number"
+                                 value={vt.sharedStock ?? 0}
+                                 onChange={(e) => {
+                                   const newValue = e.target.value === '' ? 0 : Number(e.target.value);
+                                   updateVariationType(vt.id, 'sharedStock', newValue);
+                                 }}
+                                 className="w-24 p-2 border border-gray-300 rounded text-sm text-right bg-white"
+                                 placeholder="0"
+                                 min="0"
+                               />
+                               <span className="text-sm text-gray-500">個</span>
+                             </div>
+                           )}
+                         </div>
+                       )}
                      </div>
                    </div>
                  ))}

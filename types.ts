@@ -21,6 +21,7 @@ export interface Product {
       stock: number | null;
     }[];
     stockManagement: 'shared' | 'individual' | 'none';
+    sharedStock?: number | null; // 在庫共有時の共有在庫数
   }[];
   sku?: string;
   stock?: number;
