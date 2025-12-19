@@ -161,6 +161,53 @@ const ProductList = () => {
     }
   };
 
+  // バリエーション在庫を計算する関数（各バリエーションタイプは独立して在庫管理）
+  const calculateVariantStock = (product: Product): number => {
+    if (!product.hasVariants || !product.variants_config || product.variants_config.length === 0) {
+      // バリエーションがない場合は基本在庫を返す（現在は0）
+      return product.stock ?? 0;
+    }
+
+    // 各バリエーションタイプの在庫を計算（独立して管理）
+    const variantStocks: number[] = [];
+
+    for (const vt of product.variants_config) {
+      if (vt.stockManagement === 'none') {
+        // 在庫管理しない場合はスキップ
+        continue;
+      } else if (vt.stockManagement === 'individual') {
+        let typeStock = 0;
+        // 在庫共有が有効な場合
+        if (vt.sharedStock !== null && vt.sharedStock !== undefined) {
+          typeStock = Number(vt.sharedStock);
+        } else {
+          // 個別在庫の場合、各選択肢の在庫を合計
+          for (const opt of vt.options || []) {
+            if (opt.stock !== null && opt.stock !== undefined) {
+              typeStock += Number(opt.stock);
+            }
+          }
+        }
+        // 各バリエーションタイプの在庫を配列に追加
+        if (typeStock > 0) {
+          variantStocks.push(typeStock);
+        }
+      }
+    }
+
+    // 複数のバリエーションタイプがある場合、最小値を返す（最も制限的な在庫）
+    // または、すべてのバリエーションタイプの在庫を合計する
+    // ここでは、各バリエーションタイプが独立しているため、最小値を返す
+    if (variantStocks.length === 0) {
+      return 0;
+    } else if (variantStocks.length === 1) {
+      return variantStocks[0];
+    } else {
+      // 複数のバリエーションタイプがある場合、最小値を返す
+      return Math.min(...variantStocks);
+    }
+  };
+
   const filteredProducts = products
     .filter(product => 
       product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -909,7 +956,7 @@ const ProductList = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
-                      {product.stock}
+                      {calculateVariantStock(product)}
                     </td>
                      <td className="px-6 py-4 text-gray-500">
                       {product.category}
