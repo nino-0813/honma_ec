@@ -20,7 +20,7 @@ type VariationType = {
   id: string;
   name: string;
   options: VariationOption[];
-  stockManagement: 'shared' | 'individual';
+  stockManagement: 'shared' | 'individual' | 'none';
 };
 
 const ProductEditor = () => {
@@ -224,18 +224,10 @@ const ProductEditor = () => {
     
     setVariationTypes(newVariationTypes);
     
-    // 在庫管理方法が変更された場合、バリデーションを実行し、基本在庫を自動更新
+    // 在庫管理方法が変更された場合の処理（基本在庫は使用しない）
     if (field === 'stockManagement') {
-      const error = validateStock(stock, newVariationTypes);
-      setStockValidationError(error);
-      
-      // バリエーションごとに設定に変更した場合、基本在庫を自動計算
-      if (value === 'individual') {
-        const totalStock = calculateTotalVariantStockForTypes(newVariationTypes);
-        if (totalStock > 0) {
-          setStock(totalStock.toString());
-        }
-      }
+      // バリデーションは不要（基本在庫との比較がないため）
+      setStockValidationError('');
     }
   };
 
@@ -271,31 +263,24 @@ const ProductEditor = () => {
     
     setVariationTypes(newVariationTypes);
     
-    // 在庫フィールドが変更された場合、バリデーションを実行し、基本在庫を自動更新
+    // 在庫フィールドが変更された場合の処理（基本在庫は使用しない）
     if (field === 'stock') {
-      const error = validateStock(stock, newVariationTypes);
-      setStockValidationError(error);
-      
-      // バリエーションごとに設定の場合、基本在庫を自動計算
-      const hasIndividualStock = newVariationTypes.some(vt => vt.stockManagement === 'individual');
-      if (hasIndividualStock) {
-        const totalStock = calculateTotalVariantStockForTypes(newVariationTypes);
-        if (totalStock > 0) {
-          setStock(totalStock.toString());
-        }
-      }
+      // バリデーションは不要（基本在庫との比較がないため）
+      setStockValidationError('');
     }
   };
   
   // バリエーション在庫の合計を計算（引数でタイプを指定可能）
   // 在庫数がnullの場合は計算から除外（在庫管理が不要なバリエーション用）
+  // 0の場合は有効な在庫数として含める
   const calculateTotalVariantStockForTypes = (types: VariationType[]): number => {
     let total = 0;
     for (const vt of types) {
       if (vt.stockManagement === 'individual') {
         for (const opt of vt.options) {
           // nullまたはundefinedの場合はスキップ（在庫管理が不要なバリエーション）
-          if (opt.stock !== null && opt.stock !== undefined && opt.stock > 0) {
+          // 0以上の数値は有効な在庫数として合計に含める
+          if (opt.stock !== null && opt.stock !== undefined && opt.stock >= 0) {
             total += opt.stock;
           }
         }
@@ -317,16 +302,8 @@ const ProductEditor = () => {
     
     setVariationTypes(newVariationTypes);
     
-    // バリエーションごとに設定の場合、基本在庫を自動計算
-    const hasIndividualStock = newVariationTypes.some(vt => vt.stockManagement === 'individual');
-    if (hasIndividualStock) {
-      const totalStock = calculateTotalVariantStockForTypes(newVariationTypes);
-      if (totalStock > 0) {
-        setStock(totalStock.toString());
-      }
-      const error = validateStock(stock, newVariationTypes);
-      setStockValidationError(error);
-    }
+    // 基本在庫は使用しないため、バリデーションは不要
+    setStockValidationError('');
   };
 
   // バリエーション在庫の合計を計算
@@ -350,46 +327,15 @@ const ProductEditor = () => {
     return total;
   };
 
-  // 在庫バリデーション
+  // 在庫バリデーション（基本在庫は使用しないため、常に空文字列を返す）
   const validateStock = (newStock: string, newVariationTypes?: VariationType[]): string => {
-    const baseStock = Number(newStock) || 0;
-    const types = newVariationTypes || variationTypes;
-    
-    if (!hasVariants || types.length === 0) {
-      return ''; // バリエーションがない場合はバリデーション不要
-    }
-
-    // バリエーション在庫の合計を計算（nullの場合は除外）
-    let variantStockTotal = 0;
-    for (const vt of types) {
-      if (vt.stockManagement === 'individual') {
-        for (const opt of vt.options) {
-          // nullまたはundefinedの場合はスキップ（在庫管理が不要なバリエーション）
-          if (opt.stock !== null && opt.stock !== undefined && opt.stock > 0) {
-            variantStockTotal += opt.stock;
-          }
-        }
-      }
-    }
-
-    // 在庫が設定されているバリエーションがある場合のみ、基本在庫との一致をチェック
-    if (variantStockTotal > 0 && baseStock !== variantStockTotal) {
-      return `基本在庫数（${baseStock}）は、バリエーション在庫の合計（${variantStockTotal}）と一致する必要があります。`;
-    }
-
+    // 基本在庫との比較は不要（基本在庫を使用しない）
     return '';
   };
 
   const handleSubmit = async () => {
     if (!title || !price || !handle) {
       alert('必須項目を入力してください（商品名、価格、ハンドル）');
-      return;
-    }
-
-    // 在庫バリデーション
-    const stockError = validateStock(stock);
-    if (stockError) {
-      alert(stockError);
       return;
     }
 
@@ -428,7 +374,7 @@ const ProductEditor = () => {
         subcategory: subcategory || null,
         description,
         handle,
-        stock: Number(stock),
+        stock: 0, // 基本在庫は使用しないため、常に0として保存
         sku: sku || null,
         is_active: isActive,
         has_variants: hasVariants,
@@ -585,9 +531,19 @@ const ProductEditor = () => {
                            onChange={(e) => updateVariationType(vt.id, 'stockManagement', e.target.value)}
                            className="w-full p-2 border border-gray-300 rounded text-sm bg-white"
                          >
-                           <option value="shared">基本在庫を共有</option>
-                           <option value="individual">バリエーションごとに設定</option>
+                           <option value="none">在庫管理しない</option>
+                           <option value="individual">在庫設定をする</option>
                          </select>
+                         {vt.stockManagement === 'individual' && (
+                           <p className="text-[10px] text-blue-600 mt-1">
+                             各選択肢の在庫数を設定できます。
+                           </p>
+                         )}
+                         {vt.stockManagement === 'none' && (
+                           <p className="text-[10px] text-gray-500 mt-1">
+                             このバリエーションでは在庫管理を行いません。
+                           </p>
+                         )}
                        </div>
                      </div>
 
@@ -595,7 +551,14 @@ const ProductEditor = () => {
                        <div className="text-xs font-medium text-gray-500 flex gap-4 px-2">
                          <span className="flex-1">選択肢名</span>
                          <span className="w-24 text-right">追加価格</span>
-                         {vt.stockManagement === 'individual' && <span className="w-20 text-right">在庫数</span>}
+                         {vt.stockManagement === 'individual' && (
+                           <span className="w-24 text-right">
+                             在庫数
+                             <span className="block text-[10px] text-gray-400 font-normal mt-0.5">
+                               (合計: {vt.options.reduce((sum, o) => sum + (o.stock ?? 0), 0)})
+                             </span>
+                           </span>
+                         )}
                          <span className="w-8"></span>
                        </div>
                        {vt.options.map((opt) => (
@@ -617,7 +580,7 @@ const ProductEditor = () => {
                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">円</span>
                            </div>
                            {vt.stockManagement === 'individual' && (
-                             <div className="w-20">
+                             <div className="w-24">
                                <input 
                                  type="number" 
                                  value={opt.stock ?? ''}
@@ -628,7 +591,7 @@ const ProductEditor = () => {
                                  className={`w-full p-2 border rounded text-sm text-right bg-white ${
                                    stockValidationError ? 'border-red-500' : 'border-gray-300'
                                  }`}
-                                 placeholder="未設定"
+                                 placeholder="0"
                                  min="0"
                                />
                                <p className="text-[10px] text-gray-400 mt-0.5 text-right">在庫不要なら空欄</p>
@@ -739,35 +702,6 @@ const ProductEditor = () => {
                     />
                   </div>
                   {hasVariants && <p className="text-xs text-gray-500 mt-1">バリエーションごとの追加価格がここに加算されます。</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">基本在庫数</label>
-                  <input 
-                    type="number" 
-                    value={stock}
-                    onChange={(e) => {
-                      const newStock = e.target.value;
-                      setStock(newStock);
-                      const error = validateStock(newStock);
-                      setStockValidationError(error);
-                    }}
-                    className={`w-full p-2 border rounded-lg focus:outline-none focus:ring-1 transition-all bg-white ${
-                      stockValidationError 
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-200 focus:border-black focus:ring-black'
-                    }`}
-                    placeholder="0"
-                  />
-                  {hasVariants && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      「基本在庫を共有」設定のバリエーションで消費されます。
-                      {variationTypes.some(vt => vt.stockManagement === 'individual') && 
-                        '「バリエーションごとに設定」の場合、基本在庫数は全バリエーション在庫の合計と一致する必要があります。'}
-                    </p>
-                  )}
-                  {stockValidationError && (
-                    <p className="text-xs text-red-600 mt-1">{stockValidationError}</p>
-                  )}
                 </div>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

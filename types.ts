@@ -20,7 +20,7 @@ export interface Product {
       priceAdjustment: number;
       stock: number | null;
     }[];
-    stockManagement: 'shared' | 'individual';
+    stockManagement: 'shared' | 'individual' | 'none';
   }[];
   sku?: string;
   stock?: number;
