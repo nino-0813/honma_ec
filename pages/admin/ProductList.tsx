@@ -380,12 +380,21 @@ const ProductList = () => {
       return;
     }
     try {
+      // is_visibleとis_activeを連動させる
       const { error } = await supabase
         .from('products')
-        .update({ is_visible: visible })
+        .update({ 
+          is_visible: visible,
+          is_active: visible,
+          status: visible ? 'active' : 'draft'
+        })
         .in('id', selectedProducts);
       if (error) throw error;
-      setProducts(products.map(p => selectedProducts.includes(p.id) ? { ...p, is_visible: visible } : p));
+      setProducts(products.map(p => 
+        selectedProducts.includes(p.id) 
+          ? { ...p, is_visible: visible, is_active: visible, status: visible ? 'active' : 'draft' } 
+          : p
+      ));
       setSelectedProducts([]);
       alert(visible ? '公開にしました' : '非公開にしました');
     } catch (error) {
@@ -394,19 +403,30 @@ const ProductList = () => {
     }
   };
 
-  // 表示/非表示のトグル
+  // 表示/非表示のトグル（ステータスも連動）
   const toggleVisibility = async (productId: string, currentVisibility: boolean) => {
     try {
+      const newVisibility = !currentVisibility;
+      // is_visibleとis_activeを連動させる
       const { error } = await supabase
         .from('products')
-        .update({ is_visible: !currentVisibility })
+        .update({ 
+          is_visible: newVisibility,
+          is_active: newVisibility,
+          status: newVisibility ? 'active' : 'draft'
+        })
         .eq('id', productId);
 
       if (error) throw error;
 
       // ローカル状態を更新
       setProducts(products.map(p => 
-        p.id === productId ? { ...p, is_visible: !currentVisibility } : p
+        p.id === productId ? { 
+          ...p, 
+          is_visible: newVisibility,
+          is_active: newVisibility,
+          status: newVisibility ? 'active' : 'draft'
+        } : p
       ));
     } catch (error) {
       console.error('表示状態の更新エラー:', error);
