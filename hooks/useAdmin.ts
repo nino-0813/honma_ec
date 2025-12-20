@@ -58,6 +58,9 @@ export const useAdmin = () => {
         if (!session?.user) {
           console.log('ユーザーはログインしていません。');
           localStorage.removeItem(STORAGE_KEY); // キャッシュクリア
+          // Basic認証のセッションもクリア
+          sessionStorage.removeItem('basic_auth_passed');
+          sessionStorage.removeItem('admin_return_path');
           if (mountedRef.current) {
             setIsAdmin(false);
             setAdminUser(null);
@@ -128,6 +131,9 @@ export const useAdmin = () => {
 
       if (event === 'SIGNED_OUT' || !session) {
         localStorage.removeItem(STORAGE_KEY);
+        // Basic認証のセッションもクリア
+        sessionStorage.removeItem('basic_auth_passed');
+        sessionStorage.removeItem('admin_return_path');
         setIsAdmin(false);
         setAdminUser(null);
         setLocation('/admin/login');

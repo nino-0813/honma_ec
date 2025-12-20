@@ -26,8 +26,8 @@ export default function middleware(request: Request) {
       return;
     }
 
-    // `/admin` パスで始まる場合のみ Basic認証を要求
-    if (pathname.startsWith('/admin')) {
+    // `/admin` パスで始まる場合のみ Basic認証を要求（`/admin/login`は除外）
+    if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
       // Basic認証のヘッダーを確認
       const authHeader = request.headers.get('authorization');
 
