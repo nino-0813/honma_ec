@@ -481,6 +481,37 @@ const ProductList = () => {
     }
   };
 
+  // ステータス変更（is_visibleも連動）
+  const toggleStatus = async (productId: string, currentStatus: boolean) => {
+    try {
+      const newStatus = !currentStatus;
+      // is_activeとis_visibleを連動させる
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          is_active: newStatus,
+          is_visible: newStatus,
+          status: newStatus ? 'active' : 'draft'
+        })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      // ローカル状態を更新
+      setProducts(products.map(p => 
+        p.id === productId ? { 
+          ...p, 
+          is_active: newStatus,
+          is_visible: newStatus,
+          status: newStatus ? 'active' : 'draft'
+        } : p
+      ));
+    } catch (error) {
+      console.error('ステータスの更新エラー:', error);
+      alert('ステータスの更新に失敗しました');
+    }
+  };
+
   const handleExportCSV = () => {
     const productsToExport = selectedProducts.length > 0 
       ? products.filter(p => selectedProducts.includes(p.id))
@@ -946,14 +977,21 @@ const ProductList = () => {
                       {product.sku || '-'}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        !product.is_active
-                          ? 'bg-gray-100 text-gray-600' 
-                          : 'bg-green-50 text-green-700 border border-green-100'
-                      }`}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleStatus(product.id, product.is_active);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${
+                          !product.is_active
+                            ? 'bg-gray-100 text-gray-600' 
+                            : 'bg-green-50 text-green-700 border border-green-100'
+                        }`}
+                        title={product.is_active ? '非公開にする' : '販売中にする'}
+                      >
                         {product.is_active && <span className="w-1.5 h-1.5 rounded-full bg-green-500" />}
                         {product.is_active ? '販売中' : '非公開'}
-                      </span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
                       {calculateVariantStock(product)}

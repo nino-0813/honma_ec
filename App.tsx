@@ -44,6 +44,7 @@ interface CartContextType {
   updateQuantity: (productId: string, quantity: number, variant?: string) => void;
   clearCart: () => void;
   openCart: () => void;
+  restoreCart: () => void;
 }
 
 export const CartContext = createContext<CartContextType>({
@@ -52,7 +53,8 @@ export const CartContext = createContext<CartContextType>({
   removeFromCart: () => {},
   updateQuantity: () => {},
   clearCart: () => {},
-  openCart: () => {}
+  openCart: () => {},
+  restoreCart: () => {}
 });
 
 // --- Hash Location Hook for Sandboxed Environments ---
@@ -200,8 +202,24 @@ const MainLayout = () => {
 
   const openCart = () => setIsCartOpen(true);
 
+  // カートをlocalStorageから復元する関数
+  const restoreCart = () => {
+    try {
+      const savedCart = localStorage.getItem('ikevege_cart');
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        if (parsedCart.length > 0) {
+          setCartItems(parsedCart);
+          console.log('カートを復元しました:', parsedCart);
+        }
+      }
+    } catch (e) {
+      console.error('カート復元エラー:', e);
+    }
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, openCart }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, openCart, restoreCart }}>
       <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary selection:bg-black selection:text-white">
         <ScrollToTop />
         <Header 
@@ -250,6 +268,41 @@ import { useAdmin } from './hooks/useAdmin';
 const AdminRoutes = () => {
   const { isAdmin, loading } = useAdmin();
   const [, setLocation] = useLocation();
+
+  // Basic認証チェック（クライアントサイド）
+  useEffect(() => {
+    // ローカル開発環境では Basic認証をスキップ
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' ||
+                        window.location.hostname.includes('localhost');
+    
+    if (isLocalhost) {
+      // ローカル環境では Basic認証をスキップ
+      return;
+    }
+
+    const currentPath = window.location.hash.replace('#', '');
+    
+    // `/admin/login` は Basic認証をスキップ
+    if (currentPath === '/admin/login') {
+      return;
+    }
+
+    // Basic認証のセッションをチェック
+    const basicAuthPassed = sessionStorage.getItem('basic_auth_passed');
+    if (basicAuthPassed === 'true') {
+      return; // 既に認証済み
+    }
+
+    // 管理画面へのアクセスを検出した場合、`/admin` にリダイレクトして Basic認証を要求
+    if (currentPath.startsWith('/admin')) {
+      // サーバーサイドで Basic認証を要求するため、`/admin` にリダイレクト
+      // 認証成功後、元のパスに戻る
+      const returnPath = currentPath;
+      sessionStorage.setItem('admin_return_path', returnPath);
+      window.location.href = '/admin';
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && isAdmin === false) {
@@ -316,11 +369,35 @@ function App() {
       const redirectPath = localStorage.getItem('auth_redirect');
       if (redirectPath) {
         console.log('認証後のリダイレクトを実行:', redirectPath);
+        
+        // カートを確認し、空の場合はlocalStorageから復元を試みる
+        const savedCart = localStorage.getItem('ikevege_cart');
+        if (savedCart) {
+          try {
+            const parsedCart = JSON.parse(savedCart);
+            if (parsedCart.length > 0) {
+              console.log('OAuthリダイレクト後、カートを確認:', parsedCart);
+              // カートは既にCartContextで読み込まれているはずだが、念のため確認
+            }
+          } catch (e) {
+            console.error('カート復元エラー:', e);
+          }
+        }
+        
         setTimeout(() => {
           window.location.hash = redirectPath;
           localStorage.removeItem('auth_redirect');
         }, 500);
       }
+    }
+
+    // Basic認証後のリダイレクト処理
+    const adminReturnPath = sessionStorage.getItem('admin_return_path');
+    if (adminReturnPath && window.location.pathname === '/') {
+      // Basic認証成功後、元のパスに戻る
+      sessionStorage.setItem('basic_auth_passed', 'true');
+      sessionStorage.removeItem('admin_return_path');
+      window.location.hash = adminReturnPath;
     }
   }, []);
 

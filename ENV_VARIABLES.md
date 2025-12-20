@@ -28,9 +28,20 @@ VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 2. Developers > API keys に移動
 3. Publishable key をコピー（テスト環境または本番環境）
 
+#### 3. 管理画面 Basic認証（Vercel Edge Function用）
+```
+ADMIN_BASIC_AUTH_USER=your_admin_username
+ADMIN_BASIC_AUTH_PASS=your_admin_password
+```
+
+**設定方法:**
+1. 管理画面にアクセスするためのユーザー名とパスワードを設定
+2. **重要**: `VITE_` プレフィックスを付けないでください（サーバーサイドでのみ使用）
+3. 本番環境でのみ設定することを推奨（開発環境では設定しないと認証がスキップされます）
+
 ### オプション環境変数（メール送信機能用）
 
-#### 3. Resend API設定（Vercel Serverless Function用）
+#### 4. Resend API設定（Vercel Serverless Function用）
 ```
 RESEND_API_KEY=your_resend_api_key
 RESEND_FROM_EMAIL=your_verified_email@domain.com
@@ -56,6 +67,8 @@ RESEND_FROM_EMAIL=your_verified_email@domain.com
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 VITE_STRIPE_PUBLISHABLE_KEY
+ADMIN_BASIC_AUTH_USER (推奨: 本番環境のみ)
+ADMIN_BASIC_AUTH_PASS (推奨: 本番環境のみ)
 RESEND_API_KEY (オプション)
 RESEND_FROM_EMAIL (オプション)
 ```
@@ -76,6 +89,7 @@ RESEND_FROM_EMAIL (オプション)
 1. **セキュリティ**: 
    - `VITE_` プレフィックス付きの環境変数はクライアント側に公開されます
    - 機密情報（Secret Keys）は `VITE_` プレフィックスを付けないでください
+   - Basic認証のユーザー名・パスワードは `ADMIN_BASIC_AUTH_USER` と `ADMIN_BASIC_AUTH_PASS` として設定（`VITE_` なし）
    - Resend APIキーは `RESEND_API_KEY` として設定（`VITE_` なし）
 
 2. **環境変数の再デプロイ**:
@@ -108,6 +122,7 @@ RESEND_FROM_EMAIL (オプション)
 - [ ] `VITE_SUPABASE_URL` が設定されている
 - [ ] `VITE_SUPABASE_ANON_KEY` が設定されている
 - [ ] `VITE_STRIPE_PUBLISHABLE_KEY` が設定されている
+- [ ] 本番環境で管理画面を保護する場合、`ADMIN_BASIC_AUTH_USER` と `ADMIN_BASIC_AUTH_PASS` が設定されている
 - [ ] メール送信機能を使用する場合、`RESEND_API_KEY` と `RESEND_FROM_EMAIL` が設定されている
 - [ ] すべての環境変数が正しい環境（Production/Preview/Development）に適用されている
 - [ ] 環境変数設定後に再デプロイを実行した

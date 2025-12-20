@@ -23,7 +23,7 @@ const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCos
 }) => {
   const stripe = useStripe();
   const elements = useElements();
-  const { cartItems, clearCart } = useContext(CartContext);
+  const { cartItems, clearCart, restoreCart } = useContext(CartContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -191,7 +191,7 @@ const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCos
 
 const Checkout = () => {
   const [, setLocation] = useLocation();
-  const { cartItems } = useContext(CartContext);
+  const { cartItems, restoreCart } = useContext(CartContext);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authUser, setAuthUser] = useState<any>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -279,12 +279,37 @@ const Checkout = () => {
         
         // OAuth認証成功時（SIGNED_INイベント）に確実にチェックアウトページに留まる
         if (event === 'SIGNED_IN') {
+          // OAuthリダイレクト直後フラグを設定
+          setIsOAuthRedirect(true);
+          
+          // カートを確認し、空の場合はlocalStorageから復元を試みる
+          const savedCart = localStorage.getItem('ikevege_cart');
+          if (savedCart) {
+            try {
+              const parsedCart = JSON.parse(savedCart);
+              if (parsedCart.length > 0 && cartItems.length === 0) {
+                // カートが空の場合、restoreCart関数でカートを復元
+                console.log('OAuthリダイレクト後、カートを復元します:', parsedCart);
+                restoreCart();
+              }
+            } catch (e) {
+              console.error('カート復元エラー:', e);
+            }
+          }
+          
           // 現在のURLがチェックアウトページでない場合のみリダイレクト
           const currentHash = window.location.hash.replace('#', '') || '/';
           if (!currentHash.includes('/checkout')) {
             // ハッシュルーティングを使用しているため、ハッシュでリダイレクト
+            // リダイレクト先を保存
+            localStorage.setItem('auth_redirect', '/checkout');
             window.location.hash = '/checkout';
           }
+          
+          // カートの復元を待つため、少し遅延させる
+          setTimeout(() => {
+            setIsOAuthRedirect(false);
+          }, 2000);
         }
       } else {
         setIsAuthenticated(false);
@@ -411,14 +436,44 @@ const Checkout = () => {
     setIsAuthenticated(true);
     setAuthUser(userData);
     setFormData(prev => ({ ...prev, email }));
+    
+    // ログイン成功時にカートを確認し、空の場合はlocalStorageから復元を試みる
+    const savedCart = localStorage.getItem('ikevege_cart');
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        if (parsedCart.length > 0 && cartItems.length === 0) {
+          // カートが空の場合、restoreCart関数でカートを復元
+          console.log('ログイン成功後、カートを復元します:', parsedCart);
+          restoreCart();
+        }
+      } catch (e) {
+        console.error('カート復元エラー:', e);
+      }
+    }
   };
 
-  // カートが空の場合はホームにリダイレクト
+  // OAuthリダイレクト直後かどうかを判定するフラグ
+  const [isOAuthRedirect, setIsOAuthRedirect] = useState(false);
+
+  // カートが空の場合はホームにリダイレクト（OAuthリダイレクト直後は除く）
   useEffect(() => {
-    if (cartItems.length === 0) {
+    // OAuthリダイレクト直後（URLにaccess_tokenが含まれている）の場合は、カート復元を待つ
+    const hash = window.location.hash;
+    if (hash && (hash.includes('access_token=') || hash.includes('type=recovery'))) {
+      setIsOAuthRedirect(true);
+      // OAuthリダイレクト直後は、カートの復元を待つため、少し遅延させる
+      setTimeout(() => {
+        setIsOAuthRedirect(false);
+      }, 2000);
+      return;
+    }
+
+    // OAuthリダイレクト直後でない場合のみ、カートが空ならリダイレクト
+    if (cartItems.length === 0 && !isOAuthRedirect) {
       setLocation('/');
     }
-  }, [cartItems.length, setLocation]);
+  }, [cartItems.length, setLocation, isOAuthRedirect]);
 
   const subtotal = cartItems.reduce((sum, item) => {
     const price = item.finalPrice ?? item.product.price;

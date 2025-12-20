@@ -235,11 +235,9 @@ export const MenuDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   };
 
   const handleLoginClick = () => {
-    if (isLoggedIn) {
-      navigate('/account');
-    } else {
-      navigate('/checkout');
-    }
+    // ログイン状態に関わらず、マイページに遷移
+    // マイページでログインしていない場合は自動的にチェックアウトページにリダイレクトされる
+    navigate('/account');
   };
 
   return (

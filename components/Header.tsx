@@ -153,23 +153,13 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
 
           {/* Icons */}
           <div className="flex items-center gap-5 sm:gap-6">
-            {isLoggedIn ? (
-              <Link href="/account">
-                <a className={`hidden sm:block transition-colors ${
-                  isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
-                }`}>
-                  <IconUser className="w-5 h-5" />
-                </a>
-              </Link>
-            ) : (
-              <Link href="/checkout">
-                <a className={`hidden sm:block transition-colors ${
-                  isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
-                }`} title="ログインが必要です">
-                  <IconUser className="w-5 h-5" />
-                </a>
-              </Link>
-            )}
+            <Link href="/account">
+              <a className={`hidden sm:block transition-colors ${
+                isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
+              }`} title={isLoggedIn ? 'マイページ' : 'ログイン'}>
+                <IconUser className="w-5 h-5" />
+              </a>
+            </Link>
             <button className={`transition-colors ${
               isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
             }`}>

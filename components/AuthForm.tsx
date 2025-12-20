@@ -106,12 +106,26 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, initialEmail = '' })
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isSignUp ? 'bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg border-2 border-blue-300 shadow-sm' : ''}`}>
       <div>
-        <h2 className="text-xl font-medium mb-2">アカウント</h2>
-        <p className="text-sm text-gray-500">
-          {isSignUp ? '新規アカウントを作成' : '既存のアカウントでログイン'}
-        </p>
+        {isSignUp ? (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-2xl font-bold text-blue-700">新規登録</h2>
+              <span className="text-xs font-semibold text-white bg-blue-600 px-3 py-1 rounded-full">NEW</span>
+            </div>
+            <p className="text-sm font-medium text-blue-600">
+              ✨ 新規アカウントを作成して始めましょう
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h2 className="text-xl font-medium mb-2">アカウント</h2>
+            <p className="text-sm text-gray-500">
+              既存のアカウントでログイン
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Google認証 */}
