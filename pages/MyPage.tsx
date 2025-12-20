@@ -3,6 +3,9 @@ import { useLocation, Link } from 'wouter';
 import { supabase, getProfile, updateProfile, getOrders, Order, Profile } from '../lib/supabase';
 import { IconChevronDown, IconChevronRight } from '../components/Icons';
 import { FadeInImage, LoadingButton } from '../components/UI';
+import AuthForm from '../components/AuthForm';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const MyPage = () => {
   const [, setLocation] = useLocation();
@@ -34,24 +37,31 @@ const MyPage = () => {
   const checkAuth = async () => {
     try {
       if (!supabase) {
-        setLocation('/');
+        setLoading(false);
         return;
       }
 
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error || !session) {
-        setLocation('/checkout');
-        return;
+        setLoading(false);
+        return; // ログインしていない場合は、ログインフォームを表示
       }
 
       setUser(session.user);
       await loadUserData(session.user.id);
     } catch (error) {
       console.error('認証チェックエラー:', error);
-      setLocation('/checkout');
+      setLoading(false);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAuthSuccess = async (email: string, userData: any) => {
+    setUser(userData);
+    if (userData?.id) {
+      await loadUserData(userData.id);
     }
   };
 
@@ -142,8 +152,25 @@ const MyPage = () => {
     );
   }
 
+  // ログインしていない場合はログインフォームを表示
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary">
+        <Header onOpenCart={() => {}} onOpenMenu={() => {}} />
+        <main className="flex-1 pt-32 pb-24">
+          <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-8 text-center">
+              <h1 className="text-3xl md:text-4xl font-serif tracking-widest mb-2">マイページ</h1>
+              <p className="text-sm text-gray-500">ログインしてマイページをご利用ください</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-8">
+              <AuthForm onAuthSuccess={handleAuthSuccess} />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (
