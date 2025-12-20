@@ -44,6 +44,7 @@ const ProductEditor = () => {
   const [stock, setStock] = useState('0');
   const [sku, setSku] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
   const [stockValidationError, setStockValidationError] = useState<string>('');
   
   // Variants
@@ -103,7 +104,8 @@ const ProductEditor = () => {
         setHandle(data.handle);
         setStock(data.stock?.toString() || '0');
         setSku(data.sku || '');
-        setIsActive(data.is_active);
+        setIsActive(data.is_active ?? true);
+        setIsVisible(data.is_visible ?? (data.is_active ?? true));
         setHasVariants(data.has_variants || false);
         
         // Load variants config or migrate from old format
@@ -382,6 +384,8 @@ const ProductEditor = () => {
         stock: 0, // 基本在庫は使用しないため、常に0として保存
         sku: sku || null,
         is_active: isActive,
+        is_visible: isActive, // is_activeとis_visibleを連動
+        status: isActive ? 'active' : 'draft', // statusも連動
         has_variants: hasVariants,
         variants: legacyVariants, // Only first variation type options for legacy
         variants_config: hasVariants ? variationTypes : [], // Full config
@@ -782,7 +786,11 @@ const ProductEditor = () => {
              <h3 className="text-base font-medium text-gray-900 mb-4">公開状態</h3>
              <select 
                value={isActive ? 'active' : 'draft'}
-               onChange={(e) => setIsActive(e.target.value === 'active')}
+               onChange={(e) => {
+                 const newIsActive = e.target.value === 'active';
+                 setIsActive(newIsActive);
+                 setIsVisible(newIsActive); // is_visibleも連動
+               }}
                     className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-sm bg-white"
                   >
                     <option value="active">販売中</option>

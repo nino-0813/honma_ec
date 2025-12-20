@@ -35,14 +35,38 @@ ADMIN_BASIC_AUTH_PASS=your_admin_password
 ```
 
 **設定方法（詳細）:**
+
+#### 方法①: 1つずつ追加する（推奨）
+
 1. Vercelダッシュボードにログイン
 2. プロジェクトを選択
 3. **Settings** > **Environment Variables** に移動
-4. 以下の2つの環境変数を追加：
-   - **Key**: `ADMIN_BASIC_AUTH_USER` / **Value**: 管理画面のユーザー名（例: `admin`）
-   - **Key**: `ADMIN_BASIC_AUTH_PASS` / **Value**: 管理画面のパスワード（例: `secure_password_123`）
-5. **Environment** で **Production** を選択（必要に応じて Preview も選択可）
-6. **Save** をクリック
+4. **1つ目の環境変数を追加：**
+   - **Key**: `ADMIN_BASIC_AUTH_USER`
+   - **Value**: 管理画面のユーザー名（例: `naco_ikevege`）
+   - **Environment**: **Production** を選択
+   - **「追加」または「保存」ボタンをクリック**（重要！）
+5. **2つ目の環境変数を追加：**
+   - **Key**: `ADMIN_BASIC_AUTH_PASS`
+   - **Value**: 管理画面のパスワード（例: `phRMyqQPBmTK6`）
+   - **Environment**: **Production** を選択
+   - **「追加」または「保存」ボタンをクリック**（重要！）
+
+**重要**: 各環境変数を追加した後、**必ず「保存」ボタンをクリック**してください。複数の環境変数を一度に追加しようとすると、エラーが発生することがあります。
+
+#### 方法②: .envファイルをインポートする
+
+1. 以下の内容をテキストエディタにコピー：
+   ```
+   ADMIN_BASIC_AUTH_USER=naco_ikevege
+   ADMIN_BASIC_AUTH_PASS=phRMyqQPBmTK6
+   ```
+2. Vercelダッシュボードの **Settings** > **Environment Variables** に移動
+3. **「.env をインポートする」ボタンをクリック**
+4. 上記の内容を貼り付け
+5. **Environment** で **Production** を選択
+6. **「保存」ボタンをクリック**
+
 7. **重要**: 環境変数を追加・変更した後は、**必ず再デプロイが必要**です
    - Deployments タブから最新のデプロイメントを **Redeploy** するか
    - GitHubにプッシュして自動デプロイを待つ
