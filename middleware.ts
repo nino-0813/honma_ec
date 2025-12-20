@@ -22,10 +22,8 @@ export default function middleware(request: Request) {
 
     // 環境変数が設定されていない場合は認証をスキップ（開発環境用）
     if (!adminUser || !adminPass) {
-      // 環境変数が設定されていない場合、リクエストをそのまま通過
-      return new Response(null, {
-        status: 200,
-      });
+      // リクエストをそのまま通過（何も返さない = undefinedを返す）
+      return;
     }
 
     // `/admin` パスで始まる場合のみ Basic認証を要求
@@ -41,10 +39,8 @@ export default function middleware(request: Request) {
           const [username, password] = credentials.split(':');
 
           if (username === adminUser && password === adminPass) {
-            // 認証成功: リクエストをそのまま通過
-            return new Response(null, {
-              status: 200,
-            });
+            // 認証成功: リクエストをそのまま通過（何も返さない = undefinedを返す）
+            return;
           }
         } catch (e) {
           console.error('Basic認証の解析エラー:', e);
@@ -60,16 +56,13 @@ export default function middleware(request: Request) {
       });
     }
 
-    // 管理画面以外のリクエストはそのまま通過
-    return new Response(null, {
-      status: 200,
-    });
+    // 管理画面以外のリクエストはそのまま通過（何も返さない = undefinedを返す）
+    return;
   } catch (error) {
     // エラーが発生した場合、ログを出力してリクエストを通過させる
     console.error('Middleware error:', error);
-    return new Response(null, {
-      status: 200,
-    });
+    // エラー時もリクエストを通過（何も返さない = undefinedを返す）
+    return;
   }
 }
 

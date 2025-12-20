@@ -300,7 +300,9 @@ const AdminRoutes = () => {
       // 認証成功後、元のパスに戻る
       const returnPath = currentPath;
       sessionStorage.setItem('admin_return_path', returnPath);
+      // フルページリロードでBasic認証を要求
       window.location.href = '/admin';
+      return; // リダイレクト後は処理を終了
     }
   }, []);
 
@@ -393,11 +395,20 @@ function App() {
 
     // Basic認証後のリダイレクト処理
     const adminReturnPath = sessionStorage.getItem('admin_return_path');
-    if (adminReturnPath && window.location.pathname === '/') {
+    // Basic認証が成功して`/admin`または`/`にリダイレクトされた場合
+    // または、`/admin`に直接アクセスしてBasic認証が成功した場合
+    if (adminReturnPath && (window.location.pathname === '/' || window.location.pathname === '/index.html' || window.location.pathname === '/admin')) {
       // Basic認証成功後、元のパスに戻る
       sessionStorage.setItem('basic_auth_passed', 'true');
       sessionStorage.removeItem('admin_return_path');
+      // ハッシュルーティングを使用しているため、ハッシュでリダイレクト
       window.location.hash = adminReturnPath;
+    } else if (window.location.pathname === '/admin' && !adminReturnPath) {
+      // `/admin`に直接アクセスしてBasic認証が成功した場合
+      // Basic認証が成功したことを示すフラグを設定
+      sessionStorage.setItem('basic_auth_passed', 'true');
+      // ハッシュルーティングを使用しているため、ハッシュでリダイレクト
+      window.location.hash = '/admin';
     }
   }, []);
 
