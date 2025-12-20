@@ -1,4 +1,16 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Vercel Serverless Function types
+type VercelRequest = {
+  method?: string;
+  body?: any;
+  query?: Record<string, string>;
+};
+
+type VercelResponse = {
+  status: (code: number) => VercelResponse;
+  json: (data: any) => void;
+  end: () => void;
+  setHeader: (name: string, value: string) => void;
+};
 
 // RSSフィードをパースするためのシンプルな実装
 const parseRSS = (xmlText: string) => {

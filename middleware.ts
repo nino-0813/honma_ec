@@ -1,3 +1,10 @@
+// Vercel Edge Middleware types
+declare const Deno: {
+  env: {
+    get: (key: string) => string | undefined;
+  };
+};
+
 export const config = {
   matcher: [
     '/admin/:path*',
@@ -10,8 +17,8 @@ export default function middleware(request: Request) {
     const pathname = url.pathname;
 
     // 環境変数から認証情報を取得
-    const adminUser = Deno.env.get('ADMIN_BASIC_AUTH_USER') || '';
-    const adminPass = Deno.env.get('ADMIN_BASIC_AUTH_PASS') || '';
+    const adminUser = Deno?.env?.get('ADMIN_BASIC_AUTH_USER') || '';
+    const adminPass = Deno?.env?.get('ADMIN_BASIC_AUTH_PASS') || '';
 
     // 環境変数が設定されていない場合は認証をスキップ（開発環境用）
     if (!adminUser || !adminPass) {

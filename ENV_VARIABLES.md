@@ -28,16 +28,29 @@ VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 2. Developers > API keys に移動
 3. Publishable key をコピー（テスト環境または本番環境）
 
-#### 3. 管理画面 Basic認証（Vercel Edge Function用）
+#### 3. 管理画面 Basic認証（Vercel Edge Middleware用）
 ```
 ADMIN_BASIC_AUTH_USER=your_admin_username
 ADMIN_BASIC_AUTH_PASS=your_admin_password
 ```
 
-**設定方法:**
-1. 管理画面にアクセスするためのユーザー名とパスワードを設定
-2. **重要**: `VITE_` プレフィックスを付けないでください（サーバーサイドでのみ使用）
-3. 本番環境でのみ設定することを推奨（開発環境では設定しないと認証がスキップされます）
+**設定方法（詳細）:**
+1. Vercelダッシュボードにログイン
+2. プロジェクトを選択
+3. **Settings** > **Environment Variables** に移動
+4. 以下の2つの環境変数を追加：
+   - **Key**: `ADMIN_BASIC_AUTH_USER` / **Value**: 管理画面のユーザー名（例: `admin`）
+   - **Key**: `ADMIN_BASIC_AUTH_PASS` / **Value**: 管理画面のパスワード（例: `secure_password_123`）
+5. **Environment** で **Production** を選択（必要に応じて Preview も選択可）
+6. **Save** をクリック
+7. **重要**: 環境変数を追加・変更した後は、**必ず再デプロイが必要**です
+   - Deployments タブから最新のデプロイメントを **Redeploy** するか
+   - GitHubにプッシュして自動デプロイを待つ
+
+**重要事項:**
+- `VITE_` プレフィックスを付けないでください（サーバーサイドでのみ使用）
+- 本番環境でのみ設定することを推奨（開発環境では設定しないと認証がスキップされます）
+- パスワードは強力なものを設定してください（英数字・記号を含む8文字以上推奨）
 
 ### オプション環境変数（メール送信機能用）
 

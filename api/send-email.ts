@@ -55,7 +55,7 @@ export default async function handler(req: any, res: any) {
       };
     }
 
-    const apiKey = process.env.RESEND_API_KEY || (import.meta.env?.VITE_RESEND_API_KEY as string);
+    const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       const error = { error: 'Resend APIキーが設定されていません' };
       if (res) {
@@ -72,7 +72,7 @@ export default async function handler(req: any, res: any) {
 
     // 送信元メールアドレス（Resendで設定したドメインを使用）
     // 注意: Resendでドメインを設定する必要があります
-    const fromEmail = process.env.RESEND_FROM_EMAIL || import.meta.env?.VITE_RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
     // 各受信者にメールを送信
     const emailPromises = recipients.map((email: string) =>

@@ -8,15 +8,15 @@
 
 ### 1. ファイル構成
 
-- `api/admin-auth.ts`: Vercel Edge Function（Basic認証を実装）
-- `vercel.json`: `/admin` へのリクエストを Edge Function にルーティング
+- `middleware.ts`: Vercel Edge Middleware（Basic認証を実装）
+- `vercel.json`: ルーティング設定（`/admin` パスは `middleware.ts` で処理）
 
 ### 2. 動作フロー
 
 1. ユーザーが `/admin` にアクセス
-2. `vercel.json` の `rewrites` により、リクエストが `api/admin-auth.ts` にルーティング
-3. Edge Function で Basic認証をチェック
-4. 認証成功: `index.html` にリダイレクト（クライアントサイドで `/#/admin` にルーティング）
+2. `middleware.ts` がリクエストをインターセプト
+3. Edge Middleware で Basic認証をチェック
+4. 認証成功: リクエストをそのまま通過（クライアントサイドで `/#/admin` にルーティング）
 5. 認証失敗: 401 Unauthorized を返し、ブラウザが Basic認証ダイアログを表示
 
 ### 3. 環境変数の設定
@@ -33,17 +33,43 @@ ADMIN_BASIC_AUTH_PASS=your_admin_password
 - 本番環境（Production）でのみ設定することを推奨
 - 開発環境では設定しないと認証がスキップされます（ローカル開発が容易）
 
-### 4. 設定手順
+### 4. 設定手順（重要）
 
-1. Vercel ダッシュボードにログイン
-2. プロジェクトを選択
-3. Settings > Environment Variables に移動
-4. 以下の環境変数を追加：
-   - `ADMIN_BASIC_AUTH_USER`: 管理画面のユーザー名
-   - `ADMIN_BASIC_AUTH_PASS`: 管理画面のパスワード
-5. 環境を選択（Production のみ推奨）
-6. Save をクリック
-7. **再デプロイを実行**（環境変数の変更を反映するため）
+#### Step 1: Vercel ダッシュボードにアクセス
+1. [Vercel ダッシュボード](https://vercel.com/dashboard) にログイン
+2. プロジェクト `honma-ec` を選択
+
+#### Step 2: 環境変数を設定
+1. プロジェクトページで **Settings** タブをクリック
+2. 左サイドバーから **Environment Variables** を選択
+3. 以下の環境変数を追加：
+
+   **環境変数 1:**
+   - **Key**: `ADMIN_BASIC_AUTH_USER`
+   - **Value**: 管理画面のユーザー名（例: `admin`）
+   - **Environment**: `Production` を選択（必要に応じて `Preview` も選択可）
+
+   **環境変数 2:**
+   - **Key**: `ADMIN_BASIC_AUTH_PASS`
+   - **Value**: 管理画面のパスワード（例: `your_secure_password_123`）
+   - **Environment**: `Production` を選択（必要に応じて `Preview` も選択可）
+
+4. 各環境変数を追加したら **Save** をクリック
+
+#### Step 3: 再デプロイ（必須）
+環境変数を追加・変更した後は、**必ず再デプロイが必要**です：
+
+1. プロジェクトページの **Deployments** タブを開く
+2. 最新のデプロイメントの右側にある **「...」メニュー** をクリック
+3. **Redeploy** を選択
+4. 確認ダイアログで **Redeploy** をクリック
+
+または、GitHubにプッシュすることで自動的に再デプロイされます。
+
+#### 注意事項
+- **`VITE_` プレフィックスは付けないでください**（サーバーサイドでのみ使用）
+- 環境変数は **Production 環境のみ** に設定することを推奨（開発が容易）
+- パスワードは **強力なもの** を設定してください（英数字・記号を含む8文字以上推奨）
 
 ### 5. 動作確認
 
