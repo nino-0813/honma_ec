@@ -3,6 +3,7 @@ import { useRoute, Link, useLocation } from 'wouter';
 import { supabase } from '../../lib/supabase';
 import { IconArrowLeft, IconUpload, IconLoader2, IconTrash, IconX, IconPlus } from '../../components/Icons';
 import { LoadingButton } from '../../components/UI';
+import { ShippingMethod } from '../../types';
 
 const CATEGORIES = [
   { id: 'お米', name: 'お米', subcategories: ['コシヒカリ', '亀の尾', 'にこまる', '年間契約'] },
@@ -54,6 +55,15 @@ const ProductEditor = () => {
   // Images
   const [images, setImages] = useState<string[]>([]);
 
+  // Shipping Methods
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
+
+  // Fetch shipping methods
+  useEffect(() => {
+    fetchShippingMethods();
+  }, []);
+
   // Fetch existing product
   useEffect(() => {
     if (!isNew && routeHandle) {
@@ -83,6 +93,20 @@ const ProductEditor = () => {
       setSubcategory('');
     }
   }, [category]);
+
+  const fetchShippingMethods = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('shipping_methods')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setShippingMethods((data || []) as ShippingMethod[]);
+    } catch (error) {
+      console.error('発送方法の取得エラー:', error);
+    }
+  };
 
   const fetchProduct = async (handleStr: string) => {
     try {
@@ -139,6 +163,16 @@ const ProductEditor = () => {
           setImages(data.images);
         } else if (data.image) {
           setImages([data.image]);
+        }
+
+        // Load shipping methods for this product
+        const { data: linkedMethods, error: linkError } = await supabase
+          .from('product_shipping_methods')
+          .select('shipping_method_id')
+          .eq('product_id', data.id);
+
+        if (!linkError && linkedMethods) {
+          setSelectedShippingMethodIds(linkedMethods.map((m: any) => m.shipping_method_id));
         }
       }
     } catch (error) {
@@ -394,13 +428,26 @@ const ProductEditor = () => {
         updated_at: new Date().toISOString(),
       };
 
+      let productId: string;
       let error;
       if (isNew) {
-        const { error: insertError } = await supabase
+        const { data: insertedData, error: insertError } = await supabase
           .from('products')
-          .insert([productData]);
+          .insert([productData])
+          .select()
+          .single();
         error = insertError;
+        productId = insertedData?.id;
       } else {
+        // Get product ID first
+        const { data: existingProduct } = await supabase
+          .from('products')
+          .select('id')
+          .eq('handle', routeHandle)
+          .single();
+        
+        productId = existingProduct?.id;
+
         const { error: updateError } = await supabase
           .from('products')
           .update(productData)
@@ -409,6 +456,32 @@ const ProductEditor = () => {
       }
 
       if (error) throw error;
+
+      // Save shipping method associations
+      if (productId) {
+        // Delete existing associations
+        await supabase
+          .from('product_shipping_methods')
+          .delete()
+          .eq('product_id', productId);
+
+        // Insert new associations
+        if (selectedShippingMethodIds.length > 0) {
+          const links = selectedShippingMethodIds.map((methodId) => ({
+            product_id: productId,
+            shipping_method_id: methodId,
+          }));
+
+          const { error: linkError } = await supabase
+            .from('product_shipping_methods')
+            .insert(links);
+
+          if (linkError) {
+            console.error('発送方法の紐づけエラー:', linkError);
+            // Don't throw - product is saved, just the link failed
+          }
+        }
+      }
 
       alert('商品を保存しました');
       setLocation('/admin/products');
@@ -841,6 +914,61 @@ const ProductEditor = () => {
                   />
                </div>
              </div>
+          </div>
+
+          {/* 発送方法選択 */}
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-slide-up" style={{ animationDelay: '500ms' }}>
+             <div className="flex items-center justify-between mb-4">
+               <h3 className="text-base font-medium text-gray-900">発送方法</h3>
+               <Link href="/admin/shipping-methods">
+                 <a className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
+                   管理画面で設定
+                 </a>
+               </Link>
+             </div>
+             <div className="space-y-2 max-h-64 overflow-y-auto">
+               {shippingMethods.length === 0 ? (
+                 <div className="text-sm text-gray-500 py-4 text-center">
+                   発送方法が登録されていません
+                   <br />
+                   <Link href="/admin/shipping-methods/new">
+                     <a className="text-blue-600 hover:underline mt-1 inline-block">
+                       新規作成
+                     </a>
+                   </Link>
+                 </div>
+               ) : (
+                 shippingMethods.map((method) => (
+                   <label
+                     key={method.id}
+                     className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                   >
+                     <input
+                       type="checkbox"
+                       checked={selectedShippingMethodIds.includes(method.id)}
+                       onChange={(e) => {
+                         if (e.target.checked) {
+                           setSelectedShippingMethodIds([...selectedShippingMethodIds, method.id]);
+                         } else {
+                           setSelectedShippingMethodIds(selectedShippingMethodIds.filter(id => id !== method.id));
+                         }
+                       }}
+                       className="rounded border-gray-300 text-black focus:ring-black"
+                     />
+                     <div className="flex-1">
+                       <div className="text-sm font-medium text-gray-900">{method.name}</div>
+                       <div className="text-xs text-gray-500">
+                         {method.box_size && `${method.box_size}サイズ`}
+                         {method.max_items_per_box && ` / 1箱${method.max_items_per_box}個まで`}
+                       </div>
+                     </div>
+                   </label>
+                 ))
+               )}
+             </div>
+             <p className="text-xs text-gray-500 mt-2">
+               複数の発送方法を選択できます（例：常温便 / クール便）
+             </p>
           </div>
         </div>
       </div>

@@ -131,3 +131,38 @@ export interface Profile {
   updated_at: string;
   is_admin?: boolean;
 }
+
+// 発送方法の地域別送料
+export interface AreaFees {
+  hokkaido?: number;    // 北海道
+  tohoku?: number;       // 東北
+  kanto?: number;        // 関東
+  chubu?: number;       // 中部
+  kansai?: number;      // 関西
+  chugoku?: number;     // 中国
+  shikoku?: number;     // 四国
+  kyushu?: number;      // 九州
+  okinawa?: number;     // 沖縄
+}
+
+// 発送方法
+export interface ShippingMethod {
+  id: string;
+  name: string;                    // 発送方法名（例：米用ダンボールM）
+  box_size: number | null;         // ダンボールサイズ（60 / 80 / 100 / 120）
+  max_weight_kg: number | null;   // 最大重量（kg）
+  max_items_per_box: number | null; // 1箱に入る最大商品数（発送量）
+  fee_type: 'uniform' | 'area';   // 送料タイプ（全国一律 / 地域別）
+  area_fees: AreaFees;            // 地域別送料（JSON形式）
+  uniform_fee?: number;           // 全国一律送料（fee_typeが'uniform'の場合）
+  created_at: string;
+  updated_at: string;
+}
+
+// 商品と発送方法の紐づけ
+export interface ProductShippingMethod {
+  id: string;
+  product_id: string;
+  shipping_method_id: string;
+  created_at: string;
+}

@@ -35,6 +35,8 @@ import CustomerSupport from './pages/admin/CustomerSupport';
 import AdminLogin from './pages/admin/AdminLogin';
 import BlogManagement from './pages/admin/BlogManagement';
 import BlogEditor from './pages/admin/BlogEditor';
+import ShippingMethodManagement from './pages/admin/ShippingMethodManagement';
+import ShippingMethodEditor from './pages/admin/ShippingMethodEditor';
 
 // Cart Context
 interface CartContextType {
@@ -337,6 +339,9 @@ const AdminRoutes = () => {
         <Route path="/admin/products/new" component={ProductEditor} />
         <Route path="/admin/products/:handle" component={ProductEditor} />
         <Route path="/admin/products" component={ProductList} />
+        <Route path="/admin/shipping-methods/new" component={ShippingMethodEditor} />
+        <Route path="/admin/shipping-methods/:id" component={ShippingMethodEditor} />
+        <Route path="/admin/shipping-methods" component={ShippingMethodManagement} />
         <Route path="/admin/orders" component={Orders} />
         <Route path="/admin/customers" component={Customers} />
         <Route path="/admin/discounts" component={Discounts} />

@@ -11,7 +11,8 @@ import {
   IconStar,
   IconMessageCircle,
   IconMail,
-  IconFileText
+  IconFileText,
+  IconSettings
 } from '../../components/Icons';
 import { useAdmin } from '../../hooks/useAdmin';
 
@@ -60,6 +61,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, actions }) =
           <NavItem href="/admin" icon={IconDashboard} label="ホーム" />
           <NavItem href="/admin/orders" icon={IconShoppingCart} label="注文管理" />
           <NavItem href="/admin/products" icon={IconPackage} label="商品管理" />
+          <NavItem href="/admin/shipping-methods" icon={IconSettings} label="発送方法管理" />
           <NavItem href="/admin/customers" icon={IconUsers} label="顧客管理" />
           <NavItem href="/admin/reviews" icon={IconStar} label="レビュー管理" />
           <NavItem href="/admin/customer-support" icon={IconMessageCircle} label="顧客対応" />
