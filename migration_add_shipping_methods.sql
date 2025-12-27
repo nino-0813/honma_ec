@@ -9,8 +9,9 @@ CREATE TABLE IF NOT EXISTS public.shipping_methods (
   box_size INTEGER, -- ダンボールサイズ（60 / 80 / 100 / 120）
   max_weight_kg NUMERIC(5, 2), -- 最大重量（kg）
   max_items_per_box INTEGER, -- 1箱に入る最大商品数（発送量）
-  fee_type TEXT NOT NULL DEFAULT 'uniform', -- 'uniform'（全国一律）または 'area'（地域別）
-  area_fees JSONB DEFAULT '{}'::jsonb, -- 地域別送料（JSON形式）
+  fee_type TEXT NOT NULL DEFAULT 'uniform', -- 'uniform'（全国一律）、'area'（地域別）、'size'（サイズ別）
+  area_fees JSONB DEFAULT '{}'::jsonb, -- 地域別送料（JSON形式、fee_typeが'area'の場合）
+  size_fees JSONB DEFAULT '{}'::jsonb, -- サイズ別送料（JSON形式、fee_typeが'size'の場合）
   uniform_fee INTEGER, -- 全国一律送料（fee_typeが'uniform'の場合）
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

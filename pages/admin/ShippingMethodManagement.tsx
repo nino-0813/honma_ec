@@ -4,15 +4,19 @@ import { supabase } from '../../lib/supabase';
 import { IconPlus, IconEdit, IconTrash, IconPackage } from '../../components/Icons';
 import { ShippingMethod, AreaFees } from '../../types';
 
+// 画像の料金表に合わせた地域区分
 const AREA_LABELS: Record<keyof AreaFees, string> = {
   hokkaido: '北海道',
-  tohoku: '東北',
-  kanto: '関東',
-  chubu: '中部',
-  kansai: '関西',
-  chugoku: '中国',
-  shikoku: '四国',
-  kyushu: '九州',
+  north_tohoku: '北東北（青森、秋田、岩手）',
+  south_tohoku: '南東北（宮城、山形、福島）',
+  kanto: '関東（茨城、栃木、群馬、埼玉、千葉、神奈川、山梨、東京）',
+  shinetsu: '信越（新潟、長野）',
+  hokuriku: '北陸（富山、石川、福井）',
+  chubu: '中部（静岡、愛知、三重、岐阜）',
+  kansai: '関西（大阪、京都、滋賀、奈良、和歌山、兵庫）',
+  chugoku: '中国（岡山、広島、山口、鳥取、島根）',
+  shikoku: '四国（香川、徳島、愛媛、高知）',
+  kyushu: '九州（福岡、佐賀、長崎、熊本、大分、宮崎、鹿児島）',
   okinawa: '沖縄',
 };
 

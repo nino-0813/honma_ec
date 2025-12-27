@@ -132,28 +132,43 @@ export interface Profile {
   is_admin?: boolean;
 }
 
-// 発送方法の地域別送料
+// 発送方法の地域別送料（画像の料金表に合わせた地域区分）
 export interface AreaFees {
-  hokkaido?: number;    // 北海道
-  tohoku?: number;       // 東北
-  kanto?: number;        // 関東
-  chubu?: number;       // 中部
-  kansai?: number;      // 関西
-  chugoku?: number;     // 中国
-  shikoku?: number;     // 四国
-  kyushu?: number;      // 九州
-  okinawa?: number;     // 沖縄
+  hokkaido?: number;           // 北海道
+  north_tohoku?: number;       // 北東北（青森、秋田、岩手）
+  south_tohoku?: number;       // 南東北（宮城、山形、福島）
+  kanto?: number;              // 関東（茨城、栃木、群馬、埼玉、千葉、神奈川、山梨、東京）
+  shinetsu?: number;           // 信越（新潟、長野）
+  hokuriku?: number;           // 北陸（富山、石川、福井）
+  chubu?: number;              // 中部（静岡、愛知、三重、岐阜）
+  kansai?: number;             // 関西（大阪、京都、滋賀、奈良、和歌山、兵庫）
+  chugoku?: number;            // 中国（岡山、広島、山口、鳥取、島根）
+  shikoku?: number;            // 四国（香川、徳島、愛媛、高知）
+  kyushu?: number;             // 九州（福岡、佐賀、長崎、熊本、大分、宮崎、鹿児島）
+  okinawa?: number;            // 沖縄
+}
+
+// サイズ別送料（サイズと重量の組み合わせ）
+export interface SizeFee {
+  size: number;                // サイズ（60, 80, 100, 120, 140）
+  weight_kg: number;           // 重量上限（2, 5, 10, 15, 20）
+  area_fees: AreaFees;         // 地域別送料
+}
+
+export interface SizeFees {
+  [key: string]: SizeFee;      // key: "size_weight" (例: "60_2", "80_5")
 }
 
 // 発送方法
 export interface ShippingMethod {
   id: string;
   name: string;                    // 発送方法名（例：米用ダンボールM）
-  box_size: number | null;         // ダンボールサイズ（60 / 80 / 100 / 120）
+  box_size: number | null;         // ダンボールサイズ（60 / 80 / 100 / 120 / 140）
   max_weight_kg: number | null;   // 最大重量（kg）
   max_items_per_box: number | null; // 1箱に入る最大商品数（発送量）
-  fee_type: 'uniform' | 'area';   // 送料タイプ（全国一律 / 地域別）
-  area_fees: AreaFees;            // 地域別送料（JSON形式）
+  fee_type: 'uniform' | 'area' | 'size'; // 送料タイプ（全国一律 / 地域別 / サイズ別）
+  area_fees: AreaFees;            // 地域別送料（JSON形式、fee_typeが'area'の場合）
+  size_fees?: SizeFees;            // サイズ別送料（JSON形式、fee_typeが'size'の場合）
   uniform_fee?: number;           // 全国一律送料（fee_typeが'uniform'の場合）
   created_at: string;
   updated_at: string;
