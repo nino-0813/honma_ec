@@ -11,7 +11,9 @@ import { supabase, checkStockAvailability } from '../lib/supabase';
 import { ShippingMethod, AreaFees } from '../types';
 
 // Stripe公開可能キー（環境変数から取得）
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51...');
+// NOTE: 未設定だとPaymentElementが無言で出ないことがあるため、フォールバック文字列は使わない
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null;
 
 // 郵便番号から都道府県を判定（先頭3桁で判定）
 const getPrefectureFromPostalCode = (postalCode: string): string | null => {
@@ -224,6 +226,7 @@ const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
   const { cartItems, clearCart, restoreCart } = useContext(CartContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentElementReady, setPaymentElementReady] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -350,7 +353,16 @@ const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
       {/* Stripe Payment Element */}
       <div className="border border-gray-200 p-6 rounded">
         <h3 className="text-sm font-medium mb-4">お支払い方法</h3>
-        <PaymentElement />
+        {!paymentElementReady && (
+          <div className="text-sm text-gray-500 mb-3">決済フォームを読み込み中...</div>
+        )}
+        <PaymentElement
+          onReady={() => setPaymentElementReady(true)}
+          onLoadError={(e) => {
+            console.error('PaymentElement load error:', e);
+            setError('決済フォームの読み込みに失敗しました（Stripe設定を確認してください）');
+          }}
+        />
       </div>
 
       {/* エラーメッセージ */}
@@ -1427,7 +1439,14 @@ const Checkout = () => {
                         </div>
                       )}
 
-                      {paymentClientSecret ? (
+                      {!STRIPE_PUBLISHABLE_KEY ? (
+                        <div className="border border-red-200 bg-red-50 text-red-700 px-4 py-3 rounded">
+                          Stripe公開可能キー（<code className="font-mono">VITE_STRIPE_PUBLISHABLE_KEY</code>）が未設定です。<br />
+                          <span className="text-xs">
+                            ※ <code className="font-mono">.env.local</code> を設定後、Viteを再起動してください
+                          </span>
+                        </div>
+                      ) : paymentClientSecret ? (
                         <Elements
                           stripe={stripePromise}
                           options={{ clientSecret: paymentClientSecret, locale: 'ja' }}
