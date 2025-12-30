@@ -228,8 +228,17 @@ const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData?.shippingMethod) {
-      setError('配送方法を選択してください');
+    // 住所/連絡先の必須項目（このフォームは配送先入力とは別なので、ここで必須チェックする）
+    const hasRequired =
+      Boolean(formData.email && String(formData.email).length > 3) &&
+      Boolean(formData.firstName && String(formData.firstName).trim().length > 0) &&
+      Boolean(formData.lastName && String(formData.lastName).trim().length > 0) &&
+      Boolean(formData.postalCode && String(formData.postalCode).replace(/[^0-9]/g, '').length === 7) &&
+      Boolean(formData.prefecture && String(formData.prefecture).trim().length > 0) &&
+      Boolean(formData.city && String(formData.city).trim().length > 0) &&
+      Boolean(formData.address && String(formData.address).trim().length > 0);
+    if (!hasRequired) {
+      setError('配送先住所（郵便番号・都道府県・市区町村・町名・番地）と氏名/メールを入力してください');
       return;
     }
 
@@ -383,7 +392,7 @@ const Checkout = () => {
     city: '',
     address: '',
     building: '',
-    shippingMethod: '' // 発送方法ID（UUID）
+    shippingMethod: '' // 互換用（旧仕様）。現在は自動割り当てのため選択不要。
   });
 
   // 発送方法と送料計算の状態
@@ -976,7 +985,7 @@ const Checkout = () => {
           Boolean(formData.postalCode && formData.postalCode.replace(/[^0-9]/g, '').length === 7) &&
           Boolean(formData.city && formData.city.trim().length > 0) &&
           Boolean(formData.address && formData.address.trim().length > 0) &&
-          Boolean(formData.shippingMethod && formData.shippingMethod.length > 0);
+          Boolean(formData.prefecture && String(formData.prefecture).trim().length > 0);
 
         if (!hasRequired) return;
 
@@ -1006,7 +1015,15 @@ const Checkout = () => {
           shipping_city: formData.city,
           shipping_postal_code: formData.postalCode,
           shipping_country: 'JP',
-          shipping_method: formData.shippingMethod,
+          // 自動割り当て結果を保存（管理画面で確認できるようにする）
+          shipping_method: JSON.stringify(
+            Object.entries(shippingPlan.byMethod || {}).map(([id, v]) => ({
+              shipping_method_id: id,
+              cost: v.cost,
+              items: v.itemsText,
+              breakdown: v.sizeBreakdownText || null,
+            }))
+          ),
           subtotal: subtotal,
           shipping_cost: shippingCost,
           total: total,
@@ -1051,7 +1068,7 @@ const Checkout = () => {
     };
 
     upsertOrderDraft();
-  }, [supabase, authUser, paymentIntentId, cartItems, total, subtotal, shippingCost, formData]);
+  }, [supabase, authUser, paymentIntentId, cartItems, total, subtotal, shippingCost, formData, shippingPlan]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -1345,54 +1362,52 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* 配送方法 */}
+                {/* 配送（自動割り当て / 選択不要） */}
                 {availableShippingMethods.length > 0 && (
                   <div className="border-t border-gray-200 pt-6">
-                    <h2 className="text-lg font-medium mb-4">配送方法</h2>
+                    <h2 className="text-lg font-medium mb-4">配送</h2>
                     {!formData.postalCode ? (
-                      <p className="text-sm text-gray-500">郵便番号を入力すると送料が表示されます</p>
+                      <p className="text-sm text-gray-500">郵便番号を入力すると送料の詳細が表示されます</p>
                     ) : (
                       <div className="space-y-3">
                         {availableShippingMethods.map((method) => {
                           const methodPlan = shippingPlan.byMethod?.[method.id];
-                          const methodCost = methodPlan?.cost ?? 0;
-                          const sizeBreakdownText = methodPlan?.sizeBreakdownText ?? null;
-                          const itemsText = methodPlan?.itemsText ?? '';
+                          // その配送方法が今回の注文で使われない場合は表示しない（見やすさ）
+                          if (!methodPlan) return null;
+
+                          const methodCost = methodPlan.cost ?? 0;
+                          const sizeBreakdownText = methodPlan.sizeBreakdownText ?? null;
+                          const itemsText = methodPlan.itemsText ?? '';
+
                           return (
-                            <label
+                            <div
                               key={method.id}
-                              className="flex items-center p-4 border border-gray-200 cursor-pointer hover:border-black transition-colors"
+                              className="p-4 border border-gray-200 rounded"
                             >
-                              <input
-                                type="radio"
-                                name="shippingMethod"
-                                value={method.id}
-                                checked={formData.shippingMethod === method.id}
-                                onChange={handleInputChange}
-                                className="mr-3"
-                              />
-                              <div className="flex-1">
-                                <div className="font-medium">{method.name}</div>
-                                {method.fee_type === 'size' && method.size_fees && (
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {Object.keys(method.size_fees).length}種類のサイズに対応
-                                  </div>
-                                )}
-                                {itemsText && (
-                                  <div className="text-xs text-gray-600 mt-1">
-                                    対象商品: {itemsText}
-                                  </div>
-                                )}
-                                {sizeBreakdownText && (
-                                  <div className="text-xs text-gray-600 mt-1">
-                                    内訳: {sizeBreakdownText}
-                                  </div>
-                                )}
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="font-medium">{method.name}</div>
+                                  {method.fee_type === 'size' && method.size_fees && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {Object.keys(method.size_fees).length}種類のサイズに対応
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="font-serif whitespace-nowrap">
+                                  ¥{methodCost.toLocaleString()}
+                                </div>
                               </div>
-                              <div className="font-serif">
-                                {methodCost > 0 ? `¥${methodCost.toLocaleString()}` : '—'}
-                              </div>
-                            </label>
+                              {itemsText && (
+                                <div className="text-xs text-gray-600 mt-2">
+                                  対象商品: {itemsText}
+                                </div>
+                              )}
+                              {sizeBreakdownText && (
+                                <div className="text-xs text-gray-600 mt-1">
+                                  内訳: {sizeBreakdownText}
+                                </div>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
@@ -1401,8 +1416,8 @@ const Checkout = () => {
                 )}
                   </div>
 
-                  {/* Stripe決済フォーム */}
-                  {isAuthenticated && formData.shippingMethod && (
+                  {/* Stripe決済フォーム（配送の選択は不要なので常時表示） */}
+                  {isAuthenticated && (
                     <div className="border-t border-gray-200 pt-6">
                       <h2 className="text-lg font-medium mb-6">お支払い</h2>
 
@@ -1436,15 +1451,6 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* 配送方法未選択の場合は決済へ進めない */}
-                  {isAuthenticated && !formData.shippingMethod && (
-                    <div className="border-t border-gray-200 pt-6">
-                      <h2 className="text-lg font-medium mb-4">お支払い</h2>
-                      <div className="border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 rounded">
-                        配送方法を選択すると、お支払いに進めます。
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
             </div>
