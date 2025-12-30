@@ -39,6 +39,8 @@ export interface DatabaseProduct {
 
 // Database型をProduct型に変換
 export const convertDatabaseProductToProduct = (dbProduct: DatabaseProduct): Product => {
+  const hasVariantsFromConfig =
+    Array.isArray(dbProduct.variants_config) && dbProduct.variants_config.length > 0;
   return {
     id: dbProduct.id,
     title: dbProduct.title,
@@ -50,7 +52,8 @@ export const convertDatabaseProductToProduct = (dbProduct: DatabaseProduct): Pro
     category: dbProduct.category,
     subcategory: dbProduct.subcategory || undefined,
     description: dbProduct.description || undefined,
-    hasVariants: dbProduct.has_variants,
+    // has_variants がfalseでも variants_config が入っているケースに対応
+    hasVariants: dbProduct.has_variants || hasVariantsFromConfig,
     variants: dbProduct.variants || [],
     variants_config: dbProduct.variants_config || [],
     sku: dbProduct.sku || undefined,
@@ -62,6 +65,9 @@ export const convertDatabaseProductToProduct = (dbProduct: DatabaseProduct): Pro
 
 // Product型をDatabase型に変換
 export const convertProductToDatabaseProduct = (product: Partial<Product> & { status?: 'active' | 'draft' | 'archived', is_active?: boolean }) => {
+  const hasVariantsFromConfig =
+    Array.isArray((product as any).variants_config) && (product as any).variants_config.length > 0;
+  const isVariantProduct = Boolean((product as any).hasVariants || hasVariantsFromConfig);
   return {
     title: product.title,
     price: product.price,
@@ -76,7 +82,8 @@ export const convertProductToDatabaseProduct = (product: Partial<Product> & { st
     variants: product.variants || null,
     variants_config: product.variants_config || null,
     status: product.status || 'active',
-    stock: product.stock || 0,
+    // ガード: バリエーション有りの商品は基本在庫(stock)を0に固定
+    stock: isVariantProduct ? 0 : (product.stock || 0),
     sku: product.sku || null,
     is_active: product.is_active ?? true,
     display_order: product.display_order ?? null,
@@ -252,7 +259,7 @@ export const getStockForVariant = (product: Product, selectedOptions: Record<str
       if (type.stockManagement === 'none') {
         // 在庫管理しない場合はスキップ
         continue;
-      } else if (type.stockManagement === 'individual') {
+      } else if (type.stockManagement === 'individual' || type.stockManagement === 'shared') {
         // 在庫共有が有効な場合
         if (type.sharedStock !== null && type.sharedStock !== undefined) {
           const sharedStockValue = Number(type.sharedStock);
@@ -265,10 +272,6 @@ export const getStockForVariant = (product: Product, selectedOptions: Record<str
           }
           // null/undefined は在庫管理しないオプションとして無視
         }
-      } else if (type.stockManagement === 'shared') {
-        // 基本在庫を共有する場合（互換性のため残しているが、基本在庫は使用しない）
-        // 基本在庫を使用しないため、在庫チェックをスキップ（nullを返す）
-        continue;
       }
     }
 

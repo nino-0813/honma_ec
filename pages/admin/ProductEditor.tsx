@@ -52,6 +52,13 @@ const ProductEditor = () => {
   const [hasVariants, setHasVariants] = useState(false);
   const [variationTypes, setVariationTypes] = useState<VariationType[]>([]);
 
+  // ガード: バリエーション有りの場合は基本在庫(stock)を常に0に固定
+  useEffect(() => {
+    if (hasVariants) {
+      setStock('0');
+    }
+  }, [hasVariants]);
+
   // Images
   const [images, setImages] = useState<string[]>([]);
 
@@ -130,7 +137,24 @@ const ProductEditor = () => {
         setSku(data.sku || '');
         setIsActive(data.is_active ?? true);
         setIsVisible(data.is_visible ?? (data.is_active ?? true));
-        setHasVariants(data.has_variants || false);
+        // has_variants が false でも variants_config が入っているケースに対応
+        const hasVariantsFromConfig = Array.isArray(data.variants_config) && data.variants_config.length > 0;
+        const hasVariantsFromLegacy = Array.isArray(data.variants) && data.variants.length > 0;
+        const computedHasVariants = Boolean(data.has_variants || hasVariantsFromConfig || hasVariantsFromLegacy);
+        setHasVariants(computedHasVariants);
+
+        // DBガード: バリエーション有りの商品は products.stock を0に補正（古いデータの残り対策）
+        if (computedHasVariants && data.id && (data.stock ?? 0) !== 0) {
+          try {
+            await supabase
+              .from('products')
+              .update({ stock: 0 })
+              .eq('id', data.id);
+            setStock('0');
+          } catch (e) {
+            console.warn('products.stock の自動補正に失敗:', e);
+          }
+        }
         
         // Load variants config or migrate from old format
         if (data.variants_config && Array.isArray(data.variants_config) && data.variants_config.length > 0) {

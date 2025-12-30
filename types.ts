@@ -153,6 +153,7 @@ export interface SizeFee {
   size: number;                // サイズ（60, 80, 100, 120, 140）
   weight_kg: number;           // 重量上限（2, 5, 10, 15, 20）
   area_fees: AreaFees;         // 地域別送料
+  max_items_per_box?: number | null; // このサイズで1箱に入る最大商品数（発送量）
 }
 
 export interface SizeFees {

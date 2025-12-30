@@ -107,9 +107,6 @@ const ShippingMethodEditor = () => {
 
   // フォーム状態
   const [name, setName] = useState('');
-  const [boxSize, setBoxSize] = useState<number | ''>('');
-  const [maxWeightKg, setMaxWeightKg] = useState<number | ''>('');
-  const [maxItemsPerBox, setMaxItemsPerBox] = useState<number | ''>('');
   const [feeType, setFeeType] = useState<'uniform' | 'area' | 'size'>('uniform');
   const [uniformFee, setUniformFee] = useState<number | ''>('');
   const [areaFees, setAreaFees] = useState<AreaFees>({});
@@ -125,6 +122,15 @@ const ShippingMethodEditor = () => {
   const [shippingTemplates, setShippingTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [autoAppliedDefaultTemplate, setAutoAppliedDefaultTemplate] = useState(false);
+
+  // サイズ別: 表示するサイズ行（バリエーションのように追加していく）
+  const [enabledSizes, setEnabledSizes] = useState<number[]>([]);
+  const [sizeToAdd, setSizeToAdd] = useState<number>(60);
+
+  const availableSizes = useMemo(
+    () => SIZE_OPTIONS.filter((s) => !enabledSizes.includes(s)),
+    [enabledSizes]
+  );
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
@@ -173,6 +179,40 @@ const ShippingMethodEditor = () => {
     setAutoAppliedDefaultTemplate(true);
   }, [isNew, feeType, shippingTemplates, sizeFees, autoAppliedDefaultTemplate]);
 
+  // サイズ別に切り替えたら、最初は60だけ表示（必要なサイズを追加していく）
+  useEffect(() => {
+    if (feeType !== 'size') return;
+    setEnabledSizes((prev) => (prev.length > 0 ? prev : [60]));
+  }, [feeType]);
+
+  // 追加候補のselectは「まだ追加されていないサイズ」に追従させる
+  useEffect(() => {
+    if (feeType !== 'size') return;
+    const next = availableSizes[0];
+    if (next !== undefined) {
+      setSizeToAdd(next);
+    }
+  }, [feeType, availableSizes]);
+
+  const addSizeRow = () => {
+    setEnabledSizes((prev) => {
+      if (prev.includes(sizeToAdd)) return prev;
+      return [...prev, sizeToAdd].sort((a, b) => a - b);
+    });
+  };
+
+  const removeSizeRow = (size: number) => {
+    setEnabledSizes((prev) => prev.filter((s) => s !== size));
+    // 表示から消すだけでなく、該当サイズのデータも消す（混乱防止）
+    const weight = SIZE_WEIGHT_MAP[size];
+    const key = `${size}_${weight}`;
+    setSizeFees((prev) => {
+      if (!prev || !(key in prev)) return prev;
+      const { [key]: _removed, ...rest } = prev as any;
+      return rest as SizeFees;
+    });
+  };
+
   const fetchShippingMethod = async (id: string) => {
     try {
       setInitialLoading(true);
@@ -188,9 +228,6 @@ const ShippingMethodEditor = () => {
 
       if (data) {
         setName(data.name || '');
-        setBoxSize(data.box_size || '');
-        setMaxWeightKg(data.max_weight_kg || '');
-        setMaxItemsPerBox(data.max_items_per_box || '');
         setFeeType(data.fee_type || 'uniform');
         // area_feesとsize_feesを正しく読み込む
         let loadedAreaFees: AreaFees = {};
@@ -219,6 +256,16 @@ const ShippingMethodEditor = () => {
         setAreaFees(loadedAreaFees);
         setSizeFees(loadedSizeFees);
         setUniformFee(data.uniform_fee || '');
+
+        // 既存データの場合: size_feesに入っているサイズだけ表示（なければ60だけ）
+        if ((data.fee_type || 'uniform') === 'size') {
+          const sizesFromKeys = Object.keys(loadedSizeFees || {})
+            .map((k) => Number(String(k).split('_')[0]))
+            .filter((n) => Number.isFinite(n));
+          const uniqueSorted = Array.from(new Set(sizesFromKeys)).sort((a, b) => a - b);
+          setEnabledSizes(uniqueSorted.length > 0 ? uniqueSorted : [60]);
+          setSizeToAdd(60);
+        }
         
         // 紐づいている商品を取得
         const { data: linkedProducts, error: linkError } = await supabase
@@ -283,6 +330,12 @@ const ShippingMethodEditor = () => {
     if (!name.trim()) {
       setName(`${tmpl.name}（コピー）`);
     }
+
+    // サイズ別の場合、最初は60だけ表示（必要なサイズを追加していく）
+    if (tmplFeeType === 'size') {
+      setEnabledSizes((prev) => (prev.length > 0 ? prev : [60]));
+      setSizeToAdd(60);
+    }
   };
 
   const fetchProducts = async () => {
@@ -312,7 +365,7 @@ const ShippingMethodEditor = () => {
   const handleSizeFeeChange = (size: number, weight: number, area: keyof AreaFees, value: string) => {
     const key = `${size}_${weight}`;
     setSizeFees((prev) => {
-      const current = prev[key] || { size, weight_kg: weight, area_fees: {} };
+      const current = prev[key] || { size, weight_kg: weight, area_fees: {}, max_items_per_box: null };
       return {
         ...prev,
         [key]: {
@@ -321,6 +374,21 @@ const ShippingMethodEditor = () => {
             ...current.area_fees,
             [area]: value === '' ? undefined : Number(value),
           },
+        },
+      };
+    });
+  };
+
+  const handleSizeMaxItemsChange = (size: number, value: string) => {
+    const weight = SIZE_WEIGHT_MAP[size];
+    const key = `${size}_${weight}`;
+    setSizeFees((prev) => {
+      const current = prev[key] || { size, weight_kg: weight, area_fees: {}, max_items_per_box: null };
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          max_items_per_box: value === '' ? null : Number(value),
         },
       };
     });
@@ -355,9 +423,10 @@ const ShippingMethodEditor = () => {
 
       const methodData: any = {
         name,
-        box_size: boxSize === '' ? null : Number(boxSize),
-        max_weight_kg: maxWeightKg === '' ? null : Number(maxWeightKg),
-        max_items_per_box: maxItemsPerBox === '' ? null : Number(maxItemsPerBox),
+        // 基本情報の「ダンボールサイズ / 最大重量 / 1箱に入る最大商品数」は不要のため常にnull
+        box_size: null,
+        max_weight_kg: null,
+        max_items_per_box: null,
         fee_type: feeType,
         area_fees: feeType === 'area' ? areaFees : {},
         size_fees: feeType === 'size' ? sizeFees : {},
@@ -457,53 +526,6 @@ const ShippingMethodEditor = () => {
                 placeholder="例：米用ダンボールM"
                 required
               />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ダンボールサイズ
-                </label>
-                <select
-                  value={boxSize}
-                  onChange={(e) => setBoxSize(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                >
-                  <option value="">選択してください</option>
-                  <option value="60">60サイズ</option>
-                  <option value="80">80サイズ</option>
-                  <option value="100">100サイズ</option>
-                  <option value="120">120サイズ</option>
-                  <option value="140">140サイズ</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  最大重量 (kg)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={maxWeightKg}
-                  onChange={(e) => setMaxWeightKg(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                  placeholder="例：10.0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  1箱に入る最大商品数
-                </label>
-                <input
-                  type="number"
-                  value={maxItemsPerBox}
-                  onChange={(e) => setMaxItemsPerBox(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                  placeholder="例：5"
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -636,6 +658,39 @@ const ShippingMethodEditor = () => {
                     </button>
                   </div>
                 )}
+
+                {/* サイズを追加していく（バリエーション風） */}
+                <div className="mb-3 flex items-center gap-2">
+                  <select
+                    value={sizeToAdd}
+                    onChange={(e) => setSizeToAdd(Number(e.target.value))}
+                    className="p-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-sm"
+                  >
+                    {availableSizes.map((s) => (
+                      <option key={s} value={s}>
+                        {s}サイズ
+                      </option>
+                    ))}
+                    {availableSizes.length === 0 && (
+                      <option value={sizeToAdd}>追加できるサイズはありません</option>
+                    )}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={addSizeRow}
+                    disabled={availableSizes.length === 0}
+                    className="px-3 py-2 text-sm bg-gray-100 text-gray-900 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
+                  >
+                    サイズを追加
+                  </button>
+                  <span className="text-xs text-gray-500">表に表示するサイズだけ追加できます</span>
+                </div>
+
+                {enabledSizes.length === 0 ? (
+                  <div className="text-sm text-gray-500 py-6 text-center border border-gray-200 rounded-lg bg-white">
+                    「サイズを追加」から表示したいサイズを追加してください
+                  </div>
+                ) : (
                 <div className="overflow-x-auto border border-gray-200 rounded-lg">
                   <table className="w-full min-w-max text-sm">
                     <thead className="bg-gray-50 sticky top-0">
@@ -646,6 +701,9 @@ const ShippingMethodEditor = () => {
                         <th className="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-r border-gray-200 whitespace-nowrap">
                           重量
                         </th>
+                        <th className="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-r border-gray-200 whitespace-nowrap">
+                          1箱に入る数
+                        </th>
                         {AREA_KEYS.map((area) => (
                           <th
                             key={area}
@@ -654,12 +712,19 @@ const ShippingMethodEditor = () => {
                             <AreaLabelCell area={area} />
                           </th>
                         ))}
+                        <th className="px-3 py-2 text-center text-xs font-semibold text-gray-700 whitespace-nowrap">
+                          操作
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
-                      {SIZE_OPTIONS.map((size) => {
+                      {enabledSizes.map((size) => {
                         const weight = SIZE_WEIGHT_MAP[size];
                         const sizeFee = getSizeFee(size, weight);
+                        const maxItemsValue =
+                          sizeFee?.max_items_per_box !== undefined && sizeFee?.max_items_per_box !== null && sizeFee.max_items_per_box !== 0
+                            ? sizeFee.max_items_per_box
+                            : '';
                         return (
                           <tr key={size} className="hover:bg-gray-50">
                             <td className="px-3 py-2 text-sm font-medium text-gray-900 border-r border-gray-200 text-center whitespace-nowrap bg-gray-50">
@@ -667,6 +732,18 @@ const ShippingMethodEditor = () => {
                             </td>
                             <td className="px-3 py-2 text-sm text-gray-700 border-r border-gray-200 text-center whitespace-nowrap">
                               {weight}kg以内
+                            </td>
+                            <td className="px-2 py-1 border-r border-gray-200">
+                              <input
+                                type="number"
+                                min={1}
+                                step={1}
+                                value={maxItemsValue}
+                                onChange={(e) => handleSizeMaxItemsChange(size, e.target.value)}
+                                className="w-24 p-1.5 border border-gray-300 rounded text-xs text-right bg-white focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                                placeholder=""
+                              />
+                              <span className="ml-1 text-xs text-gray-500">個</span>
                             </td>
                             {AREA_KEYS.map((area) => {
                               const feeValue = sizeFee?.area_fees?.[area];
@@ -685,12 +762,22 @@ const ShippingMethodEditor = () => {
                                 </td>
                               );
                             })}
+                            <td className="px-2 py-1 text-center">
+                              <button
+                                type="button"
+                                onClick={() => removeSizeRow(size)}
+                                className="text-xs text-gray-500 hover:text-red-600"
+                              >
+                                削除
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
+                )}
                 <p className="text-xs text-gray-500 mt-2">
                   ※ 写真の料金表をそのまま入力できます。空欄の場合は0円として扱われます。
                 </p>

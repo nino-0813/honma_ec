@@ -13,6 +13,7 @@ interface Product {
   subcategory?: string;
   handle: string;
   stock: number;
+  has_variants?: boolean;
   is_active: boolean;
   created_at: string;
   description?: string;
@@ -163,19 +164,26 @@ const ProductList = () => {
 
   // バリエーション在庫を計算する関数（各バリエーションタイプは独立して在庫管理）
   const calculateVariantStock = (product: Product): number => {
-    if (!product.hasVariants || !product.variants_config || product.variants_config.length === 0) {
-      // バリエーションがない場合は基本在庫を返す（現在は0）
+    const variantsConfig = product.variants_config;
+    const hasVariants = Boolean(
+      (product as any).hasVariants ||
+      product.has_variants ||
+      (Array.isArray(variantsConfig) && variantsConfig.length > 0)
+    );
+
+    if (!hasVariants || !Array.isArray(variantsConfig) || variantsConfig.length === 0) {
+      // バリエーションがない（または設定がない）場合は基本在庫を返す
       return product.stock ?? 0;
     }
 
     // 各バリエーションタイプの在庫を計算（独立して管理）
     const variantStocks: number[] = [];
 
-    for (const vt of product.variants_config) {
+    for (const vt of variantsConfig) {
       if (vt.stockManagement === 'none') {
         // 在庫管理しない場合はスキップ
         continue;
-      } else if (vt.stockManagement === 'individual') {
+      } else if (vt.stockManagement === 'individual' || vt.stockManagement === 'shared') {
         let typeStock = 0;
         // 在庫共有が有効な場合
         if (vt.sharedStock !== null && vt.sharedStock !== undefined) {
@@ -703,13 +711,22 @@ const ProductList = () => {
             // SKUで既存商品を検索
             const { data: existing, error: searchError } = await supabase
               .from('products')
-              .select('id')
+              .select('id, has_variants, variants_config')
               .eq('sku', product.sku)
               .single();
 
             if (searchError && searchError.code !== 'PGRST116') {
               // PGRST116は「行が見つからない」エラー（新規作成の場合に正常）
               throw searchError;
+            }
+
+            // ガード: バリエーション有りの商品は stock を常に0に固定（CSVで入ってきても無視）
+            const existingHasVariantsFromConfig =
+              existing && Array.isArray((existing as any).variants_config) && (existing as any).variants_config.length > 0;
+            const existingHasVariants =
+              Boolean(existing && (((existing as any).has_variants) || existingHasVariantsFromConfig));
+            if (existingHasVariants) {
+              product.stock = 0;
             }
 
             if (existing) {
@@ -974,7 +991,10 @@ const ProductList = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-500 font-mono text-xs">
-                      {product.sku || '-'}
+                      <div className="leading-tight">
+                        <div>{product.sku || '-'}</div>
+                        <div className="text-[10px] text-gray-400">{product.id}</div>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <button

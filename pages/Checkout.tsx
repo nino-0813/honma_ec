@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useMemo } from 'react';
 import { useLocation, Link } from 'wouter';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -8,17 +8,95 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AuthForm from '../components/AuthForm';
 import { supabase, checkStockAvailability } from '../lib/supabase';
+import { ShippingMethod, AreaFees } from '../types';
 
 // Stripe公開可能キー（環境変数から取得）
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51...');
 
+// 郵便番号から都道府県を判定（先頭3桁で判定）
+const getPrefectureFromPostalCode = (postalCode: string): string | null => {
+  const cleaned = postalCode.replace(/[^0-9]/g, '');
+  if (cleaned.length < 3) return null;
+  const prefix = parseInt(cleaned.substring(0, 3), 10);
+  
+  // 郵便番号の先頭3桁で都道府県を判定
+  if (prefix >= 1 && prefix <= 7) return '北海道';
+  if (prefix >= 10 && prefix <= 16) return '青森県';
+  if (prefix >= 17 && prefix <= 22) return '秋田県';
+  if (prefix >= 23 && prefix <= 29) return '岩手県';
+  if (prefix >= 30 && prefix <= 38) return '宮城県';
+  if (prefix >= 39 && prefix <= 49) return '山形県';
+  if (prefix >= 50 && prefix <= 59) return '福島県';
+  if (prefix >= 100 && prefix <= 208) return '東京都';
+  if (prefix >= 209 && prefix <= 214) return '神奈川県';
+  if (prefix >= 215 && prefix <= 219) return '山梨県';
+  if (prefix >= 270 && prefix <= 278) return '千葉県';
+  if (prefix >= 300 && prefix <= 329) return '茨城県';
+  if (prefix >= 320 && prefix <= 329) return '栃木県';
+  if (prefix >= 360 && prefix <= 369) return '群馬県';
+  if (prefix >= 370 && prefix <= 399) return '埼玉県';
+  if (prefix >= 400 && prefix <= 409) return '新潟県';
+  if (prefix >= 380 && prefix <= 399) return '長野県';
+  if (prefix >= 920 && prefix <= 929) return '富山県';
+  if (prefix >= 920 && prefix <= 929) return '石川県';
+  if (prefix >= 910 && prefix <= 919) return '福井県';
+  if (prefix >= 410 && prefix <= 429) return '静岡県';
+  if (prefix >= 450 && prefix <= 469) return '愛知県';
+  if (prefix >= 500 && prefix <= 509) return '岐阜県';
+  if (prefix >= 510 && prefix <= 519) return '三重県';
+  if (prefix >= 520 && prefix <= 529) return '滋賀県';
+  if (prefix >= 600 && prefix <= 609) return '京都府';
+  if (prefix >= 530 && prefix <= 599) return '大阪府';
+  if (prefix >= 630 && prefix <= 639) return '奈良県';
+  if (prefix >= 640 && prefix <= 649) return '和歌山県';
+  if (prefix >= 650 && prefix <= 669) return '兵庫県';
+  if (prefix >= 680 && prefix <= 689) return '鳥取県';
+  if (prefix >= 690 && prefix <= 699) return '島根県';
+  if (prefix >= 700 && prefix <= 709) return '岡山県';
+  if (prefix >= 730 && prefix <= 739) return '広島県';
+  if (prefix >= 740 && prefix <= 749) return '山口県';
+  if (prefix >= 760 && prefix <= 769) return '香川県';
+  if (prefix >= 770 && prefix <= 779) return '徳島県';
+  if (prefix >= 790 && prefix <= 799) return '愛媛県';
+  if (prefix >= 780 && prefix <= 789) return '高知県';
+  if (prefix >= 800 && prefix <= 819) return '福岡県';
+  if (prefix >= 840 && prefix <= 849) return '佐賀県';
+  if (prefix >= 850 && prefix <= 859) return '長崎県';
+  if (prefix >= 860 && prefix <= 869) return '熊本県';
+  if (prefix >= 870 && prefix <= 879) return '大分県';
+  if (prefix >= 880 && prefix <= 889) return '宮崎県';
+  if (prefix >= 890 && prefix <= 899) return '鹿児島県';
+  if (prefix >= 900 && prefix <= 909) return '沖縄県';
+  
+  return null;
+};
+
+// 都道府県から地域（AreaFeesのキー）を判定
+const getAreaFromPrefecture = (prefecture: string): keyof AreaFees | null => {
+  if (!prefecture) return null;
+  
+  if (prefecture === '北海道') return 'hokkaido';
+  if (['青森県', '秋田県', '岩手県'].includes(prefecture)) return 'north_tohoku';
+  if (['宮城県', '山形県', '福島県'].includes(prefecture)) return 'south_tohoku';
+  if (['東京都', '神奈川県', '山梨県', '千葉県', '茨城県', '栃木県', '群馬県', '埼玉県'].includes(prefecture)) return 'kanto';
+  if (['新潟県', '長野県'].includes(prefecture)) return 'shinetsu';
+  if (['富山県', '石川県', '福井県'].includes(prefecture)) return 'hokuriku';
+  if (['静岡県', '愛知県', '三重県', '岐阜県'].includes(prefecture)) return 'chubu';
+  if (['大阪府', '京都府', '滋賀県', '奈良県', '和歌山県', '兵庫県'].includes(prefecture)) return 'kansai';
+  if (['岡山県', '広島県', '山口県', '鳥取県', '島根県'].includes(prefecture)) return 'chugoku';
+  if (['香川県', '徳島県', '愛媛県', '高知県'].includes(prefecture)) return 'shikoku';
+  if (['福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県'].includes(prefecture)) return 'kyushu';
+  if (prefecture === '沖縄県') return 'okinawa';
+  
+  return null;
+};
+
 // 決済フォームコンポーネント
-const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCost, onSuccess }: {
+const CheckoutForm = ({ formData, total, clientSecret, onSaveOrder, onSuccess }: {
   formData: any;
-  onFormDataChange: (data: any) => void;
   total: number;
-  subtotal: number;
-  shippingCost: number;
+  clientSecret: string;
+  onSaveOrder: (paymentIntent: any) => Promise<void>;
   onSuccess: () => void;
 }) => {
   const stripe = useStripe();
@@ -26,46 +104,6 @@ const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCos
   const { cartItems, clearCart, restoreCart } = useContext(CartContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
-
-  // PaymentIntentを作成
-  useEffect(() => {
-    const createPaymentIntent = async () => {
-      if (paymentIntentCreated || !cartItems.length) return;
-
-      try {
-        // TODO: バックエンドAPIエンドポイントを実装
-        // 例: const response = await fetch('/api/create-payment-intent', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     amount: total,
-        //     currency: 'jpy',
-        //     items: cartItems.map(item => ({
-        //       productId: item.product.id,
-        //       quantity: item.quantity,
-        //       price: item.product.price
-        //     }))
-        //   })
-        // });
-        // const { clientSecret } = await response.json();
-        // setClientSecret(clientSecret);
-
-        // 仮の処理（実際の実装ではバックエンドから取得）
-        // 本番環境では必ずバックエンドAPIを使用してください
-        console.warn('PaymentIntent作成: バックエンドAPIを実装してください');
-        setPaymentIntentCreated(true);
-        // 実際の実装では、ここでclientSecretを設定
-        // setClientSecret('pi_...');
-      } catch (err: any) {
-        console.error('PaymentIntent作成エラー:', err);
-        setError('決済の初期化に失敗しました');
-      }
-    };
-
-    createPaymentIntent();
-  }, [cartItems, total, paymentIntentCreated]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,18 +113,51 @@ const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCos
       return;
     }
 
-    // バックエンドAPIが実装されていない場合は警告
-    if (!clientSecret) {
-      setError('決済システムが準備できていません。バックエンドAPIを実装してください。');
-      return;
-    }
-
     // 在庫チェック（最終確認）
     for (const item of cartItems) {
-      const stock = item.product.stock ?? null;
-      if (stock !== null && item.quantity > stock) {
-        setError(`「${item.product.title}」の在庫が不足しています。在庫数: ${stock}個`);
-        return;
+      // バリエーション選択がある場合は、バリエーション在庫（sharedStock/option stock）でチェックする
+      const selectedOptions = item.selectedOptions;
+      if (selectedOptions && Object.keys(selectedOptions).length > 0) {
+        // カート内の商品データが古い可能性があるため、直前に最新のvariants_configを取得
+        let latestProduct = item.product as any;
+        try {
+          const { data, error } = await supabase
+            .from('products')
+            .select('id, stock, has_variants, variants_config')
+            .eq('id', item.product.id)
+            .single();
+
+          if (!error && data) {
+            const hasVariantsFromConfig = Array.isArray(data.variants_config) && data.variants_config.length > 0;
+            latestProduct = {
+              ...item.product,
+              stock: data.stock ?? item.product.stock,
+              hasVariants: Boolean(data.has_variants || hasVariantsFromConfig),
+              variants_config: data.variants_config ?? item.product.variants_config,
+            };
+          }
+        } catch (e) {
+          // 取得失敗時はカート内データで続行
+          console.warn('在庫チェック用の最新商品データ取得に失敗:', e);
+        }
+
+        const stockCheck = checkStockAvailability(
+          latestProduct,
+          selectedOptions,
+          item.quantity,
+          0
+        );
+        if (!stockCheck.available) {
+          setError(stockCheck.message || `「${item.product.title}」の在庫が不足しています。`);
+          return;
+        }
+      } else {
+        // バリエーション情報がない場合は基本在庫でチェック
+        const stock = item.product.stock ?? null;
+        if (stock !== null && item.quantity > stock) {
+          setError(`「${item.product.title}」の在庫が不足しています。在庫数: ${stock}個`);
+          return;
+        }
       }
     }
 
@@ -114,10 +185,10 @@ const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCos
               email: formData.email,
               phone: formData.phone,
               address: {
-                line1: formData.address,
+                line1: `${formData.prefecture}${formData.city}${formData.address}${formData.building ? ' ' + formData.building : ''}`,
                 city: formData.city,
                 postal_code: formData.postalCode,
-                country: formData.country,
+                country: 'JP',
               },
             },
           },
@@ -130,7 +201,7 @@ const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCos
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         // 決済成功 - 注文情報をSupabaseに保存
         try {
-          await saveOrderToSupabase(paymentIntent);
+          await onSaveOrder(paymentIntent);
           clearCart();
           onSuccess();
         } catch (saveError: any) {
@@ -152,21 +223,10 @@ const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCos
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Stripe Payment Element */}
-      {clientSecret ? (
-        <div className="border border-gray-200 p-6 rounded">
-          <h3 className="text-sm font-medium mb-4">お支払い方法</h3>
-          <PaymentElement />
-        </div>
-      ) : (
-        <div className="border border-gray-200 p-6 rounded bg-gray-50">
-          <p className="text-sm text-gray-500">
-            決済システムを初期化中...
-          </p>
-          <p className="text-xs text-gray-400 mt-2">
-            ※バックエンドAPIを実装してPaymentIntentを作成してください
-          </p>
-        </div>
-      )}
+      <div className="border border-gray-200 p-6 rounded">
+        <h3 className="text-sm font-medium mb-4">お支払い方法</h3>
+        <PaymentElement />
+      </div>
 
       {/* エラーメッセージ */}
       {error && (
@@ -179,7 +239,7 @@ const CheckoutForm = ({ formData, onFormDataChange, total, subtotal, shippingCos
       <div className="border-t border-gray-200 pt-6">
         <button
           type="submit"
-          disabled={!stripe || !elements || loading || !clientSecret}
+          disabled={!stripe || !elements || loading}
           className="w-full py-4 bg-primary text-white text-sm tracking-widest uppercase hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? '処理中...' : `¥${total.toLocaleString()} を支払う`}
@@ -202,12 +262,27 @@ const Checkout = () => {
     firstName: '',
     lastName: '',
     phone: '',
-    address: '',
-    city: '',
     postalCode: '',
-    country: 'JP',
+    prefecture: '',
+    city: '',
+    address: '',
+    building: '',
     shippingMethod: 'standard' // standard, express
   });
+
+  // 発送方法と送料計算の状態
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [calculatedShippingCost, setCalculatedShippingCost] = useState<number>(0);
+  const [shippingCalculationError, setShippingCalculationError] = useState<string | null>(null);
+  
+  // 郵便番号検索の状態
+  const [postalCodeSearching, setPostalCodeSearching] = useState(false);
+  const [postalCodeError, setPostalCodeError] = useState<string | null>(null);
+
+  // 決済（PaymentIntent）
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+  const [paymentIntentAmount, setPaymentIntentAmount] = useState<number | null>(null);
+  const [paymentInitError, setPaymentInitError] = useState<string | null>(null);
 
   // 認証状態を確認
   useEffect(() => {
@@ -341,9 +416,10 @@ const Checkout = () => {
             lastName: profile.last_name || prev.lastName,
             phone: profile.phone || prev.phone,
             postalCode: profile.postal_code || prev.postalCode,
-            address: profile.address || prev.address,
+            prefecture: profile.prefecture || prev.prefecture,
             city: profile.city || prev.city,
-            country: profile.country || prev.country,
+            address: profile.address || prev.address,
+            building: profile.building || prev.building,
           }));
         }
       } catch (err) {
@@ -353,6 +429,139 @@ const Checkout = () => {
 
     loadProfile();
   }, [isAuthenticated, authUser]);
+
+  // カート内の商品に紐づいている発送方法を取得
+  useEffect(() => {
+    const fetchShippingMethods = async () => {
+      if (!supabase || cartItems.length === 0) {
+        setShippingMethods([]);
+        return;
+      }
+
+      try {
+        const productIds = cartItems.map(item => item.product.id);
+        
+        // 商品と発送方法の紐づけを取得
+        const { data: productShippingMethods, error: linkError } = await supabase
+          .from('product_shipping_methods')
+          .select('shipping_method_id, products!inner(id)')
+          .in('product_id', productIds);
+
+        if (linkError) throw linkError;
+
+        if (!productShippingMethods || productShippingMethods.length === 0) {
+          setShippingMethods([]);
+          return;
+        }
+
+        // 発送方法IDを取得（重複を除去）
+        const shippingMethodIds = [...new Set(
+          productShippingMethods.map((psm: any) => psm.shipping_method_id)
+        )];
+
+        // 発送方法の詳細を取得
+        const { data: methods, error: methodsError } = await supabase
+          .from('shipping_methods')
+          .select('*')
+          .in('id', shippingMethodIds);
+
+        if (methodsError) throw methodsError;
+
+        setShippingMethods((methods || []) as ShippingMethod[]);
+      } catch (err) {
+        console.error('発送方法の取得エラー:', err);
+        setShippingMethods([]);
+      }
+    };
+
+    fetchShippingMethods();
+  }, [cartItems]);
+
+  // 郵便番号から送料を自動計算
+  useEffect(() => {
+    const calculateShipping = async () => {
+      if (!formData.postalCode || cartItems.length === 0 || shippingMethods.length === 0) {
+        setCalculatedShippingCost(0);
+        setShippingCalculationError(null);
+        return;
+      }
+
+      try {
+        // 郵便番号から都道府県を判定
+        const prefecture = getPrefectureFromPostalCode(formData.postalCode);
+        if (!prefecture) {
+          setCalculatedShippingCost(0);
+          setShippingCalculationError(null);
+          return;
+        }
+
+        // 都道府県から地域を判定
+        const area = getAreaFromPrefecture(prefecture);
+        if (!area) {
+          setCalculatedShippingCost(0);
+          setShippingCalculationError(null);
+          return;
+        }
+
+        // 各商品の送料を計算
+        let totalShippingCost = 0;
+        const shippingCostsByMethod: { [methodId: string]: number } = {};
+
+        for (const item of cartItems) {
+          // この商品に紐づいている発送方法を取得
+          const { data: productShippingMethods } = await supabase
+            ?.from('product_shipping_methods')
+            .select('shipping_method_id')
+            .eq('product_id', item.product.id)
+            .limit(1) || { data: null };
+
+          if (!productShippingMethods || productShippingMethods.length === 0) continue;
+
+          const shippingMethodId = productShippingMethods[0].shipping_method_id;
+          const method = shippingMethods.find(m => m.id === shippingMethodId);
+          if (!method) continue;
+
+          // 発送方法ごとの送料を計算（同じ発送方法は1回だけ計算）
+          if (!shippingCostsByMethod[shippingMethodId]) {
+            let cost = 0;
+
+            if (method.fee_type === 'uniform') {
+              cost = method.uniform_fee || 0;
+            } else if (method.fee_type === 'area') {
+              cost = method.area_fees[area] || 0;
+            } else if (method.fee_type === 'size') {
+              // サイズ別送料の場合、商品のサイズ/重量から適切な送料を選択
+              // ここでは簡易的に最初のサイズ別送料を使用（実際には商品のサイズ/重量情報が必要）
+              if (method.size_fees) {
+                const sizeFeeKeys = Object.keys(method.size_fees);
+                if (sizeFeeKeys.length > 0) {
+                  const firstSizeFee = method.size_fees[sizeFeeKeys[0]];
+                  cost = firstSizeFee.area_fees[area] || 0;
+                }
+              }
+            }
+
+            shippingCostsByMethod[shippingMethodId] = cost;
+          }
+
+          // 商品数量に応じて箱数を計算（簡易版：1商品=1箱）
+          // 実際には max_items_per_box を考慮する必要がある
+          const boxes = Math.ceil(item.quantity / (method.size_fees ? 
+            (Object.values(method.size_fees)[0]?.max_items_per_box || 1) : 1));
+          totalShippingCost += shippingCostsByMethod[shippingMethodId] * boxes;
+        }
+
+        setCalculatedShippingCost(totalShippingCost);
+        setShippingCalculationError(null);
+      } catch (err) {
+        console.error('送料計算エラー:', err);
+        setCalculatedShippingCost(0);
+        setShippingCalculationError('送料の計算に失敗しました');
+      }
+    };
+
+    calculateShipping();
+  }, [formData.postalCode, cartItems, shippingMethods]);
 
   // 注文情報を保存する関数
   const saveOrderToSupabase = async (paymentIntent: any) => {
@@ -367,9 +576,11 @@ const Checkout = () => {
         last_name: formData.lastName,
         phone: formData.phone,
         postal_code: formData.postalCode,
-        address: formData.address,
+        prefecture: formData.prefecture,
         city: formData.city,
-        country: formData.country,
+        address: formData.address,
+        building: formData.building,
+        country: 'JP', // 固定値
         updated_at: new Date().toISOString(),
       });
     } catch (profileError) {
@@ -385,10 +596,10 @@ const Checkout = () => {
         first_name: formData.firstName,
         last_name: formData.lastName,
         phone: formData.phone,
-        shipping_address: formData.address,
+        shipping_address: `${formData.prefecture}${formData.city}${formData.address}${formData.building ? ' ' + formData.building : ''}`,
         shipping_city: formData.city,
         shipping_postal_code: formData.postalCode,
-        shipping_country: formData.country,
+        shipping_country: 'JP',
         shipping_method: formData.shippingMethod,
         subtotal: subtotal,
         shipping_cost: shippingCost,
@@ -479,12 +690,119 @@ const Checkout = () => {
     const price = item.finalPrice ?? item.product.price;
     return sum + (price * item.quantity);
   }, 0);
-  const shippingCost = formData.shippingMethod === 'express' ? 1000 : 500;
+  
+  // 送料計算（郵便番号から自動計算、計算できない場合はデフォルト値）
+  const shippingCost = calculatedShippingCost > 0 ? calculatedShippingCost : (formData.shippingMethod === 'express' ? 1000 : 500);
   const total = subtotal + shippingCost;
+
+  // PaymentIntent 作成（ElementsにclientSecretを渡すため、ここで作る）
+  useEffect(() => {
+    const createPaymentIntent = async () => {
+      if (!isAuthenticated) return;
+      if (!cartItems.length || total <= 0) return;
+      if (paymentClientSecret && paymentIntentAmount === total) return;
+
+      try {
+        setPaymentInitError(null);
+        const response = await fetch('/api/create-payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: total,
+            currency: 'jpy',
+            metadata: {
+              itemCount: String(cartItems.length),
+              subtotal: String(subtotal),
+              shippingCost: String(shippingCost),
+              total: String(total),
+            },
+          }),
+        });
+
+        const responseText = await response.text();
+        let responseData: any = null;
+        if (responseText) {
+          try {
+            responseData = JSON.parse(responseText);
+          } catch (e) {
+            console.error('PaymentIntent JSONパースエラー:', e, responseText);
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(responseData?.error || responseText || 'PaymentIntentの作成に失敗しました');
+        }
+
+        const cs = responseData?.clientSecret;
+        if (!cs) throw new Error('clientSecretが取得できませんでした');
+
+        setPaymentClientSecret(cs);
+        setPaymentIntentAmount(total);
+      } catch (e: any) {
+        console.error('PaymentIntent初期化エラー:', e);
+        setPaymentClientSecret(null);
+        setPaymentIntentAmount(null);
+        setPaymentInitError(e?.message || '決済の初期化に失敗しました');
+      }
+    };
+
+    createPaymentIntent();
+  }, [isAuthenticated, cartItems.length, total, subtotal, shippingCost, paymentClientSecret, paymentIntentAmount]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // 郵便番号から住所を検索
+  const handlePostalCodeSearch = async () => {
+    if (!formData.postalCode) {
+      setPostalCodeError('郵便番号を入力してください');
+      return;
+    }
+
+    setPostalCodeSearching(true);
+    setPostalCodeError(null);
+
+    try {
+      const cleaned = formData.postalCode.replace(/[^0-9]/g, '');
+      if (cleaned.length !== 7) {
+        setPostalCodeError('郵便番号は7桁で入力してください');
+        setPostalCodeSearching(false);
+        return;
+      }
+
+      // 郵便番号API（郵便番号検索API）を使用
+      const response = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleaned}`);
+      const data = await response.json();
+
+      if (data.status === 200 && data.results && data.results.length > 0) {
+        const result = data.results[0];
+        const prefecture = result.address1 || '';
+        const city = result.address2 || '';
+        const address = result.address3 || '';
+
+        setFormData(prev => ({
+          ...prev,
+          prefecture: prefecture,
+          city: city,
+          address: address,
+        }));
+
+        // 都道府県から送料を再計算
+        const area = getAreaFromPrefecture(prefecture);
+        if (area) {
+          // 送料計算をトリガー（useEffectが自動で実行される）
+        }
+      } else {
+        setPostalCodeError('住所が見つかりませんでした');
+      }
+    } catch (err) {
+      console.error('郵便番号検索エラー:', err);
+      setPostalCodeError('住所の検索に失敗しました');
+    } finally {
+      setPostalCodeSearching(false);
+    }
   };
 
   const handleSuccess = () => {
@@ -630,37 +948,55 @@ const Checkout = () => {
                       <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-2">
                         郵便番号 <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        id="postalCode"
-                        name="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 bg-white border border-gray-200 focus:outline-none focus:border-black transition-colors"
-                        placeholder="123-4567"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          id="postalCode"
+                          name="postalCode"
+                          value={formData.postalCode}
+                          onChange={handleInputChange}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handlePostalCodeSearch();
+                            }
+                          }}
+                          required
+                          className="flex-1 px-4 py-3 bg-white border border-gray-200 focus:outline-none focus:border-black transition-colors"
+                          placeholder="123-4567"
+                        />
+                        <button
+                          type="button"
+                          onClick={handlePostalCodeSearch}
+                          disabled={postalCodeSearching || !formData.postalCode}
+                          className="px-6 py-3 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {postalCodeSearching ? '検索中...' : '検索'}
+                        </button>
+                      </div>
+                      {postalCodeError && (
+                        <p className="mt-2 text-sm text-red-600">{postalCodeError}</p>
+                      )}
                     </div>
 
                     <div>
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                        住所 <span className="text-red-500">*</span>
+                      <label htmlFor="prefecture" className="block text-sm font-medium text-gray-700 mb-2">
+                        都道府県
                       </label>
                       <input
                         type="text"
-                        id="address"
-                        name="address"
-                        value={formData.address}
+                        id="prefecture"
+                        name="prefecture"
+                        value={formData.prefecture}
                         onChange={handleInputChange}
-                        required
                         className="w-full px-4 py-3 bg-white border border-gray-200 focus:outline-none focus:border-black transition-colors"
-                        placeholder="都道府県 市区町村 番地"
+                        placeholder="東京都"
                       />
                     </div>
 
                     <div>
                       <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
-                        市区町村 <span className="text-red-500">*</span>
+                        市区町村
                       </label>
                       <input
                         type="text"
@@ -668,26 +1004,39 @@ const Checkout = () => {
                         name="city"
                         value={formData.city}
                         onChange={handleInputChange}
-                        required
                         className="w-full px-4 py-3 bg-white border border-gray-200 focus:outline-none focus:border-black transition-colors"
-                        placeholder="東京都渋谷区"
+                        placeholder="渋谷区"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
-                        国 <span className="text-red-500">*</span>
+                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                        町名・番地
                       </label>
-                      <select
-                        id="country"
-                        name="country"
-                        value={formData.country}
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={formData.address}
                         onChange={handleInputChange}
-                        required
                         className="w-full px-4 py-3 bg-white border border-gray-200 focus:outline-none focus:border-black transition-colors"
-                      >
-                        <option value="JP">日本</option>
-                      </select>
+                        placeholder="神南1-2-3"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="building" className="block text-sm font-medium text-gray-700 mb-2">
+                        建物名・部屋番号
+                      </label>
+                      <input
+                        type="text"
+                        id="building"
+                        name="building"
+                        value={formData.building}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 focus:outline-none focus:border-black transition-colors"
+                        placeholder="マンション名 101号室"
+                      />
                     </div>
                   </div>
                 </div>
@@ -734,16 +1083,35 @@ const Checkout = () => {
                   {isAuthenticated && (
                     <div className="border-t border-gray-200 pt-6">
                       <h2 className="text-lg font-medium mb-6">お支払い</h2>
-                      <Elements stripe={stripePromise} options={{ locale: 'ja' }}>
-                        <CheckoutForm
-                          formData={formData}
-                          onFormDataChange={setFormData}
-                          total={total}
-                          subtotal={subtotal}
-                          shippingCost={shippingCost}
-                          onSuccess={handleSuccess}
-                        />
-                      </Elements>
+
+                      {paymentInitError && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                          {paymentInitError}
+                        </div>
+                      )}
+
+                      {paymentClientSecret ? (
+                        <Elements
+                          stripe={stripePromise}
+                          options={{ clientSecret: paymentClientSecret, locale: 'ja' }}
+                          key={paymentClientSecret}
+                        >
+                          <CheckoutForm
+                            formData={formData}
+                            total={total}
+                            clientSecret={paymentClientSecret}
+                            onSaveOrder={saveOrderToSupabase}
+                            onSuccess={handleSuccess}
+                          />
+                        </Elements>
+                      ) : (
+                        <div className="border border-gray-200 p-6 rounded bg-gray-50">
+                          <p className="text-sm text-gray-500">決済システムを初期化中...</p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            ※少し待っても表示されない場合は、ページを再読み込みしてください
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>

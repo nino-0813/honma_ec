@@ -10,24 +10,10 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         proxy: {
           '/api': {
-            target: 'http://localhost:3009',
+            // ローカル開発時は dev-api.mjs (3010) に転送してStripeなどのサーバー処理を実行
+            // NOTE: Vite本体が3010に退避するケースがあるため、dev-apiは3011をデフォルトにする
+            target: 'http://localhost:3011',
             changeOrigin: true,
-            configure: (proxy, _options) => {
-              proxy.on('proxyReq', (proxyReq, req, _res) => {
-                // APIリクエストを処理
-                if (req.method === 'POST' && req.url === '/api/send-email') {
-                  // リクエストボディを読み取る
-                  let body = '';
-                  req.on('data', (chunk) => {
-                    body += chunk.toString();
-                  });
-                  req.on('end', () => {
-                    // ここでResend APIを直接呼び出す
-                    // ただし、セキュリティ上、サーバーサイドで処理する方が良い
-                  });
-                }
-              });
-            },
           },
         },
       },

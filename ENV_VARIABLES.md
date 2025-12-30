@@ -21,12 +21,19 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 #### 2. Stripe設定
 ```
 VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+STRIPE_SECRET_KEY=your_stripe_secret_key
 ```
 
 **取得方法:**
 1. Stripeダッシュボードにログイン
 2. Developers > API keys に移動
-3. Publishable key をコピー（テスト環境または本番環境）
+3. **Publishable key** をコピー（テスト環境または本番環境）→ `VITE_STRIPE_PUBLISHABLE_KEY` に設定
+4. **Secret key** をコピー（テスト環境または本番環境）→ `STRIPE_SECRET_KEY` に設定
+
+**重要:**
+- `VITE_STRIPE_PUBLISHABLE_KEY` はクライアント側で使用（`VITE_` プレフィックス付き）
+- `STRIPE_SECRET_KEY` はサーバー側（Vercel Serverless Function）でのみ使用（`VITE_` プレフィックスなし）
+- Secret keyは絶対にクライアント側に公開しないでください
 
 #### 3. 管理画面 Basic認証（Vercel Edge Middleware用）
 ```
@@ -104,6 +111,7 @@ RESEND_FROM_EMAIL=your_verified_email@domain.com
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 VITE_STRIPE_PUBLISHABLE_KEY
+STRIPE_SECRET_KEY
 ADMIN_BASIC_AUTH_USER (推奨: 本番環境のみ)
 ADMIN_BASIC_AUTH_PASS (推奨: 本番環境のみ)
 RESEND_API_KEY (オプション)
@@ -126,6 +134,7 @@ RESEND_FROM_EMAIL (オプション)
 1. **セキュリティ**: 
    - `VITE_` プレフィックス付きの環境変数はクライアント側に公開されます
    - 機密情報（Secret Keys）は `VITE_` プレフィックスを付けないでください
+   - Stripe Secret Keyは `STRIPE_SECRET_KEY` として設定（`VITE_` なし）
    - Basic認証のユーザー名・パスワードは `ADMIN_BASIC_AUTH_USER` と `ADMIN_BASIC_AUTH_PASS` として設定（`VITE_` なし）
    - Resend APIキーは `RESEND_API_KEY` として設定（`VITE_` なし）
 
@@ -159,6 +168,7 @@ RESEND_FROM_EMAIL (オプション)
 - [ ] `VITE_SUPABASE_URL` が設定されている
 - [ ] `VITE_SUPABASE_ANON_KEY` が設定されている
 - [ ] `VITE_STRIPE_PUBLISHABLE_KEY` が設定されている
+- [ ] `STRIPE_SECRET_KEY` が設定されている（決済機能を使用する場合）
 - [ ] 本番環境で管理画面を保護する場合、`ADMIN_BASIC_AUTH_USER` と `ADMIN_BASIC_AUTH_PASS` が設定されている
 - [ ] メール送信機能を使用する場合、`RESEND_API_KEY` と `RESEND_FROM_EMAIL` が設定されている
 - [ ] すべての環境変数が正しい環境（Production/Preview/Development）に適用されている
