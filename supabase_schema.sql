@@ -202,6 +202,60 @@ CREATE TABLE IF NOT EXISTS public.blog_articles (
 
 CREATE INDEX IF NOT EXISTS idx_blog_articles_published_at ON public.blog_articles(published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_blog_articles_is_published ON public.blog_articles(is_published);
+
+-- ==========================================
+-- クーポン（割引コード）管理
+-- ==========================================
+CREATE TABLE IF NOT EXISTS public.coupons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  code TEXT NOT NULL UNIQUE,
+  discount_type TEXT NOT NULL DEFAULT 'percentage' CHECK (discount_type IN ('percentage', 'fixed')),
+  discount_value INTEGER NOT NULL DEFAULT 0, -- percentage: 1-100, fixed: 円
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  starts_at TIMESTAMP WITH TIME ZONE,
+  ends_at TIMESTAMP WITH TIME ZONE,
+  usage_count INTEGER NOT NULL DEFAULT 0,
+  usage_limit INTEGER, -- 発行/使用上限（任意）
+  min_order_amount INTEGER, -- 最低購入金額（任意）
+  once_per_user BOOLEAN NOT NULL DEFAULT false, -- 1人1回制限
+  applies_to_all BOOLEAN NOT NULL DEFAULT true, -- 対象商品: 全商品
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 既存環境向けに不足カラムを追加（安全に実行可能）
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS code TEXT;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS discount_type TEXT DEFAULT 'percentage';
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS discount_value INTEGER DEFAULT 0;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS starts_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS ends_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS usage_count INTEGER DEFAULT 0;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS usage_limit INTEGER;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS min_order_amount INTEGER;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS once_per_user BOOLEAN DEFAULT false;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS applies_to_all BOOLEAN DEFAULT true;
+
+-- 対象商品（クーポン×商品）
+CREATE TABLE IF NOT EXISTS public.coupon_products (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  coupon_id UUID NOT NULL REFERENCES public.coupons(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(coupon_id, product_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_coupon_products_coupon_id ON public.coupon_products(coupon_id);
+CREATE INDEX IF NOT EXISTS idx_coupon_products_product_id ON public.coupon_products(product_id);
+
+-- updated_at トリガー（coupons）
+DROP TRIGGER IF EXISTS update_coupons_updated_at ON public.coupons;
+CREATE TRIGGER update_coupons_updated_at
+  BEFORE UPDATE ON public.coupons
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
 CREATE INDEX IF NOT EXISTS idx_blog_articles_note_url ON public.blog_articles(note_url);
 
 -- ==========================================
@@ -299,6 +353,8 @@ ALTER TABLE shipping_methods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_shipping_methods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blog_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stripe_webhook_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coupon_products ENABLE ROW LEVEL SECURITY;
 
 -- Profiles ポリシー
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
@@ -402,6 +458,19 @@ CREATE POLICY "Anyone can view shipping methods"
 DROP POLICY IF EXISTS "Admins can manage shipping methods" ON shipping_methods;
 CREATE POLICY "Admins can manage shipping methods"
   ON shipping_methods
+  FOR ALL
+  USING (public.is_admin());
+
+-- coupons / coupon_products: 管理者のみ操作可能
+DROP POLICY IF EXISTS "Admins can manage coupons" ON public.coupons;
+CREATE POLICY "Admins can manage coupons"
+  ON public.coupons
+  FOR ALL
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can manage coupon products" ON public.coupon_products;
+CREATE POLICY "Admins can manage coupon products"
+  ON public.coupon_products
   FOR ALL
   USING (public.is_admin());
 

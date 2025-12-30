@@ -25,6 +25,7 @@ import ProductEditor from './pages/admin/ProductEditor';
 import Orders from './pages/admin/Orders';
 import Customers from './pages/admin/Customers';
 import Discounts from './pages/admin/Discounts';
+import CouponEditor from './pages/admin/CouponEditor';
 import Content from './pages/admin/Content';
 import Market from './pages/admin/Market';
 import Finance from './pages/admin/Finance';
@@ -344,6 +345,8 @@ const AdminRoutes = () => {
         <Route path="/admin/shipping-methods" component={ShippingMethodManagement} />
         <Route path="/admin/orders" component={Orders} />
         <Route path="/admin/customers" component={Customers} />
+        <Route path="/admin/discounts/new" component={CouponEditor} />
+        <Route path="/admin/discounts/:id" component={CouponEditor} />
         <Route path="/admin/discounts" component={Discounts} />
         <Route path="/admin/content" component={Content} />
         <Route path="/admin/market" component={Market} />
