@@ -7,7 +7,7 @@ export default async function handler(req: any, res: any) {
   if (res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
   }
 
   if (req.method === 'OPTIONS') {
@@ -26,6 +26,24 @@ export default async function handler(req: any, res: any) {
       statusCode: 405,
       body: JSON.stringify(error),
     };
+  }
+
+  // --- Guard: APIキー必須（使う時だけ有効化できる） ---
+  const requiredApiKey = process.env.SEND_EMAIL_API_KEY;
+  if (!requiredApiKey) {
+    const error = { error: 'send-email endpoint is disabled' };
+    if (res) return res.status(403).json(error);
+    return { statusCode: 403, body: JSON.stringify(error) };
+  }
+
+  const headerApiKey =
+    (req?.headers?.['x-api-key'] as string | undefined) ||
+    (req?.headers?.['X-API-Key'] as string | undefined);
+
+  if (!headerApiKey || headerApiKey !== requiredApiKey) {
+    const error = { error: 'Unauthorized' };
+    if (res) return res.status(401).json(error);
+    return { statusCode: 401, body: JSON.stringify(error) };
   }
 
   try {

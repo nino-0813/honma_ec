@@ -89,6 +89,7 @@ ADMIN_BASIC_AUTH_PASS=your_admin_password
 ```
 RESEND_API_KEY=your_resend_api_key
 RESEND_FROM_EMAIL=your_verified_email@domain.com
+SEND_EMAIL_API_KEY=your_internal_api_key
 ```
 
 **取得方法:**
@@ -97,6 +98,14 @@ RESEND_FROM_EMAIL=your_verified_email@domain.com
 3. Domains セクションでドメインを検証（またはデフォルトの `onboarding@resend.dev` を使用）
 
 **注意:** Vercel Serverless Functionでは `RESEND_API_KEY` と `RESEND_FROM_EMAIL` を使用します（`VITE_` プレフィックスなし）。
+
+#### 4-1. send-email の保護（推奨）
+`api/send-email.ts` は **外部から叩かれると悪用される**可能性があるため、APIキー必須にしています。
+
+- **環境変数**: `SEND_EMAIL_API_KEY`
+- **リクエストヘッダー**: `X-API-Key: <SEND_EMAIL_API_KEY>`
+
+`SEND_EMAIL_API_KEY` が未設定の場合、`/api/send-email` は **常に403で無効化**されます。
 
 ## 🔧 Vercelでの環境変数設定方法
 

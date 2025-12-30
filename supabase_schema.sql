@@ -30,8 +30,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   last_name TEXT,
   phone TEXT,
   postal_code TEXT,
+  prefecture TEXT,
   address TEXT,
   city TEXT,
+  building TEXT,
   country TEXT DEFAULT 'JP',
   is_admin BOOLEAN DEFAULT false, -- 管理者フラグ
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -51,6 +53,10 @@ CREATE TABLE IF NOT EXISTS public.products (
   subcategory TEXT, -- サブカテゴリー (コシヒカリ等)
   stock INTEGER DEFAULT 0, -- 在庫数
   sku TEXT, -- 商品番号
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'draft', 'archived')), -- 公開ステータス
+  has_variants BOOLEAN DEFAULT false, -- バリエーション有無
+  variants TEXT[] DEFAULT '{}', -- 旧形式バリエーション（互換性のため維持）
+  variants_config JSONB DEFAULT '[]'::jsonb, -- 新形式バリエーション設定（在庫/価格調整など）
   is_active BOOLEAN DEFAULT true, -- 公開状態
   sold_out BOOLEAN DEFAULT false, -- 在庫切れフラグ (互換性のため維持、基本はstockで判断)
   display_order INTEGER DEFAULT 0, -- 表示順序（小さい順に表示）
@@ -58,6 +64,24 @@ CREATE TABLE IF NOT EXISTS public.products (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 4-1. products: 既存環境向けに不足カラムを追加（安全に実行可能）
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS has_variants BOOLEAN DEFAULT false;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS variants TEXT[] DEFAULT '{}';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS variants_config JSONB DEFAULT '[]'::jsonb;
+
+-- products: 互換性のために status の値制約を付与（既にある場合は上書きしない）
+DO $$ BEGIN
+  ALTER TABLE public.products
+    ADD CONSTRAINT products_status_check
+    CHECK (status IN ('active', 'draft', 'archived'));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- products: SKU検索のためのインデックス
+CREATE INDEX IF NOT EXISTS idx_products_sku ON public.products(sku);
 
 -- 5. orders テーブル (注文情報)
 CREATE TABLE IF NOT EXISTS public.orders (
@@ -108,6 +132,55 @@ CREATE TABLE IF NOT EXISTS public.inquiries (
 );
 
 -- ==========================================
+-- 追加機能テーブル（統合版）
+-- ==========================================
+
+-- 8. shipping_methods テーブル (発送方法)
+CREATE TABLE IF NOT EXISTS public.shipping_methods (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL, -- 発送方法名（例：通常料金/クール便料金）
+  box_size INTEGER, -- 互換性のため残す（将来的に不使用でもOK）
+  max_weight_kg NUMERIC(5, 2),
+  max_items_per_box INTEGER,
+  fee_type TEXT NOT NULL DEFAULT 'uniform', -- 'uniform' / 'area' / 'size'
+  area_fees JSONB DEFAULT '{}'::jsonb,
+  size_fees JSONB DEFAULT '{}'::jsonb,
+  uniform_fee INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 9. product_shipping_methods テーブル (商品×発送方法)
+CREATE TABLE IF NOT EXISTS public.product_shipping_methods (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  shipping_method_id UUID NOT NULL REFERENCES public.shipping_methods(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(product_id, shipping_method_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_shipping_methods_product_id ON public.product_shipping_methods(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_shipping_methods_shipping_method_id ON public.product_shipping_methods(shipping_method_id);
+
+-- 10. blog_articles テーブル（ブログ/Note連携）
+CREATE TABLE IF NOT EXISTS public.blog_articles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  excerpt TEXT,
+  image_url TEXT,
+  note_url TEXT UNIQUE,
+  published_at TIMESTAMP WITH TIME ZONE,
+  is_published BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_blog_articles_published_at ON public.blog_articles(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_blog_articles_is_published ON public.blog_articles(is_published);
+CREATE INDEX IF NOT EXISTS idx_blog_articles_note_url ON public.blog_articles(note_url);
+
+-- ==========================================
 -- 関数とトリガー
 -- ==========================================
 
@@ -129,6 +202,12 @@ CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW
 
 DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_shipping_methods_updated_at ON shipping_methods;
+CREATE TRIGGER update_shipping_methods_updated_at BEFORE UPDATE ON shipping_methods FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_blog_articles_updated_at ON blog_articles;
+CREATE TRIGGER update_blog_articles_updated_at BEFORE UPDATE ON blog_articles FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
 -- 新規ユーザー登録時にプロフィールを自動作成する関数
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -192,6 +271,9 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shipping_methods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_shipping_methods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blog_articles ENABLE ROW LEVEL SECURITY;
 
 -- Profiles ポリシー
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
@@ -205,7 +287,15 @@ CREATE POLICY "Admins can read all profiles" ON profiles FOR SELECT USING (publi
 
 -- Products ポリシー
 DROP POLICY IF EXISTS "Public can view active products" ON products;
-CREATE POLICY "Public can view active products" ON products FOR SELECT USING (true);
+-- 公開条件はDB側で強制（漏洩防止）
+CREATE POLICY "Public can view active products"
+  ON products
+  FOR SELECT
+  USING (
+    is_active = true
+    AND (is_visible IS NULL OR is_visible = true)
+    AND (status IS NULL OR status = 'active')
+  );
 
 DROP POLICY IF EXISTS "Admins can manage products" ON products;
 CREATE POLICY "Admins can manage products" ON products FOR ALL USING (public.is_admin());
@@ -215,7 +305,26 @@ DROP POLICY IF EXISTS "Users can read own orders" ON orders;
 CREATE POLICY "Users can read own orders" ON orders FOR SELECT USING (auth_user_id = auth.uid());
 
 DROP POLICY IF EXISTS "Users can create orders" ON orders;
-CREATE POLICY "Users can create orders" ON orders FOR INSERT WITH CHECK (true); -- 認証なしでも注文可能にする場合はtrue
+-- 注文作成はログイン必須 + 自分のauth_user_idのみ許可（Checkoutがログイン必須のため）
+CREATE POLICY "Users can create orders"
+  ON orders
+  FOR INSERT
+  WITH CHECK (
+    auth.uid() IS NOT NULL
+    AND auth_user_id = auth.uid()
+    AND email IS NOT NULL
+    AND length(email) > 3
+    AND first_name IS NOT NULL
+    AND length(first_name) > 0
+    AND last_name IS NOT NULL
+    AND length(last_name) > 0
+    AND subtotal IS NOT NULL
+    AND subtotal >= 0
+    AND shipping_cost IS NOT NULL
+    AND shipping_cost >= 0
+    AND total IS NOT NULL
+    AND total > 0
+  );
 
 DROP POLICY IF EXISTS "Admins can manage orders" ON orders;
 CREATE POLICY "Admins can manage orders" ON orders FOR ALL USING (public.is_admin());
@@ -231,7 +340,18 @@ CREATE POLICY "Users can read own order items" ON order_items FOR SELECT USING (
 );
 
 DROP POLICY IF EXISTS "Users can create order items" ON order_items;
-CREATE POLICY "Users can create order items" ON order_items FOR INSERT WITH CHECK (true);
+-- 注文明細の作成は「自分の注文」に紐づく場合のみ許可
+CREATE POLICY "Users can create order items"
+  ON order_items
+  FOR INSERT
+  WITH CHECK (
+    auth.uid() IS NOT NULL
+    AND EXISTS (
+      SELECT 1 FROM orders
+      WHERE orders.id = order_items.order_id
+        AND (orders.auth_user_id = auth.uid() OR public.is_admin())
+    )
+  );
 
 -- Inquiries ポリシー
 DROP POLICY IF EXISTS "Admins can read inquiries" ON inquiries;
@@ -239,6 +359,63 @@ CREATE POLICY "Admins can read inquiries" ON inquiries FOR SELECT USING (public.
 
 DROP POLICY IF EXISTS "Public can create inquiries" ON inquiries;
 CREATE POLICY "Public can create inquiries" ON inquiries FOR INSERT WITH CHECK (true);
+
+-- Shipping Methods ポリシー（閲覧: 公開 / 変更: 管理者のみ）
+DROP POLICY IF EXISTS "Anyone can view shipping methods" ON shipping_methods;
+CREATE POLICY "Anyone can view shipping methods"
+  ON shipping_methods
+  FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Admins can manage shipping methods" ON shipping_methods;
+CREATE POLICY "Admins can manage shipping methods"
+  ON shipping_methods
+  FOR ALL
+  USING (public.is_admin());
+
+-- ProductShippingMethods ポリシー（閲覧: 公開 / 変更: 管理者のみ）
+DROP POLICY IF EXISTS "Anyone can view product shipping methods" ON product_shipping_methods;
+CREATE POLICY "Anyone can view product shipping methods"
+  ON product_shipping_methods
+  FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Admins can manage product shipping methods" ON product_shipping_methods;
+CREATE POLICY "Admins can manage product shipping methods"
+  ON product_shipping_methods
+  FOR ALL
+  USING (public.is_admin());
+
+-- Blog Articles ポリシー（公開記事: 誰でも / 全管理: 管理者のみ）
+DROP POLICY IF EXISTS "Anyone can view published articles" ON blog_articles;
+CREATE POLICY "Anyone can view published articles"
+  ON blog_articles
+  FOR SELECT
+  USING (is_published = true);
+
+DROP POLICY IF EXISTS "Admins can view all articles" ON blog_articles;
+CREATE POLICY "Admins can view all articles"
+  ON blog_articles
+  FOR SELECT
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can insert articles" ON blog_articles;
+CREATE POLICY "Admins can insert articles"
+  ON blog_articles
+  FOR INSERT
+  WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can update articles" ON blog_articles;
+CREATE POLICY "Admins can update articles"
+  ON blog_articles
+  FOR UPDATE
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can delete articles" ON blog_articles;
+CREATE POLICY "Admins can delete articles"
+  ON blog_articles
+  FOR DELETE
+  USING (public.is_admin());
 
 -- ==========================================
 -- reviews テーブル (お客様の声/レビュー)

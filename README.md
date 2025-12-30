@@ -34,10 +34,12 @@ VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 Supabaseの **SQL Editor** を開き、`supabase_schema.sql` の内容をすべてコピーして実行（Run）してください。
 これにより、以下のテーブルと機能が一括で作成されます。
 
-*   `products` (商品情報: 画像配列, 在庫, SKUなど)
-*   `orders` (注文情報: 注文番号自動生成)
+*   `products` (商品情報: 画像配列, SKU, バリエーション設定 `variants_config` など)
+*   `orders` / `order_items` (注文情報: 注文番号自動生成)
 *   `profiles` (ユーザー情報: 管理者フラグ, 住所など)
 *   `inquiries` (お問い合わせ)
+*   `shipping_methods` / `product_shipping_methods`（発送方法・紐づけ）
+*   `blog_articles`（ブログ記事）
 *   各種RLSポリシー（セキュリティ設定）
 *   自動更新トリガー
 
@@ -147,10 +149,12 @@ Vercelダッシュボードの **Settings > Environment Variables** で以下の
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
+ - `STRIPE_SECRET_KEY`（決済を使う場合）
 
 **オプション（メール送信機能用）:**
 - `RESEND_API_KEY` (Vercel Serverless Function用)
 - `RESEND_FROM_EMAIL` (Vercel Serverless Function用)
+ - `SEND_EMAIL_API_KEY`（`/api/send-email` を有効化する場合）
 
 ### 4. Vercel Serverless Functionの設定
 
