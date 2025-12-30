@@ -127,6 +127,34 @@ const getAreaFee = (fees: any, areaKey: string | null): number => {
   return 0;
 };
 
+// サイズ別送料（size_fees）で、qty個を送る最小送料を求める
+// - boxType: { max_items_per_box, area_fees } を1箱として扱う
+// - 例: 100サイズ(5個/箱) + 60サイズ(1個/箱) など「混在」も最小化に含める
+const getMinCostForSizeFees = (sizeFees: any, qty: number, areaKey: string | null): number => {
+  const target = Math.max(0, Number(qty || 0));
+  if (!sizeFees || target <= 0) return 0;
+
+  const boxTypes: Array<{ cap: number; cost: number }> = [];
+  for (const sf of Object.values(sizeFees as any)) {
+    const cap = Math.max(1, Number((sf as any)?.max_items_per_box || 1));
+    const cost = getAreaFee((sf as any)?.area_fees, areaKey);
+    if (cost > 0) boxTypes.push({ cap, cost });
+  }
+  if (boxTypes.length === 0) return 0;
+
+  // dp[i] = i個送る最小送料（iは0..target）
+  const dp = Array(target + 1).fill(Infinity) as number[];
+  dp[0] = 0;
+  for (let i = 0; i <= target; i++) {
+    if (!Number.isFinite(dp[i])) continue;
+    for (const bt of boxTypes) {
+      const next = Math.min(target, i + bt.cap);
+      dp[next] = Math.min(dp[next], dp[i] + bt.cost);
+    }
+  }
+  return Number.isFinite(dp[target]) ? dp[target] : 0;
+};
+
 const resolvePrefectureForShipping = (formData: any): string | null => {
   // 住所検索（Zipcloud）で入ってきた都道府県を最優先（郵便番号テーブルは網羅できないため）
   if (formData?.prefecture && String(formData.prefecture).trim().length > 0) {
@@ -565,7 +593,7 @@ const Checkout = () => {
         }
 
         // 1つの発送方法が「その商品(quantity)」に対していくらになるかを計算
-        // sizeの場合は size_fees の各行（60/80/100...）を比較して最安を採用する
+        // sizeの場合は size_fees を使って「箱の分割（混在含む）」まで最小化する
         const getMethodCostForQuantity = (method: ShippingMethod, quantity: number): number => {
           if (method.fee_type === 'uniform') {
             return Number(method.uniform_fee || 0);
@@ -574,15 +602,7 @@ const Checkout = () => {
             return getAreaFee(method.area_fees, area as any);
           }
           if (method.fee_type === 'size' && method.size_fees) {
-            let best = Infinity;
-            for (const sf of Object.values(method.size_fees as any)) {
-              const perBox = Math.max(1, Number((sf as any)?.max_items_per_box || 1));
-              const fee = getAreaFee((sf as any)?.area_fees, area as any);
-              if (!fee || fee <= 0) continue; // 未設定(0)は候補にしない
-              const boxes = Math.max(1, Math.ceil(quantity / perBox));
-              best = Math.min(best, fee * boxes);
-            }
-            return best !== Infinity ? best : 0;
+            return getMinCostForSizeFees(method.size_fees, quantity, area as any);
           }
           return 0;
         };
@@ -706,15 +726,7 @@ const Checkout = () => {
       } else if (m.fee_type === 'area') {
         return getAreaFee(m.area_fees, area as any);
       } else if (m.fee_type === 'size' && m.size_fees) {
-        let best = Infinity;
-        for (const sf of Object.values(m.size_fees as any)) {
-          const perBox = Math.max(1, Number((sf as any)?.max_items_per_box || 1));
-          const fee = getAreaFee((sf as any)?.area_fees, area as any);
-          if (!fee || fee <= 0) continue;
-          const boxes = Math.max(1, Math.ceil(quantity / perBox));
-          best = Math.min(best, fee * boxes);
-        }
-        return best !== Infinity ? best : 0;
+        return getMinCostForSizeFees(m.size_fees, quantity, area as any);
       }
       return 0;
     };
