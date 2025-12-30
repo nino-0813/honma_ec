@@ -66,13 +66,13 @@ const getSupabaseErrorMessage = (err: unknown): string => {
   if (lower.includes('column') && lower.includes('size_fees')) {
     return (
       'DBに `size_fees` カラムがありません。\n' +
-      'SupabaseのSQL Editorで `migration_add_size_fees_column.sql` を実行してください。'
+      'SupabaseのSQL Editorで `supabase_schema.sql`（統合版）を実行して、shipping_methodsテーブルを最新化してください。'
     );
   }
   if (lower.includes('column') && lower.includes('uniform_fee')) {
     return (
       'DBに `uniform_fee` カラムがありません。\n' +
-      'SupabaseのSQL Editorで `migration_add_uniform_fee_column.sql` を実行してください。'
+      'SupabaseのSQL Editorで `supabase_schema.sql`（統合版）を実行して、shipping_methodsテーブルを最新化してください。'
     );
   }
   if (lower.includes('row-level security') || lower.includes('rls')) {

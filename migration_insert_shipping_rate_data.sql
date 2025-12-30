@@ -3,7 +3,7 @@
 -- ==========================================
 
 -- 注意: このSQLを実行する前に、shipping_methodsテーブルが作成されていることを確認してください
--- migration_add_shipping_methods.sql を先に実行してください
+-- `supabase_schema.sql`（統合版）を先に実行してください
 
 -- 既存のデータを削除（再実行時用）
 DELETE FROM public.shipping_methods WHERE name IN ('通常料金', 'クール便料金');
