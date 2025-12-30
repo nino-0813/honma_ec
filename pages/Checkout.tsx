@@ -420,6 +420,8 @@ const Checkout = () => {
   // 決済（PaymentIntent）
   const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [paymentIntentLivemode, setPaymentIntentLivemode] = useState<boolean | null>(null);
+  const [paymentIntentSecretKeyPrefix, setPaymentIntentSecretKeyPrefix] = useState<string | null>(null);
   const [paymentIntentAmount, setPaymentIntentAmount] = useState<number | null>(null);
   const [paymentInitError, setPaymentInitError] = useState<string | null>(null);
 
@@ -963,16 +965,22 @@ const Checkout = () => {
 
         const cs = responseData?.clientSecret;
         const piId = responseData?.paymentIntentId;
+        const livemode = responseData?.livemode;
+        const secretKeyPrefix = responseData?.secretKeyPrefix;
         if (!cs) throw new Error('clientSecretが取得できませんでした');
         if (!piId) throw new Error('paymentIntentIdが取得できませんでした');
 
         setPaymentClientSecret(cs);
         setPaymentIntentId(piId);
+        if (typeof livemode === 'boolean') setPaymentIntentLivemode(livemode);
+        if (typeof secretKeyPrefix === 'string') setPaymentIntentSecretKeyPrefix(secretKeyPrefix);
         setPaymentIntentAmount(total);
       } catch (e: any) {
         console.error('PaymentIntent初期化エラー:', e);
         setPaymentClientSecret(null);
         setPaymentIntentId(null);
+        setPaymentIntentLivemode(null);
+        setPaymentIntentSecretKeyPrefix(null);
         setPaymentIntentAmount(null);
         setPaymentInitError(e?.message || '決済の初期化に失敗しました');
       }
@@ -1447,6 +1455,14 @@ const Checkout = () => {
                           </span>
                         </div>
                       ) : paymentClientSecret ? (
+                        <>
+                          {import.meta.env.DEV && (
+                            <div className="border border-gray-200 bg-gray-50 text-gray-700 px-4 py-3 rounded mb-4 text-xs">
+                              <div><span className="font-semibold">[debug]</span> publishableKey: <span className="font-mono">{STRIPE_PUBLISHABLE_KEY.startsWith('pk_test') ? 'pk_test' : STRIPE_PUBLISHABLE_KEY.startsWith('pk_live') ? 'pk_live' : 'unknown'}</span></div>
+                              <div><span className="font-semibold">[debug]</span> PaymentIntent.livemode: <span className="font-mono">{paymentIntentLivemode === null ? 'unknown' : String(paymentIntentLivemode)}</span></div>
+                              <div><span className="font-semibold">[debug]</span> secretKeyPrefix: <span className="font-mono">{paymentIntentSecretKeyPrefix ?? 'unknown'}</span></div>
+                            </div>
+                          )}
                         <Elements
                           stripe={stripePromise}
                           options={{ clientSecret: paymentClientSecret, locale: 'ja' }}
@@ -1459,6 +1475,7 @@ const Checkout = () => {
                             onSuccess={handleSuccess}
                           />
                         </Elements>
+                        </>
                       ) : (
                         <div className="border border-gray-200 p-6 rounded bg-gray-50">
                           <p className="text-sm text-gray-500">決済システムを初期化中...</p>

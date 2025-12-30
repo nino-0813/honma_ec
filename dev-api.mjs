@@ -28,6 +28,10 @@ if (!STRIPE_SECRET_KEY) {
   console.error('[dev-api] STRIPE_SECRET_KEY is missing. Set it in .env.local');
 }
 
+const SECRET_KEY_PREFIX = STRIPE_SECRET_KEY
+  ? (STRIPE_SECRET_KEY.startsWith('sk_test') ? 'sk_test' : STRIPE_SECRET_KEY.startsWith('sk_live') ? 'sk_live' : 'unknown')
+  : 'missing';
+
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 function sendJson(res, status, obj) {
@@ -93,7 +97,12 @@ const server = http.createServer(async (req, res) => {
         metadata,
         automatic_payment_methods: { enabled: true },
       });
-      return sendJson(res, 200, { clientSecret: pi.client_secret, paymentIntentId: pi.id });
+      return sendJson(res, 200, {
+        clientSecret: pi.client_secret,
+        paymentIntentId: pi.id,
+        livemode: pi.livemode,
+        secretKeyPrefix: SECRET_KEY_PREFIX,
+      });
     } catch (e) {
       return sendJson(res, 500, { error: e?.message || 'PaymentIntentの作成に失敗しました' });
     }

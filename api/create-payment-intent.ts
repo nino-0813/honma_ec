@@ -100,6 +100,11 @@ export default async function handler(req: VercelRequest, res?: VercelResponse) 
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
         livemode: paymentIntent.livemode,
+        secretKeyPrefix: stripeSecretKey.startsWith('sk_test')
+          ? 'sk_test'
+          : stripeSecretKey.startsWith('sk_live')
+            ? 'sk_live'
+            : 'unknown',
       });
     }
 
@@ -109,6 +114,11 @@ export default async function handler(req: VercelRequest, res?: VercelResponse) 
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
         livemode: paymentIntent.livemode,
+        secretKeyPrefix: stripeSecretKey.startsWith('sk_test')
+          ? 'sk_test'
+          : stripeSecretKey.startsWith('sk_live')
+            ? 'sk_live'
+            : 'unknown',
       }),
     };
   } catch (error: any) {
