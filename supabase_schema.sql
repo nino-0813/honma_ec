@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   payment_status TEXT DEFAULT 'pending',
   payment_intent_id TEXT,
   payment_method TEXT,
+  paid_at TIMESTAMP WITH TIME ZONE,
   order_status TEXT DEFAULT 'pending',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -116,8 +117,26 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   product_title TEXT NOT NULL,
   product_price INTEGER NOT NULL,
   product_image TEXT,
+  variant TEXT,
+  selected_options JSONB,
   quantity INTEGER NOT NULL,
   line_total INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- orders/order_items: 既存環境向けに不足カラムを追加
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS variant TEXT;
+ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS selected_options JSONB;
+
+-- payment_intent_id はWebhook/重複防止に使うためユニーク化（NULLは複数OK）
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_payment_intent_id_unique
+  ON public.orders(payment_intent_id)
+  WHERE payment_intent_id IS NOT NULL;
+
+-- Stripe webhook idempotency
+CREATE TABLE IF NOT EXISTS public.stripe_webhook_events (
+  event_id TEXT PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -274,6 +293,7 @@ ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shipping_methods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_shipping_methods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blog_articles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stripe_webhook_events ENABLE ROW LEVEL SECURITY;
 
 -- Profiles ポリシー
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
@@ -360,6 +380,13 @@ CREATE POLICY "Admins can read inquiries" ON inquiries FOR SELECT USING (public.
 DROP POLICY IF EXISTS "Public can create inquiries" ON inquiries;
 CREATE POLICY "Public can create inquiries" ON inquiries FOR INSERT WITH CHECK (true);
 
+-- Stripe webhook events: 管理者のみ閲覧/管理
+DROP POLICY IF EXISTS "Admins can manage stripe webhook events" ON stripe_webhook_events;
+CREATE POLICY "Admins can manage stripe webhook events"
+  ON stripe_webhook_events
+  FOR ALL
+  USING (public.is_admin());
+
 -- Shipping Methods ポリシー（閲覧: 公開 / 変更: 管理者のみ）
 DROP POLICY IF EXISTS "Anyone can view shipping methods" ON shipping_methods;
 CREATE POLICY "Anyone can view shipping methods"
@@ -416,6 +443,128 @@ CREATE POLICY "Admins can delete articles"
   ON blog_articles
   FOR DELETE
   USING (public.is_admin());
+
+-- ==========================================
+-- 在庫の確定減算（Webhook用）
+-- ==========================================
+-- 決済成功後（Webhook）に、在庫を安全に減算するための関数
+-- - バリエーション無し: products.stock を減算
+-- - バリエーション有り: variants_config の sharedStock / option stock を減算（存在する場合のみ）
+-- - 在庫が足りない場合は例外を投げる（負の在庫を防止）
+
+CREATE OR REPLACE FUNCTION public.decrement_product_stock(
+  p_product_id UUID,
+  p_selected_options JSONB,
+  p_qty INTEGER
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  cfg JSONB;
+  new_cfg JSONB := '[]'::jsonb;
+  t JSONB;
+  opts JSONB;
+  new_opts JSONB;
+  opt JSONB;
+  i INTEGER;
+  j INTEGER;
+  type_id TEXT;
+  sm TEXT;
+  selected_opt_id TEXT;
+  shared_val INTEGER;
+  stock_val INTEGER;
+  has_cfg BOOLEAN;
+BEGIN
+  IF p_qty IS NULL OR p_qty <= 0 THEN
+    RETURN;
+  END IF;
+
+  -- Lock the product row
+  SELECT variants_config INTO cfg
+  FROM public.products
+  WHERE id = p_product_id
+  FOR UPDATE;
+
+  has_cfg := cfg IS NOT NULL AND jsonb_typeof(cfg) = 'array' AND jsonb_array_length(cfg) > 0;
+
+  IF NOT has_cfg THEN
+    -- Simple stock decrement for non-variant products
+    UPDATE public.products
+    SET stock = stock - p_qty
+    WHERE id = p_product_id
+      AND (stock IS NULL OR stock >= p_qty);
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'insufficient_stock';
+    END IF;
+    RETURN;
+  END IF;
+
+  FOR i IN 0..jsonb_array_length(cfg)-1 LOOP
+    t := cfg -> i;
+    sm := COALESCE(t->>'stockManagement', 'individual');
+
+    IF sm = 'none' THEN
+      new_cfg := new_cfg || t;
+      CONTINUE;
+    END IF;
+
+    -- sharedStock takes precedence if present
+    IF (t ? 'sharedStock') AND (t->'sharedStock') IS NOT NULL AND (t->'sharedStock') <> 'null'::jsonb THEN
+      shared_val := (t->>'sharedStock')::INTEGER;
+      IF shared_val < p_qty THEN
+        RAISE EXCEPTION 'insufficient_stock';
+      END IF;
+      t := jsonb_set(t, '{sharedStock}', to_jsonb(shared_val - p_qty), true);
+      new_cfg := new_cfg || t;
+      CONTINUE;
+    END IF;
+
+    -- individual option stock decrement (if option stock exists)
+    type_id := t->>'id';
+    selected_opt_id := NULL;
+    IF p_selected_options IS NOT NULL AND jsonb_typeof(p_selected_options) = 'object' THEN
+      selected_opt_id := p_selected_options ->> type_id;
+    END IF;
+
+    IF selected_opt_id IS NULL THEN
+      -- No selection for this type: cannot decrement; keep as-is
+      new_cfg := new_cfg || t;
+      CONTINUE;
+    END IF;
+
+    opts := t->'options';
+    IF opts IS NULL OR jsonb_typeof(opts) <> 'array' THEN
+      new_cfg := new_cfg || t;
+      CONTINUE;
+    END IF;
+
+    new_opts := '[]'::jsonb;
+    FOR j IN 0..jsonb_array_length(opts)-1 LOOP
+      opt := opts -> j;
+      IF (opt->>'id') = selected_opt_id THEN
+        IF (opt ? 'stock') AND (opt->'stock') IS NOT NULL AND (opt->'stock') <> 'null'::jsonb THEN
+          stock_val := (opt->>'stock')::INTEGER;
+          IF stock_val < p_qty THEN
+            RAISE EXCEPTION 'insufficient_stock';
+          END IF;
+          opt := jsonb_set(opt, '{stock}', to_jsonb(stock_val - p_qty), true);
+        END IF;
+      END IF;
+      new_opts := new_opts || opt;
+    END LOOP;
+
+    t := jsonb_set(t, '{options}', new_opts, true);
+    new_cfg := new_cfg || t;
+  END LOOP;
+
+  UPDATE public.products
+  SET variants_config = new_cfg
+  WHERE id = p_product_id;
+END;
+$$;
 
 -- ==========================================
 -- reviews テーブル (お客様の声/レビュー)

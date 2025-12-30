@@ -92,11 +92,10 @@ const getAreaFromPrefecture = (prefecture: string): keyof AreaFees | null => {
 };
 
 // 決済フォームコンポーネント
-const CheckoutForm = ({ formData, total, clientSecret, onSaveOrder, onSuccess }: {
+const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
   formData: any;
   total: number;
   clientSecret: string;
-  onSaveOrder: (paymentIntent: any) => Promise<void>;
   onSuccess: () => void;
 }) => {
   const stripe = useStripe();
@@ -199,18 +198,9 @@ const CheckoutForm = ({ formData, total, clientSecret, onSaveOrder, onSuccess }:
       if (paymentError) {
         setError(paymentError.message || '決済処理中にエラーが発生しました');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // 決済成功 - 注文情報をSupabaseに保存
-        try {
-          await onSaveOrder(paymentIntent);
-          clearCart();
-          onSuccess();
-        } catch (saveError: any) {
-          // 注文保存に失敗しても決済は成功しているため、警告のみ
-          console.error('注文情報の保存に失敗しましたが、決済は完了しています:', saveError);
-          // ユーザーには成功として表示し、管理者に通知する必要があります
-          clearCart();
-          onSuccess();
-        }
+        // 注文は決済前にドラフト作成済み。決済成功後はWebhookがpaid確定&在庫確定減算を行う。
+        clearCart();
+        onSuccess();
       }
     } catch (err: any) {
       console.error('決済エラー:', err);
@@ -282,6 +272,7 @@ const Checkout = () => {
 
   // 決済（PaymentIntent）
   const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [paymentIntentAmount, setPaymentIntentAmount] = useState<number | null>(null);
   const [paymentInitError, setPaymentInitError] = useState<string | null>(null);
 
@@ -591,84 +582,7 @@ const Checkout = () => {
     calculateShipping();
   }, [formData.postalCode, cartItems, shippingMethods, productShippingMethodIds]);
 
-  // 注文情報を保存する関数
-  const saveOrderToSupabase = async (paymentIntent: any) => {
-    if (!supabase || !authUser) return;
-
-    // 1. プロフィール情報の更新（次回のために保存）
-    try {
-      await supabase.from('profiles').upsert({
-        id: authUser.id,
-        email: authUser.email,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone: formData.phone,
-        postal_code: formData.postalCode,
-        prefecture: formData.prefecture,
-        city: formData.city,
-        address: formData.address,
-        building: formData.building,
-        country: 'JP', // 固定値
-        updated_at: new Date().toISOString(),
-      });
-    } catch (profileError) {
-      console.error('プロフィール更新エラー:', profileError);
-    }
-
-    // 2. 注文情報の保存
-    try {
-      // 注文データの作成
-      const orderData = {
-        auth_user_id: authUser.id,
-        email: formData.email,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone: formData.phone,
-        shipping_address: `${formData.prefecture}${formData.city}${formData.address}${formData.building ? ' ' + formData.building : ''}`,
-        shipping_city: formData.city,
-        shipping_postal_code: formData.postalCode,
-        shipping_country: 'JP',
-        shipping_method: formData.shippingMethod,
-        subtotal: subtotal,
-        shipping_cost: shippingCost,
-        total: total,
-        payment_status: 'paid',
-        payment_intent_id: paymentIntent.id,
-        payment_method: paymentIntent.payment_method_types?.[0] || 'card',
-        order_status: 'pending',
-      };
-
-      const { data: newOrder, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      if (newOrder) {
-        // 注文アイテムの保存
-        const orderItems = cartItems.map(item => ({
-          order_id: newOrder.id,
-          product_id: item.product.id,
-          product_title: item.product.title,
-          product_price: item.product.price,
-          product_image: item.product.image, // 配列の場合は先頭を取得すべきだが、スキーマ次第
-          quantity: item.quantity,
-          line_total: item.product.price * item.quantity,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems);
-
-        if (itemsError) throw itemsError;
-      }
-    } catch (err) {
-      console.error('注文保存エラー:', err);
-      // エラーハンドリング（ユーザーへの通知など）が必要だが、決済は完了しているためスルー
-    }
-  };
+  // 注文は「決済前にドラフト作成」→「Webhookでpaid確定&在庫確定減算」へ移行
 
   // 認証成功時の処理
   const handleAuthSuccess = (email: string, userData: any) => {
@@ -728,7 +642,7 @@ const Checkout = () => {
     const createPaymentIntent = async () => {
       if (!isAuthenticated) return;
       if (!cartItems.length || total <= 0) return;
-      if (paymentClientSecret && paymentIntentAmount === total) return;
+      if (paymentClientSecret && paymentIntentAmount === total && paymentIntentId) return;
 
       try {
         setPaymentInitError(null);
@@ -762,20 +676,105 @@ const Checkout = () => {
         }
 
         const cs = responseData?.clientSecret;
+        const piId = responseData?.paymentIntentId;
         if (!cs) throw new Error('clientSecretが取得できませんでした');
+        if (!piId) throw new Error('paymentIntentIdが取得できませんでした');
 
         setPaymentClientSecret(cs);
+        setPaymentIntentId(piId);
         setPaymentIntentAmount(total);
       } catch (e: any) {
         console.error('PaymentIntent初期化エラー:', e);
         setPaymentClientSecret(null);
+        setPaymentIntentId(null);
         setPaymentIntentAmount(null);
         setPaymentInitError(e?.message || '決済の初期化に失敗しました');
       }
     };
 
     createPaymentIntent();
-  }, [isAuthenticated, cartItems.length, total, subtotal, shippingCost, paymentClientSecret, paymentIntentAmount]);
+  }, [isAuthenticated, cartItems.length, total, subtotal, shippingCost, paymentClientSecret, paymentIntentAmount, paymentIntentId]);
+
+  // 注文ドラフトを作成/更新（Webhookが参照するため、決済前にDBへ保存）
+  useEffect(() => {
+    const upsertOrderDraft = async () => {
+      if (!supabase || !authUser) return;
+      if (!paymentIntentId) return;
+      if (!cartItems.length || total <= 0) return;
+
+      try {
+        // プロフィールは先に保存（次回のため）
+        await supabase.from('profiles').upsert({
+          id: authUser.id,
+          email: authUser.email,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+          postal_code: formData.postalCode,
+          prefecture: formData.prefecture,
+          city: formData.city,
+          address: formData.address,
+          building: formData.building,
+          country: 'JP',
+          updated_at: new Date().toISOString(),
+        });
+
+        const orderData = {
+          auth_user_id: authUser.id,
+          email: formData.email,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+          shipping_address: `${formData.prefecture}${formData.city}${formData.address}${formData.building ? ' ' + formData.building : ''}`,
+          shipping_city: formData.city,
+          shipping_postal_code: formData.postalCode,
+          shipping_country: 'JP',
+          shipping_method: formData.shippingMethod,
+          subtotal: subtotal,
+          shipping_cost: shippingCost,
+          total: total,
+          payment_status: 'pending',
+          payment_intent_id: paymentIntentId,
+          order_status: 'pending',
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: order, error: orderErr } = await supabase
+          .from('orders')
+          .upsert([orderData], { onConflict: 'payment_intent_id' })
+          .select('id')
+          .single();
+
+        if (orderErr) throw orderErr;
+        if (!order?.id) return;
+
+        // 明細を作り直す（同一PaymentIntentで再計算/再作成があり得るため）
+        await supabase.from('order_items').delete().eq('order_id', order.id);
+
+        const orderItems = cartItems.map((item) => {
+          const unitPrice = item.finalPrice ?? item.product.price;
+          return {
+            order_id: order.id,
+            product_id: item.product.id,
+            product_title: item.product.title,
+            product_price: unitPrice,
+            product_image: item.product.image,
+            variant: item.variant ?? null,
+            selected_options: item.selectedOptions ?? null,
+            quantity: item.quantity,
+            line_total: unitPrice * item.quantity,
+          };
+        });
+
+        const { error: itemsErr } = await supabase.from('order_items').insert(orderItems);
+        if (itemsErr) throw itemsErr;
+      } catch (e) {
+        console.error('注文ドラフト作成/更新エラー:', e);
+      }
+    };
+
+    upsertOrderDraft();
+  }, [supabase, authUser, paymentIntentId, cartItems, total, subtotal, shippingCost, formData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -1128,7 +1127,6 @@ const Checkout = () => {
                             formData={formData}
                             total={total}
                             clientSecret={paymentClientSecret}
-                            onSaveOrder={saveOrderToSupabase}
                             onSuccess={handleSuccess}
                           />
                         </Elements>

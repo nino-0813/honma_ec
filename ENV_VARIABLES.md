@@ -22,6 +22,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 ```
 
 **取得方法:**
@@ -33,7 +34,25 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 **重要:**
 - `VITE_STRIPE_PUBLISHABLE_KEY` はクライアント側で使用（`VITE_` プレフィックス付き）
 - `STRIPE_SECRET_KEY` はサーバー側（Vercel Serverless Function）でのみ使用（`VITE_` プレフィックスなし）
+- `STRIPE_WEBHOOK_SECRET` はサーバー側（Webhook署名検証）でのみ使用（`VITE_` プレフィックスなし）
 - Secret keyは絶対にクライアント側に公開しないでください
+
+**Webhook Secret 取得方法（必須）:**
+1. Stripe Dashboard > Developers > Webhooks
+2. エンドポイントを作成（URL: `/api/stripe-webhook`）
+3. `Signing secret` をコピーして `STRIPE_WEBHOOK_SECRET` に設定
+
+#### 2-1. Supabase（サーバー側 / Webhook用）
+Webhookで **注文の確定（paid）** と **在庫の確定減算** を行うため、サーバー側でSupabaseへ書き込みできるキーが必要です。
+
+```
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
+
+**重要:**
+- `SUPABASE_SERVICE_ROLE_KEY` は **絶対にクライアントへ公開しないでください**（`VITE_` を付けない）
+- VercelのEnvironment Variablesにのみ設定してください
 
 #### 3. 管理画面 Basic認証（Vercel Edge Middleware用）
 ```
