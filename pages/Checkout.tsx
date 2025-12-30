@@ -753,6 +753,102 @@ const Checkout = () => {
     return shippingMethods.filter(m => methodIds.has(m.id));
   }, [cartItems, shippingMethods, productShippingMethodIds]);
 
+  const shippingPlan = useMemo(() => {
+    const empty = {
+      totalCost: 0,
+      byMethod: {} as Record<string, { cost: number; itemsText: string; sizeBreakdownText?: string }>,
+    };
+
+    if (!formData.postalCode || cartItems.length === 0 || shippingMethods.length === 0) return empty;
+
+    const prefecture = resolvePrefectureForShipping(formData);
+    const areaKey = prefecture ? getAreaFromPrefecture(prefecture) : null;
+    if (!areaKey) return empty;
+
+    const shippingMethodById: Record<string, ShippingMethod> = Object.fromEntries(
+      shippingMethods.map((m) => [m.id, m])
+    );
+
+    const getMethodCostForQuantity = (m: ShippingMethod, quantity: number): number => {
+      if (m.fee_type === 'uniform') return Number(m.uniform_fee || 0);
+      if (m.fee_type === 'area') return getAreaFee(m.area_fees, areaKey as any);
+      if (m.fee_type === 'size' && m.size_fees) {
+        return getMinPlanForSizeFees(m.size_fees, quantity, areaKey as any).cost;
+      }
+      return 0;
+    };
+
+    // 1) 各商品を「どの発送方法で送るか」に割り当て（選択されたshippingMethodがあれば優先）
+    const assigned: Record<string, Array<{ title: string; qty: number }>> = {};
+    for (const item of cartItems) {
+      const linkedIds = productShippingMethodIds[item.product.id] || [];
+      if (linkedIds.length === 0) continue;
+
+      let chosenId: string | null = null;
+      if (formData.shippingMethod && linkedIds.includes(formData.shippingMethod)) {
+        chosenId = formData.shippingMethod;
+      } else {
+        // 最安の発送方法を選ぶ
+        let best = Infinity;
+        for (const mid of linkedIds) {
+          const m = shippingMethodById[mid];
+          if (!m) continue;
+          const c = getMethodCostForQuantity(m, item.quantity);
+          if (c > 0 && c < best) {
+            best = c;
+            chosenId = mid;
+          }
+        }
+        // コストが取れない場合は先頭にフォールバック
+        if (!chosenId) chosenId = linkedIds[0];
+      }
+
+      if (!assigned[chosenId]) assigned[chosenId] = [];
+      assigned[chosenId].push({ title: item.product.title, qty: item.quantity });
+    }
+
+    // 2) 発送方法ごとに送料を計算（sizeは「その方法に割り当てられた数量合計」で箱割り）
+    let totalCost = 0;
+    const byMethod: Record<string, { cost: number; itemsText: string; sizeBreakdownText?: string }> = {};
+    for (const methodId of Object.keys(assigned)) {
+      const method = shippingMethodById[methodId];
+      if (!method) continue;
+
+      const items = assigned[methodId];
+      const totalQty = items.reduce((s, it) => s + Number(it.qty || 0), 0);
+      const itemsText = items
+        .slice(0, 3)
+        .map((it) => `${it.title}×${it.qty}`)
+        .join(' / ') + (items.length > 3 ? ` (+${items.length - 3})` : '');
+
+      let cost = 0;
+      let sizeBreakdownText: string | undefined = undefined;
+      if (method.fee_type === 'uniform') {
+        cost = Number(method.uniform_fee || 0);
+      } else if (method.fee_type === 'area') {
+        cost = getAreaFee(method.area_fees, areaKey as any);
+      } else if (method.fee_type === 'size' && method.size_fees) {
+        const plan = getMinPlanForSizeFees(method.size_fees, totalQty, areaKey as any);
+        cost = plan.cost;
+        if (plan.boxes.length > 0) {
+          sizeBreakdownText = plan.boxes.map(b => `${b.label}×${b.count}箱`).join(' + ');
+        }
+      }
+
+      byMethod[methodId] = { cost, itemsText, sizeBreakdownText };
+      totalCost += cost;
+    }
+
+    return { totalCost, byMethod };
+  }, [
+    formData.postalCode,
+    formData.prefecture,
+    formData.shippingMethod,
+    cartItems,
+    productShippingMethodIds,
+    shippingMethods,
+  ]);
+
   // 選択された発送方法の送料を計算
   const getShippingCostForMethod = (methodId: string): number => {
     if (!formData.postalCode) return 0;
@@ -802,10 +898,8 @@ const Checkout = () => {
     return totalCost;
   };
 
-  // 送料計算（選択された発送方法がある場合はそれを使用、なければ自動計算）
-  const shippingCost = formData.shippingMethod && formData.postalCode
-    ? getShippingCostForMethod(formData.shippingMethod)
-    : (calculatedShippingCost > 0 ? calculatedShippingCost : 0);
+  // 送料（複数口を想定して「方法ごとの合計」を表示）
+  const shippingCost = shippingPlan.totalCost || 0;
   const total = subtotal + shippingCost;
 
   // PaymentIntent 作成（ElementsにclientSecretを渡すため、ここで作る）
@@ -1260,25 +1354,10 @@ const Checkout = () => {
                     ) : (
                       <div className="space-y-3">
                         {availableShippingMethods.map((method) => {
-                          const methodCost = formData.postalCode
-                            ? getShippingCostForMethod(method.id)
-                            : 0;
-
-                          // sizeの場合は、現在のカート合計数量に対して箱割りの内訳も表示（わかりやすさ優先）
-                          let sizeBreakdownText: string | null = null;
-                          if (formData.postalCode) {
-                            const prefecture = resolvePrefectureForShipping(formData);
-                            const areaKey = prefecture ? getAreaFromPrefecture(prefecture) : null;
-                            if (areaKey && method.fee_type === 'size' && method.size_fees) {
-                              const totalQty = cartItems.reduce((s, it) => s + Number(it.quantity || 0), 0);
-                              const plan = getMinPlanForSizeFees(method.size_fees, totalQty, areaKey as any);
-                              if (plan.boxes.length > 0) {
-                                sizeBreakdownText = plan.boxes
-                                  .map(b => `${b.label}×${b.count}箱`)
-                                  .join(' + ');
-                              }
-                            }
-                          }
+                          const methodPlan = shippingPlan.byMethod?.[method.id];
+                          const methodCost = methodPlan?.cost ?? 0;
+                          const sizeBreakdownText = methodPlan?.sizeBreakdownText ?? null;
+                          const itemsText = methodPlan?.itemsText ?? '';
                           return (
                             <label
                               key={method.id}
@@ -1299,6 +1378,11 @@ const Checkout = () => {
                                     {Object.keys(method.size_fees).length}種類のサイズに対応
                                   </div>
                                 )}
+                                {itemsText && (
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    対象商品: {itemsText}
+                                  </div>
+                                )}
                                 {sizeBreakdownText && (
                                   <div className="text-xs text-gray-600 mt-1">
                                     内訳: {sizeBreakdownText}
@@ -1306,7 +1390,7 @@ const Checkout = () => {
                                 )}
                               </div>
                               <div className="font-serif">
-                                {methodCost > 0 ? `¥${methodCost.toLocaleString()}` : '計算中...'}
+                                {methodCost > 0 ? `¥${methodCost.toLocaleString()}` : '—'}
                               </div>
                             </label>
                           );
