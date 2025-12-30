@@ -257,7 +257,7 @@ const Checkout = () => {
     city: '',
     address: '',
     building: '',
-    shippingMethod: 'standard' // standard, express
+    shippingMethod: '' // 発送方法ID（UUID）
   });
 
   // 発送方法と送料計算の状態
@@ -572,6 +572,19 @@ const Checkout = () => {
 
         setCalculatedShippingCost(totalShippingCost);
         setShippingCalculationError(null);
+        
+        // 郵便番号が入力されていて、発送方法が未選択の場合、最初の利用可能な発送方法を自動選択
+        if (formData.postalCode && !formData.shippingMethod) {
+          const methodIds = new Set<string>();
+          cartItems.forEach(item => {
+            const linkedIds = productShippingMethodIds[item.product.id] || [];
+            linkedIds.forEach(id => methodIds.add(id));
+          });
+          const available = shippingMethods.filter(m => methodIds.has(m.id));
+          if (available.length > 0) {
+            setFormData(prev => ({ ...prev, shippingMethod: available[0].id }));
+          }
+        }
       } catch (err) {
         console.error('送料計算エラー:', err);
         setCalculatedShippingCost(0);
@@ -580,7 +593,7 @@ const Checkout = () => {
     };
 
     calculateShipping();
-  }, [formData.postalCode, cartItems, shippingMethods, productShippingMethodIds]);
+  }, [formData.postalCode, cartItems, shippingMethods, productShippingMethodIds, formData.shippingMethod]);
 
   // 注文は「決済前にドラフト作成」→「Webhookでpaid確定&在庫確定減算」へ移行
 
@@ -633,8 +646,97 @@ const Checkout = () => {
     return sum + (price * item.quantity);
   }, 0);
   
-  // 送料計算（郵便番号から自動計算、計算できない場合はデフォルト値）
-  const shippingCost = calculatedShippingCost > 0 ? calculatedShippingCost : (formData.shippingMethod === 'express' ? 1000 : 500);
+  // カート内の全商品に紐づく発送方法の和集合を取得
+  const availableShippingMethods = useMemo(() => {
+    const methodIds = new Set<string>();
+    cartItems.forEach(item => {
+      const linkedIds = productShippingMethodIds[item.product.id] || [];
+      linkedIds.forEach(id => methodIds.add(id));
+    });
+    return shippingMethods.filter(m => methodIds.has(m.id));
+  }, [cartItems, shippingMethods, productShippingMethodIds]);
+
+  // 選択された発送方法の送料を計算
+  const getShippingCostForMethod = (methodId: string): number => {
+    if (!formData.postalCode) return 0;
+    
+    const prefecture = getPrefectureFromPostalCode(formData.postalCode);
+    if (!prefecture) return 0;
+    
+    const area = getAreaFromPrefecture(prefecture);
+    if (!area) return 0;
+
+    const method = shippingMethods.find(m => m.id === methodId);
+    if (!method) return 0;
+
+    // 各商品に対して、選択された発送方法が適用可能かどうかを確認
+    let totalCost = 0;
+    for (const item of cartItems) {
+      const linkedIds = productShippingMethodIds[item.product.id] || [];
+      if (!linkedIds.includes(methodId)) {
+        // この商品には選択された発送方法が適用できない → 最安の送料を使用
+        let best = Infinity;
+        for (const mid of linkedIds) {
+          const m = shippingMethods.find(mm => mm.id === mid);
+          if (!m) continue;
+          
+          let cost = 0;
+          if (m.fee_type === 'uniform') {
+            cost = m.uniform_fee || 0;
+          } else if (m.fee_type === 'area') {
+            cost = m.area_fees?.[area] || 0;
+          } else if (m.fee_type === 'size' && m.size_fees) {
+            const sizeFeeKeys = Object.keys(m.size_fees);
+            if (sizeFeeKeys.length > 0) {
+              const firstSizeFee = (m.size_fees as any)[sizeFeeKeys[0]];
+              cost = firstSizeFee?.area_fees?.[area] || 0;
+            }
+          }
+          
+          // 箱数を考慮
+          let perBox = 1;
+          if (m.fee_type === 'size' && m.size_fees) {
+            const first = Object.values(m.size_fees)[0] as any;
+            perBox = Number(first?.max_items_per_box || 1);
+          }
+          const boxes = Math.max(1, Math.ceil(item.quantity / perBox));
+          best = Math.min(best, cost * boxes);
+        }
+        if (best !== Infinity) {
+          totalCost += best;
+        }
+      } else {
+        // 選択された発送方法が適用可能
+        let cost = 0;
+        if (method.fee_type === 'uniform') {
+          cost = method.uniform_fee || 0;
+        } else if (method.fee_type === 'area') {
+          cost = method.area_fees?.[area] || 0;
+        } else if (method.fee_type === 'size' && method.size_fees) {
+          const sizeFeeKeys = Object.keys(method.size_fees);
+          if (sizeFeeKeys.length > 0) {
+            const firstSizeFee = (method.size_fees as any)[sizeFeeKeys[0]];
+            cost = firstSizeFee?.area_fees?.[area] || 0;
+          }
+        }
+        
+        // 箱数を考慮
+        let perBox = 1;
+        if (method.fee_type === 'size' && method.size_fees) {
+          const first = Object.values(method.size_fees)[0] as any;
+          perBox = Number(first?.max_items_per_box || 1);
+        }
+        const boxes = Math.max(1, Math.ceil(item.quantity / perBox));
+        totalCost += cost * boxes;
+      }
+    }
+    return totalCost;
+  };
+
+  // 送料計算（選択された発送方法がある場合はそれを使用、なければ自動計算）
+  const shippingCost = formData.shippingMethod && formData.postalCode
+    ? getShippingCostForMethod(formData.shippingMethod)
+    : (calculatedShippingCost > 0 ? calculatedShippingCost : 0);
   const total = subtotal + shippingCost;
 
   // PaymentIntent 作成（ElementsにclientSecretを渡すため、ここで作る）
@@ -1069,41 +1171,48 @@ const Checkout = () => {
                 </div>
 
                 {/* 配送方法 */}
-                <div className="border-t border-gray-200 pt-6">
-                  <h2 className="text-lg font-medium mb-4">配送方法</h2>
-                  <div className="space-y-3">
-                    <label className="flex items-center p-4 border border-gray-200 cursor-pointer hover:border-black transition-colors">
-                      <input
-                        type="radio"
-                        name="shippingMethod"
-                        value="standard"
-                        checked={formData.shippingMethod === 'standard'}
-                        onChange={handleInputChange}
-                        className="mr-3"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium">標準配送</div>
-                        <div className="text-sm text-gray-500">3-7営業日でお届け</div>
+                {availableShippingMethods.length > 0 && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <h2 className="text-lg font-medium mb-4">配送方法</h2>
+                    {!formData.postalCode ? (
+                      <p className="text-sm text-gray-500">郵便番号を入力すると送料が表示されます</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {availableShippingMethods.map((method) => {
+                          const methodCost = formData.postalCode
+                            ? getShippingCostForMethod(method.id)
+                            : 0;
+                          return (
+                            <label
+                              key={method.id}
+                              className="flex items-center p-4 border border-gray-200 cursor-pointer hover:border-black transition-colors"
+                            >
+                              <input
+                                type="radio"
+                                name="shippingMethod"
+                                value={method.id}
+                                checked={formData.shippingMethod === method.id}
+                                onChange={handleInputChange}
+                                className="mr-3"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium">{method.name}</div>
+                                {method.fee_type === 'size' && method.size_fees && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {Object.keys(method.size_fees).length}種類のサイズに対応
+                                  </div>
+                                )}
+                              </div>
+                              <div className="font-serif">
+                                {methodCost > 0 ? `¥${methodCost.toLocaleString()}` : '計算中...'}
+                              </div>
+                            </label>
+                          );
+                        })}
                       </div>
-                      <div className="font-serif">¥500</div>
-                    </label>
-                    <label className="flex items-center p-4 border border-gray-200 cursor-pointer hover:border-black transition-colors">
-                      <input
-                        type="radio"
-                        name="shippingMethod"
-                        value="express"
-                        checked={formData.shippingMethod === 'express'}
-                        onChange={handleInputChange}
-                        className="mr-3"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium">速達配送</div>
-                        <div className="text-sm text-gray-500">1-2営業日でお届け</div>
-                      </div>
-                      <div className="font-serif">¥1,000</div>
-                    </label>
+                    )}
                   </div>
-                </div>
+                )}
                   </div>
 
                   {/* Stripe決済フォーム */}
