@@ -805,7 +805,21 @@ const Checkout = () => {
       if (!cartItems.length || total <= 0) return;
 
       try {
+        // 入力途中でRLSやバリデーションに弾かれるのを防ぐ（最低限の必須項目が揃ってから保存）
+        const hasRequired =
+          Boolean(formData.email && formData.email.length > 3) &&
+          Boolean(formData.firstName && formData.firstName.trim().length > 0) &&
+          Boolean(formData.lastName && formData.lastName.trim().length > 0) &&
+          Boolean(formData.postalCode && formData.postalCode.replace(/[^0-9]/g, '').length === 7) &&
+          Boolean(formData.city && formData.city.trim().length > 0) &&
+          Boolean(formData.address && formData.address.trim().length > 0) &&
+          Boolean(formData.shippingMethod && formData.shippingMethod.length > 0);
+
+        if (!hasRequired) return;
+
         // プロフィールは先に保存（次回のため）
+        // NOTE: Supabase側の profiles に prefecture/building が無い環境があるため、
+        //       ここでは確実に存在する列だけ保存する（エラー防止）
         await supabase.from('profiles').upsert({
           id: authUser.id,
           email: authUser.email,
@@ -813,10 +827,8 @@ const Checkout = () => {
           last_name: formData.lastName,
           phone: formData.phone,
           postal_code: formData.postalCode,
-          prefecture: formData.prefecture,
           city: formData.city,
-          address: formData.address,
-          building: formData.building,
+          address: `${formData.prefecture}${formData.city}${formData.address}${formData.building ? ' ' + formData.building : ''}`,
           country: 'JP',
           updated_at: new Date().toISOString(),
         });
