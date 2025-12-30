@@ -58,32 +58,18 @@ const Orders = () => {
       setLoading(true);
       setError(null);
 
-      // 注文データを取得
+      // 1クエリで注文＋注文明細を取得（N+1防止）
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          order_items (*)
+        `)
         .order('created_at', { ascending: false });
 
-      if (ordersError) {
-        throw ordersError;
-      }
+      if (ordersError) throw ordersError;
 
-      // 注文商品データを取得
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*');
-
-      if (itemsError) {
-        throw itemsError;
-      }
-
-      // 注文に商品を紐付け
-      const ordersWithItems = (ordersData || []).map(order => ({
-        ...order,
-        order_items: (itemsData || []).filter(item => item.order_id === order.id),
-      }));
-
-      setOrders(ordersWithItems as Order[]);
+      setOrders((ordersData || []) as unknown as Order[]);
     } catch (err: any) {
       console.error('注文データの取得に失敗しました:', err);
       setError(err.message || '注文データの取得に失敗しました');

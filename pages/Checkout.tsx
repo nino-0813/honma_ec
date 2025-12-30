@@ -272,6 +272,7 @@ const Checkout = () => {
 
   // 発送方法と送料計算の状態
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [productShippingMethodIds, setProductShippingMethodIds] = useState<Record<string, string[]>>({});
   const [calculatedShippingCost, setCalculatedShippingCost] = useState<number>(0);
   const [shippingCalculationError, setShippingCalculationError] = useState<string | null>(null);
   
@@ -435,6 +436,7 @@ const Checkout = () => {
     const fetchShippingMethods = async () => {
       if (!supabase || cartItems.length === 0) {
         setShippingMethods([]);
+        setProductShippingMethodIds({});
         return;
       }
 
@@ -444,15 +446,30 @@ const Checkout = () => {
         // 商品と発送方法の紐づけを取得
         const { data: productShippingMethods, error: linkError } = await supabase
           .from('product_shipping_methods')
-          .select('shipping_method_id, products!inner(id)')
+          .select('product_id, shipping_method_id')
           .in('product_id', productIds);
 
         if (linkError) throw linkError;
 
         if (!productShippingMethods || productShippingMethods.length === 0) {
           setShippingMethods([]);
+          setProductShippingMethodIds({});
           return;
         }
+
+        // product_id -> shipping_method_ids[]
+        const map: Record<string, string[]> = {};
+        for (const row of productShippingMethods as any[]) {
+          const pid = row.product_id as string;
+          const mid = row.shipping_method_id as string;
+          if (!map[pid]) map[pid] = [];
+          map[pid].push(mid);
+        }
+        // 重複除去
+        for (const pid of Object.keys(map)) {
+          map[pid] = Array.from(new Set(map[pid]));
+        }
+        setProductShippingMethodIds(map);
 
         // 発送方法IDを取得（重複を除去）
         const shippingMethodIds = [...new Set(
@@ -471,6 +488,7 @@ const Checkout = () => {
       } catch (err) {
         console.error('発送方法の取得エラー:', err);
         setShippingMethods([]);
+        setProductShippingMethodIds({});
       }
     };
 
@@ -503,52 +521,62 @@ const Checkout = () => {
           return;
         }
 
-        // 各商品の送料を計算
-        let totalShippingCost = 0;
-        const shippingCostsByMethod: { [methodId: string]: number } = {};
-
-        for (const item of cartItems) {
-          // この商品に紐づいている発送方法を取得
-          const { data: productShippingMethods } = await supabase
-            ?.from('product_shipping_methods')
-            .select('shipping_method_id')
-            .eq('product_id', item.product.id)
-            .limit(1) || { data: null };
-
-          if (!productShippingMethods || productShippingMethods.length === 0) continue;
-
-          const shippingMethodId = productShippingMethods[0].shipping_method_id;
-          const method = shippingMethods.find(m => m.id === shippingMethodId);
-          if (!method) continue;
-
-          // 発送方法ごとの送料を計算（同じ発送方法は1回だけ計算）
-          if (!shippingCostsByMethod[shippingMethodId]) {
-            let cost = 0;
-
-            if (method.fee_type === 'uniform') {
-              cost = method.uniform_fee || 0;
-            } else if (method.fee_type === 'area') {
-              cost = method.area_fees[area] || 0;
-            } else if (method.fee_type === 'size') {
-              // サイズ別送料の場合、商品のサイズ/重量から適切な送料を選択
-              // ここでは簡易的に最初のサイズ別送料を使用（実際には商品のサイズ/重量情報が必要）
-              if (method.size_fees) {
-                const sizeFeeKeys = Object.keys(method.size_fees);
-                if (sizeFeeKeys.length > 0) {
-                  const firstSizeFee = method.size_fees[sizeFeeKeys[0]];
-                  cost = firstSizeFee.area_fees[area] || 0;
-                }
+        const getMethodCost = (method: ShippingMethod): number => {
+          if (method.fee_type === 'uniform') {
+            return method.uniform_fee || 0;
+          }
+          if (method.fee_type === 'area') {
+            return method.area_fees?.[area] || 0;
+          }
+          if (method.fee_type === 'size') {
+            // サイズ別送料の場合、簡易的に最初のサイズ別送料を使用
+            if (method.size_fees) {
+              const sizeFeeKeys = Object.keys(method.size_fees);
+              if (sizeFeeKeys.length > 0) {
+                const firstSizeFee = (method.size_fees as any)[sizeFeeKeys[0]];
+                return firstSizeFee?.area_fees?.[area] || 0;
               }
             }
-
-            shippingCostsByMethod[shippingMethodId] = cost;
+            return 0;
           }
+          return 0;
+        };
 
-          // 商品数量に応じて箱数を計算（簡易版：1商品=1箱）
-          // 実際には max_items_per_box を考慮する必要がある
-          const boxes = Math.ceil(item.quantity / (method.size_fees ? 
-            (Object.values(method.size_fees)[0]?.max_items_per_box || 1) : 1));
-          totalShippingCost += shippingCostsByMethod[shippingMethodId] * boxes;
+        const getBoxes = (method: ShippingMethod, quantity: number): number => {
+          // 簡易版：size_feesの先頭の max_items_per_box を使う。なければ1。
+          let perBox = 1;
+          if (method.fee_type === 'size' && method.size_fees) {
+            const first = Object.values(method.size_fees)[0] as any;
+            perBox = Number(first?.max_items_per_box || 1);
+          }
+          return Math.max(1, Math.ceil(quantity / perBox));
+        };
+
+        // 各商品の送料を計算（DBへの追加クエリなし）
+        let totalShippingCost = 0;
+        const shippingCostsByMethod: { [methodId: string]: number } = {};
+        const shippingMethodById: Record<string, ShippingMethod> = Object.fromEntries(
+          shippingMethods.map((m) => [m.id, m])
+        );
+
+        for (const item of cartItems) {
+          const methodIds = productShippingMethodIds[item.product.id] || [];
+          if (methodIds.length === 0) continue;
+
+          // 複数ある場合は「その商品にとって最安」を採用（簡易）
+          let best = Infinity;
+          for (const mid of methodIds) {
+            const method = shippingMethodById[mid];
+            if (!method) continue;
+            if (shippingCostsByMethod[mid] === undefined) {
+              shippingCostsByMethod[mid] = getMethodCost(method);
+            }
+            const boxes = getBoxes(method, item.quantity);
+            best = Math.min(best, shippingCostsByMethod[mid] * boxes);
+          }
+          if (best !== Infinity) {
+            totalShippingCost += best;
+          }
         }
 
         setCalculatedShippingCost(totalShippingCost);
@@ -561,7 +589,7 @@ const Checkout = () => {
     };
 
     calculateShipping();
-  }, [formData.postalCode, cartItems, shippingMethods]);
+  }, [formData.postalCode, cartItems, shippingMethods, productShippingMethodIds]);
 
   // 注文情報を保存する関数
   const saveOrderToSupabase = async (paymentIntent: any) => {
