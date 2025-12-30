@@ -127,32 +127,78 @@ const getAreaFee = (fees: any, areaKey: string | null): number => {
   return 0;
 };
 
-// サイズ別送料（size_fees）で、qty個を送る最小送料を求める
+type SizeBoxType = {
+  size?: number;
+  weight_kg?: number;
+  cap: number;   // 1箱に入る数
+  cost: number;  // 1箱あたりの送料（地域別）
+};
+
+type SizeFeePlan = {
+  cost: number;
+  boxes: Array<{ label: string; count: number; perBoxCost: number; cap: number }>;
+};
+
+// サイズ別送料（size_fees）で、qty個を送る最小送料と箱割りを求める
 // - boxType: { max_items_per_box, area_fees } を1箱として扱う
 // - 例: 100サイズ(5個/箱) + 60サイズ(1個/箱) など「混在」も最小化に含める
-const getMinCostForSizeFees = (sizeFees: any, qty: number, areaKey: string | null): number => {
+const getMinPlanForSizeFees = (sizeFees: any, qty: number, areaKey: string | null): SizeFeePlan => {
   const target = Math.max(0, Number(qty || 0));
-  if (!sizeFees || target <= 0) return 0;
+  if (!sizeFees || target <= 0) return { cost: 0, boxes: [] };
 
-  const boxTypes: Array<{ cap: number; cost: number }> = [];
+  const boxTypes: SizeBoxType[] = [];
   for (const sf of Object.values(sizeFees as any)) {
     const cap = Math.max(1, Number((sf as any)?.max_items_per_box || 1));
     const cost = getAreaFee((sf as any)?.area_fees, areaKey);
-    if (cost > 0) boxTypes.push({ cap, cost });
+    const size = (sf as any)?.size;
+    const weight_kg = (sf as any)?.weight_kg;
+    if (cost > 0) boxTypes.push({ size, weight_kg, cap, cost });
   }
-  if (boxTypes.length === 0) return 0;
+  if (boxTypes.length === 0) return { cost: 0, boxes: [] };
 
   // dp[i] = i個送る最小送料（iは0..target）
   const dp = Array(target + 1).fill(Infinity) as number[];
+  const prev = Array(target + 1).fill(-1) as number[];
+  const prevBoxIdx = Array(target + 1).fill(-1) as number[];
   dp[0] = 0;
   for (let i = 0; i <= target; i++) {
     if (!Number.isFinite(dp[i])) continue;
-    for (const bt of boxTypes) {
+    for (let b = 0; b < boxTypes.length; b++) {
+      const bt = boxTypes[b];
       const next = Math.min(target, i + bt.cap);
-      dp[next] = Math.min(dp[next], dp[i] + bt.cost);
+      const cand = dp[i] + bt.cost;
+      if (cand < dp[next]) {
+        dp[next] = cand;
+        prev[next] = i;
+        prevBoxIdx[next] = b;
+      }
     }
   }
-  return Number.isFinite(dp[target]) ? dp[target] : 0;
+  if (!Number.isFinite(dp[target])) return { cost: 0, boxes: [] };
+
+  // reconstruct
+  const counts = new Map<number, number>(); // boxIdx -> count
+  let cur = target;
+  while (cur > 0 && prev[cur] !== -1 && prevBoxIdx[cur] !== -1) {
+    const bi = prevBoxIdx[cur];
+    counts.set(bi, (counts.get(bi) || 0) + 1);
+    cur = prev[cur];
+  }
+
+  const boxes: SizeFeePlan['boxes'] = [];
+  for (const [bi, count] of counts.entries()) {
+    const bt = boxTypes[bi];
+    const label = bt.size ? `${bt.size}サイズ` : 'サイズ別';
+    boxes.push({ label, count, perBoxCost: bt.cost, cap: bt.cap });
+  }
+  // size順に並べる（見やすさ）
+  boxes.sort((a, b) => {
+    const an = Number(String(a.label).replace(/[^0-9]/g, '') || 0);
+    const bn = Number(String(b.label).replace(/[^0-9]/g, '') || 0);
+    return an - bn;
+  });
+
+  return { cost: dp[target], boxes };
 };
 
 const resolvePrefectureForShipping = (formData: any): string | null => {
@@ -602,7 +648,7 @@ const Checkout = () => {
             return getAreaFee(method.area_fees, area as any);
           }
           if (method.fee_type === 'size' && method.size_fees) {
-            return getMinCostForSizeFees(method.size_fees, quantity, area as any);
+            return getMinPlanForSizeFees(method.size_fees, quantity, area as any).cost;
           }
           return 0;
         };
@@ -726,7 +772,7 @@ const Checkout = () => {
       } else if (m.fee_type === 'area') {
         return getAreaFee(m.area_fees, area as any);
       } else if (m.fee_type === 'size' && m.size_fees) {
-        return getMinCostForSizeFees(m.size_fees, quantity, area as any);
+        return getMinPlanForSizeFees(m.size_fees, quantity, area as any).cost;
       }
       return 0;
     };
@@ -1217,6 +1263,22 @@ const Checkout = () => {
                           const methodCost = formData.postalCode
                             ? getShippingCostForMethod(method.id)
                             : 0;
+
+                          // sizeの場合は、現在のカート合計数量に対して箱割りの内訳も表示（わかりやすさ優先）
+                          let sizeBreakdownText: string | null = null;
+                          if (formData.postalCode) {
+                            const prefecture = resolvePrefectureForShipping(formData);
+                            const areaKey = prefecture ? getAreaFromPrefecture(prefecture) : null;
+                            if (areaKey && method.fee_type === 'size' && method.size_fees) {
+                              const totalQty = cartItems.reduce((s, it) => s + Number(it.quantity || 0), 0);
+                              const plan = getMinPlanForSizeFees(method.size_fees, totalQty, areaKey as any);
+                              if (plan.boxes.length > 0) {
+                                sizeBreakdownText = plan.boxes
+                                  .map(b => `${b.label}×${b.count}箱`)
+                                  .join(' + ');
+                              }
+                            }
+                          }
                           return (
                             <label
                               key={method.id}
@@ -1235,6 +1297,11 @@ const Checkout = () => {
                                 {method.fee_type === 'size' && method.size_fees && (
                                   <div className="text-xs text-gray-500 mt-1">
                                     {Object.keys(method.size_fees).length}種類のサイズに対応
+                                  </div>
+                                )}
+                                {sizeBreakdownText && (
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    内訳: {sizeBreakdownText}
                                   </div>
                                 )}
                               </div>
