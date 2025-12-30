@@ -127,6 +127,17 @@ const getAreaFee = (fees: any, areaKey: string | null): number => {
   return 0;
 };
 
+const resolvePrefectureForShipping = (formData: any): string | null => {
+  // 住所検索（Zipcloud）で入ってきた都道府県を最優先（郵便番号テーブルは網羅できないため）
+  if (formData?.prefecture && String(formData.prefecture).trim().length > 0) {
+    return String(formData.prefecture).trim();
+  }
+  if (formData?.postalCode) {
+    return getPrefectureFromPostalCode(String(formData.postalCode));
+  }
+  return null;
+};
+
 // 決済フォームコンポーネント
 const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
   formData: any;
@@ -532,8 +543,8 @@ const Checkout = () => {
       }
 
       try {
-        // 郵便番号から都道府県を判定
-        const prefecture = getPrefectureFromPostalCode(formData.postalCode);
+        // 都道府県を判定（prefecture入力を優先）
+        const prefecture = resolvePrefectureForShipping(formData);
         if (!prefecture) {
           setCalculatedShippingCost(0);
           setShippingCalculationError(null);
@@ -696,7 +707,7 @@ const Checkout = () => {
   const getShippingCostForMethod = (methodId: string): number => {
     if (!formData.postalCode) return 0;
     
-    const prefecture = getPrefectureFromPostalCode(formData.postalCode);
+    const prefecture = resolvePrefectureForShipping(formData);
     if (!prefecture) return 0;
     
     const area = getAreaFromPrefecture(prefecture);
