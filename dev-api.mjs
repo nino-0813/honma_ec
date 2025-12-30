@@ -14,7 +14,8 @@ function loadEnvFile(filePath) {
     const key = trimmed.slice(0, idx).trim();
     let value = trimmed.slice(idx + 1).trim();
     value = value.replace(/^['"]|['"]$/g, '');
-    if (!(key in process.env)) process.env[key] = value;
+    // .env.local の変更が反映されるように、常に上書きする
+    process.env[key] = value;
   }
 }
 

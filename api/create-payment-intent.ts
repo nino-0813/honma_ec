@@ -99,6 +99,7 @@ export default async function handler(req: VercelRequest, res?: VercelResponse) 
       return res.status(200).json({
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
+        livemode: paymentIntent.livemode,
       });
     }
 
@@ -107,6 +108,7 @@ export default async function handler(req: VercelRequest, res?: VercelResponse) 
       body: JSON.stringify({
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
+        livemode: paymentIntent.livemode,
       }),
     };
   } catch (error: any) {
