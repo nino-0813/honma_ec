@@ -154,6 +154,11 @@ const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData?.shippingMethod) {
+      setError('配送方法を選択してください');
+      return;
+    }
+
     if (!stripe || !elements) {
       setError('Stripeが初期化されていません');
       return;
@@ -610,18 +615,7 @@ const Checkout = () => {
         setCalculatedShippingCost(totalShippingCost);
         setShippingCalculationError(null);
         
-        // 郵便番号が入力されていて、発送方法が未選択の場合、最初の利用可能な発送方法を自動選択
-        if (formData.postalCode && !formData.shippingMethod) {
-          const methodIds = new Set<string>();
-          cartItems.forEach(item => {
-            const linkedIds = productShippingMethodIds[item.product.id] || [];
-            linkedIds.forEach(id => methodIds.add(id));
-          });
-          const available = shippingMethods.filter(m => methodIds.has(m.id));
-          if (available.length > 0) {
-            setFormData(prev => ({ ...prev, shippingMethod: available[0].id }));
-          }
-        }
+        // NOTE: 配送方法はユーザーが明示的に選ぶ（自動選択しない）
       } catch (err) {
         console.error('送料計算エラー:', err);
         setCalculatedShippingCost(0);
@@ -1245,7 +1239,7 @@ const Checkout = () => {
                   </div>
 
                   {/* Stripe決済フォーム */}
-                  {isAuthenticated && (
+                  {isAuthenticated && formData.shippingMethod && (
                     <div className="border-t border-gray-200 pt-6">
                       <h2 className="text-lg font-medium mb-6">お支払い</h2>
 
@@ -1276,6 +1270,16 @@ const Checkout = () => {
                           </p>
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* 配送方法未選択の場合は決済へ進めない */}
+                  {isAuthenticated && !formData.shippingMethod && (
+                    <div className="border-t border-gray-200 pt-6">
+                      <h2 className="text-lg font-medium mb-4">お支払い</h2>
+                      <div className="border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 rounded">
+                        配送方法を選択すると、お支払いに進めます。
+                      </div>
                     </div>
                   )}
                 </>
