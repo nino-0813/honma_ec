@@ -72,23 +72,59 @@ const getPrefectureFromPostalCode = (postalCode: string): string | null => {
 };
 
 // 都道府県から地域（AreaFeesのキー）を判定
+// NOTE: 送料テーブルの地域キーは運用で変遷しやすい（旧: north_tohoku/kanto... 新: kitatohoku/kanto_area...）
+//       Checkout側は両方に対応して「0円」にならないようにする。
 const getAreaFromPrefecture = (prefecture: string): keyof AreaFees | null => {
   if (!prefecture) return null;
   
   if (prefecture === '北海道') return 'hokkaido';
-  if (['青森県', '秋田県', '岩手県'].includes(prefecture)) return 'north_tohoku';
-  if (['宮城県', '山形県', '福島県'].includes(prefecture)) return 'south_tohoku';
-  if (['東京都', '神奈川県', '山梨県', '千葉県', '茨城県', '栃木県', '群馬県', '埼玉県'].includes(prefecture)) return 'kanto';
+  // 新地域区分（ShippingMethodEditorのキーに合わせる）
+  if (['青森県', '秋田県', '岩手県'].includes(prefecture)) return 'kitatohoku' as any;
+  if (['宮城県', '山形県', '福島県'].includes(prefecture)) return 'minamitohoku' as any;
+  if (['東京都', '神奈川県', '山梨県', '千葉県', '茨城県', '栃木県', '群馬県', '埼玉県'].includes(prefecture)) return 'kanto_area' as any;
   if (['新潟県', '長野県'].includes(prefecture)) return 'shinetsu';
   if (['富山県', '石川県', '福井県'].includes(prefecture)) return 'hokuriku';
-  if (['静岡県', '愛知県', '三重県', '岐阜県'].includes(prefecture)) return 'chubu';
-  if (['大阪府', '京都府', '滋賀県', '奈良県', '和歌山県', '兵庫県'].includes(prefecture)) return 'kansai';
-  if (['岡山県', '広島県', '山口県', '鳥取県', '島根県'].includes(prefecture)) return 'chugoku';
-  if (['香川県', '徳島県', '愛媛県', '高知県'].includes(prefecture)) return 'shikoku';
-  if (['福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県'].includes(prefecture)) return 'kyushu';
-  if (prefecture === '沖縄県') return 'okinawa';
+  if (['静岡県', '愛知県', '三重県', '岐阜県'].includes(prefecture)) return 'chubu_area' as any;
+  if (['大阪府', '京都府', '滋賀県', '奈良県', '和歌山県', '兵庫県'].includes(prefecture)) return 'kansai_area' as any;
+  if (['岡山県', '広島県', '山口県', '鳥取県', '島根県'].includes(prefecture)) return 'chugoku_area' as any;
+  if (['香川県', '徳島県', '愛媛県', '高知県'].includes(prefecture)) return 'shikoku_area' as any;
+  if (['福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県'].includes(prefecture)) return 'kyushu_area' as any;
+  if (prefecture === '沖縄県') return 'okinawa_area' as any;
   
   return null;
+};
+
+const AREA_KEY_COMPAT: Record<string, string> = {
+  // new -> old
+  kitatohoku: 'north_tohoku',
+  minamitohoku: 'south_tohoku',
+  kanto_area: 'kanto',
+  chubu_area: 'chubu',
+  kansai_area: 'kansai',
+  chugoku_area: 'chugoku',
+  shikoku_area: 'shikoku',
+  kyushu_area: 'kyushu',
+  okinawa_area: 'okinawa',
+  // old -> new
+  north_tohoku: 'kitatohoku',
+  south_tohoku: 'minamitohoku',
+  kanto: 'kanto_area',
+  chubu: 'chubu_area',
+  kansai: 'kansai_area',
+  chugoku: 'chugoku_area',
+  shikoku: 'shikoku_area',
+  kyushu: 'kyushu_area',
+  okinawa: 'okinawa_area',
+};
+
+const getAreaFee = (fees: any, areaKey: string | null): number => {
+  if (!fees || !areaKey) return 0;
+  const direct = fees?.[areaKey];
+  if (direct !== undefined && direct !== null) return Number(direct) || 0;
+  const compat = AREA_KEY_COMPAT[areaKey];
+  const alt = compat ? fees?.[compat] : undefined;
+  if (alt !== undefined && alt !== null) return Number(alt) || 0;
+  return 0;
 };
 
 // 決済フォームコンポーネント
@@ -517,7 +553,7 @@ const Checkout = () => {
             return method.uniform_fee || 0;
           }
           if (method.fee_type === 'area') {
-            return method.area_fees?.[area] || 0;
+            return getAreaFee(method.area_fees, area as any);
           }
           if (method.fee_type === 'size') {
             // サイズ別送料の場合、簡易的に最初のサイズ別送料を使用
@@ -525,7 +561,7 @@ const Checkout = () => {
               const sizeFeeKeys = Object.keys(method.size_fees);
               if (sizeFeeKeys.length > 0) {
                 const firstSizeFee = (method.size_fees as any)[sizeFeeKeys[0]];
-                return firstSizeFee?.area_fees?.[area] || 0;
+                return getAreaFee(firstSizeFee?.area_fees, area as any);
               }
             }
             return 0;
@@ -684,12 +720,12 @@ const Checkout = () => {
           if (m.fee_type === 'uniform') {
             cost = m.uniform_fee || 0;
           } else if (m.fee_type === 'area') {
-            cost = m.area_fees?.[area] || 0;
+            cost = getAreaFee(m.area_fees, area as any);
           } else if (m.fee_type === 'size' && m.size_fees) {
             const sizeFeeKeys = Object.keys(m.size_fees);
             if (sizeFeeKeys.length > 0) {
               const firstSizeFee = (m.size_fees as any)[sizeFeeKeys[0]];
-              cost = firstSizeFee?.area_fees?.[area] || 0;
+              cost = getAreaFee(firstSizeFee?.area_fees, area as any);
             }
           }
           
@@ -711,12 +747,12 @@ const Checkout = () => {
         if (method.fee_type === 'uniform') {
           cost = method.uniform_fee || 0;
         } else if (method.fee_type === 'area') {
-          cost = method.area_fees?.[area] || 0;
+          cost = getAreaFee(method.area_fees, area as any);
         } else if (method.fee_type === 'size' && method.size_fees) {
           const sizeFeeKeys = Object.keys(method.size_fees);
           if (sizeFeeKeys.length > 0) {
             const firstSizeFee = (method.size_fees as any)[sizeFeeKeys[0]];
-            cost = firstSizeFee?.area_fees?.[area] || 0;
+            cost = getAreaFee(firstSizeFee?.area_fees, area as any);
           }
         }
         
