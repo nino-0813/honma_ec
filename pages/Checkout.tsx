@@ -559,40 +559,31 @@ const Checkout = () => {
           return;
         }
 
-        const getMethodCost = (method: ShippingMethod): number => {
+        // 1つの発送方法が「その商品(quantity)」に対していくらになるかを計算
+        // sizeの場合は size_fees の各行（60/80/100...）を比較して最安を採用する
+        const getMethodCostForQuantity = (method: ShippingMethod, quantity: number): number => {
           if (method.fee_type === 'uniform') {
-            return method.uniform_fee || 0;
+            return Number(method.uniform_fee || 0);
           }
           if (method.fee_type === 'area') {
             return getAreaFee(method.area_fees, area as any);
           }
-          if (method.fee_type === 'size') {
-            // サイズ別送料の場合、簡易的に最初のサイズ別送料を使用
-            if (method.size_fees) {
-              const sizeFeeKeys = Object.keys(method.size_fees);
-              if (sizeFeeKeys.length > 0) {
-                const firstSizeFee = (method.size_fees as any)[sizeFeeKeys[0]];
-                return getAreaFee(firstSizeFee?.area_fees, area as any);
-              }
+          if (method.fee_type === 'size' && method.size_fees) {
+            let best = Infinity;
+            for (const sf of Object.values(method.size_fees as any)) {
+              const perBox = Math.max(1, Number((sf as any)?.max_items_per_box || 1));
+              const fee = getAreaFee((sf as any)?.area_fees, area as any);
+              if (!fee || fee <= 0) continue; // 未設定(0)は候補にしない
+              const boxes = Math.max(1, Math.ceil(quantity / perBox));
+              best = Math.min(best, fee * boxes);
             }
-            return 0;
+            return best !== Infinity ? best : 0;
           }
           return 0;
         };
 
-        const getBoxes = (method: ShippingMethod, quantity: number): number => {
-          // 簡易版：size_feesの先頭の max_items_per_box を使う。なければ1。
-          let perBox = 1;
-          if (method.fee_type === 'size' && method.size_fees) {
-            const first = Object.values(method.size_fees)[0] as any;
-            perBox = Number(first?.max_items_per_box || 1);
-          }
-          return Math.max(1, Math.ceil(quantity / perBox));
-        };
-
         // 各商品の送料を計算（DBへの追加クエリなし）
         let totalShippingCost = 0;
-        const shippingCostsByMethod: { [methodId: string]: number } = {};
         const shippingMethodById: Record<string, ShippingMethod> = Object.fromEntries(
           shippingMethods.map((m) => [m.id, m])
         );
@@ -606,11 +597,10 @@ const Checkout = () => {
           for (const mid of methodIds) {
             const method = shippingMethodById[mid];
             if (!method) continue;
-            if (shippingCostsByMethod[mid] === undefined) {
-              shippingCostsByMethod[mid] = getMethodCost(method);
+            const cost = getMethodCostForQuantity(method, item.quantity);
+            if (cost > 0) {
+              best = Math.min(best, cost);
             }
-            const boxes = getBoxes(method, item.quantity);
-            best = Math.min(best, shippingCostsByMethod[mid] * boxes);
           }
           if (best !== Infinity) {
             totalShippingCost += best;
@@ -716,6 +706,25 @@ const Checkout = () => {
     const method = shippingMethods.find(m => m.id === methodId);
     if (!method) return 0;
 
+    const getMethodCostForQuantity = (m: ShippingMethod, quantity: number): number => {
+      if (m.fee_type === 'uniform') {
+        return Number(m.uniform_fee || 0);
+      } else if (m.fee_type === 'area') {
+        return getAreaFee(m.area_fees, area as any);
+      } else if (m.fee_type === 'size' && m.size_fees) {
+        let best = Infinity;
+        for (const sf of Object.values(m.size_fees as any)) {
+          const perBox = Math.max(1, Number((sf as any)?.max_items_per_box || 1));
+          const fee = getAreaFee((sf as any)?.area_fees, area as any);
+          if (!fee || fee <= 0) continue;
+          const boxes = Math.max(1, Math.ceil(quantity / perBox));
+          best = Math.min(best, fee * boxes);
+        }
+        return best !== Infinity ? best : 0;
+      }
+      return 0;
+    };
+
     // 各商品に対して、選択された発送方法が適用可能かどうかを確認
     let totalCost = 0;
     for (const item of cartItems) {
@@ -726,55 +735,16 @@ const Checkout = () => {
         for (const mid of linkedIds) {
           const m = shippingMethods.find(mm => mm.id === mid);
           if (!m) continue;
-          
-          let cost = 0;
-          if (m.fee_type === 'uniform') {
-            cost = m.uniform_fee || 0;
-          } else if (m.fee_type === 'area') {
-            cost = getAreaFee(m.area_fees, area as any);
-          } else if (m.fee_type === 'size' && m.size_fees) {
-            const sizeFeeKeys = Object.keys(m.size_fees);
-            if (sizeFeeKeys.length > 0) {
-              const firstSizeFee = (m.size_fees as any)[sizeFeeKeys[0]];
-              cost = getAreaFee(firstSizeFee?.area_fees, area as any);
-            }
-          }
-          
-          // 箱数を考慮
-          let perBox = 1;
-          if (m.fee_type === 'size' && m.size_fees) {
-            const first = Object.values(m.size_fees)[0] as any;
-            perBox = Number(first?.max_items_per_box || 1);
-          }
-          const boxes = Math.max(1, Math.ceil(item.quantity / perBox));
-          best = Math.min(best, cost * boxes);
+          const cost = getMethodCostForQuantity(m, item.quantity);
+          if (cost > 0) best = Math.min(best, cost);
         }
         if (best !== Infinity) {
           totalCost += best;
         }
       } else {
-        // 選択された発送方法が適用可能
-        let cost = 0;
-        if (method.fee_type === 'uniform') {
-          cost = method.uniform_fee || 0;
-        } else if (method.fee_type === 'area') {
-          cost = getAreaFee(method.area_fees, area as any);
-        } else if (method.fee_type === 'size' && method.size_fees) {
-          const sizeFeeKeys = Object.keys(method.size_fees);
-          if (sizeFeeKeys.length > 0) {
-            const firstSizeFee = (method.size_fees as any)[sizeFeeKeys[0]];
-            cost = getAreaFee(firstSizeFee?.area_fees, area as any);
-          }
-        }
-        
-        // 箱数を考慮
-        let perBox = 1;
-        if (method.fee_type === 'size' && method.size_fees) {
-          const first = Object.values(method.size_fees)[0] as any;
-          perBox = Number(first?.max_items_per_box || 1);
-        }
-        const boxes = Math.max(1, Math.ceil(item.quantity / perBox));
-        totalCost += cost * boxes;
+        // 選択された発送方法が適用可能（サイズ別なら最安サイズを自動選択）
+        const cost = getMethodCostForQuantity(method, item.quantity);
+        totalCost += cost;
       }
     }
     return totalCost;
