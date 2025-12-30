@@ -19,20 +19,19 @@ function loadEnvFile(filePath) {
   }
 }
 
-// ローカル実行時に .env.local を読み込む（Nodeは自動で読まないため）
-loadEnvFile('.env.local');
-loadEnvFile('.env');
+function getStripeFromEnv() {
+  // 毎リクエストで読み直す（.env.local を変更しても再起動不要にする）
+  loadEnvFile('.env.local');
+  loadEnvFile('.env');
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-if (!STRIPE_SECRET_KEY) {
-  console.error('[dev-api] STRIPE_SECRET_KEY is missing. Set it in .env.local');
+  const key = process.env.STRIPE_SECRET_KEY;
+  const prefix = key
+    ? (key.startsWith('sk_test') ? 'sk_test' : key.startsWith('sk_live') ? 'sk_live' : 'unknown')
+    : 'missing';
+
+  if (!key) return { stripe: null, secretKeyPrefix: prefix };
+  return { stripe: new Stripe(key), secretKeyPrefix: prefix };
 }
-
-const SECRET_KEY_PREFIX = STRIPE_SECRET_KEY
-  ? (STRIPE_SECRET_KEY.startsWith('sk_test') ? 'sk_test' : STRIPE_SECRET_KEY.startsWith('sk_live') ? 'sk_live' : 'unknown')
-  : 'missing';
-
-const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 function sendJson(res, status, obj) {
   res.writeHead(status, {
@@ -73,7 +72,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (url.pathname === '/api/create-payment-intent' && req.method === 'POST') {
-    if (!stripe) return sendJson(res, 500, { error: 'STRIPE_SECRET_KEYが設定されていません' });
+    const { stripe, secretKeyPrefix } = getStripeFromEnv();
+    if (!stripe) return sendJson(res, 500, { error: 'STRIPE_SECRET_KEYが設定されていません', secretKeyPrefix });
 
     let body;
     try {
@@ -101,7 +101,7 @@ const server = http.createServer(async (req, res) => {
         clientSecret: pi.client_secret,
         paymentIntentId: pi.id,
         livemode: pi.livemode,
-        secretKeyPrefix: SECRET_KEY_PREFIX,
+        secretKeyPrefix,
       });
     } catch (e) {
       return sendJson(res, 500, { error: e?.message || 'PaymentIntentの作成に失敗しました' });
