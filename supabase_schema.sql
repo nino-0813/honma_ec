@@ -130,9 +130,14 @@ ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS variant TEXT;
 ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS selected_options JSONB;
 
 -- payment_intent_id はWebhook/重複防止に使うためユニーク化（NULLは複数OK）
-CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_payment_intent_id_unique
-  ON public.orders(payment_intent_id)
-  WHERE payment_intent_id IS NOT NULL;
+-- NOTE: PostgREST の upsert(on_conflict=payment_intent_id) は「UNIQUE制約/インデックス」を要求するが、
+--       部分インデックス（WHERE ...）だと認識されず 42P10 になる場合があるため、UNIQUE制約を付与する。
+DO $$ BEGIN
+  ALTER TABLE public.orders
+    ADD CONSTRAINT orders_payment_intent_id_key UNIQUE (payment_intent_id);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Stripe webhook idempotency
 CREATE TABLE IF NOT EXISTS public.stripe_webhook_events (
