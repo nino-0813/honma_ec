@@ -642,6 +642,22 @@ BEGIN
 END;
 $$;
 
+-- クーポン使用回数を増やす関数（Webhookで使用）
+CREATE OR REPLACE FUNCTION public.increment_coupon_usage(
+  p_coupon_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE public.coupons
+  SET usage_count = usage_count + 1,
+      updated_at = NOW()
+  WHERE id = p_coupon_id;
+END;
+$$;
+
 -- ==========================================
 -- reviews テーブル (お客様の声/レビュー)
 -- ==========================================

@@ -82,7 +82,7 @@ export default async function handler(req: any, res: any) {
 
       const { data: order, error: orderErr } = await supabaseAdmin
         .from('orders')
-        .select('id, total, payment_status')
+        .select('id, total, payment_status, coupon_id')
         .eq('payment_intent_id', paymentIntentId)
         .maybeSingle();
 
@@ -129,6 +129,17 @@ export default async function handler(req: any, res: any) {
           });
           if (rpcErr) {
             console.error('decrement_product_stock failed', { pid, qty, rpcErr });
+            // keep going; manual handling may be required
+          }
+        }
+
+        // クーポンの使用回数を増やす
+        if (order.coupon_id) {
+          const { error: couponErr } = await supabaseAdmin.rpc('increment_coupon_usage', {
+            p_coupon_id: order.coupon_id,
+          });
+          if (couponErr) {
+            console.error('increment_coupon_usage failed', { couponId: order.coupon_id, couponErr });
             // keep going; manual handling may be required
           }
         }
