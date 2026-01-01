@@ -1705,7 +1705,7 @@ const Checkout = () => {
                             }
                           }}
                           placeholder="クーポンコードを入力"
-                          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                          className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                         />
                         <button
                           type="button"
