@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 
 -- orders/order_items: 既存環境向けに不足カラムを追加
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS discount_amount INTEGER DEFAULT 0;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS coupon_id UUID REFERENCES public.coupons(id) ON DELETE SET NULL;
 ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS variant TEXT;
 ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS selected_options JSONB;
 

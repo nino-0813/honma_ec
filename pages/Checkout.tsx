@@ -923,7 +923,145 @@ const Checkout = () => {
 
   // 送料（複数口を想定して「方法ごとの合計」を表示）
   const shippingCost = shippingPlan.totalCost || 0;
-  const total = subtotal + shippingCost;
+  
+  // クーポン関連の状態
+  const [couponCode, setCouponCode] = useState('');
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: string;
+    code: string;
+    name: string;
+    discount_type: 'percentage' | 'fixed';
+    discount_value: number;
+  } | null>(null);
+  
+  // クーポン検証関数
+  const validateCoupon = async (code: string) => {
+    if (!code.trim()) {
+      setCouponError('クーポンコードを入力してください');
+      return;
+    }
+    
+    if (!supabase || !authUser) {
+      setCouponError('ログインが必要です');
+      return;
+    }
+    
+    setCouponValidating(true);
+    setCouponError(null);
+    
+    try {
+      // クーポンを取得
+      const { data: coupon, error: couponErr } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('code', code.trim().toUpperCase())
+        .eq('is_active', true)
+        .single();
+      
+      if (couponErr || !coupon) {
+        setCouponError('クーポンコードが見つかりません');
+        setAppliedCoupon(null);
+        return;
+      }
+      
+      // 有効期間チェック
+      const now = new Date();
+      if (coupon.starts_at && new Date(coupon.starts_at) > now) {
+        setCouponError('このクーポンはまだ利用できません');
+        setAppliedCoupon(null);
+        return;
+      }
+      if (coupon.ends_at && new Date(coupon.ends_at) < now) {
+        setCouponError('このクーポンの有効期限が切れています');
+        setAppliedCoupon(null);
+        return;
+      }
+      
+      // 発行枚数制限チェック
+      if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) {
+        setCouponError('このクーポンの使用回数が上限に達しています');
+        setAppliedCoupon(null);
+        return;
+      }
+      
+      // 最低購入金額チェック
+      if (coupon.min_order_amount !== null && subtotal < coupon.min_order_amount) {
+        setCouponError(`最低購入金額¥${coupon.min_order_amount.toLocaleString()}以上でご利用いただけます`);
+        setAppliedCoupon(null);
+        return;
+      }
+      
+      // 1人1回制限チェック
+      if (coupon.once_per_user) {
+        const { data: existingOrder, error: orderErr } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('auth_user_id', authUser.id)
+          .eq('coupon_id', coupon.id)
+          .eq('payment_status', 'paid')
+          .limit(1);
+        
+        if (!orderErr && existingOrder && existingOrder.length > 0) {
+          setCouponError('このクーポンは既にご利用済みです');
+          setAppliedCoupon(null);
+          return;
+        }
+      }
+      
+      // 対象商品チェック（一部商品のみ対象の場合）
+      if (!coupon.applies_to_all) {
+        const { data: couponProducts, error: cpErr } = await supabase
+          .from('coupon_products')
+          .select('product_id')
+          .eq('coupon_id', coupon.id);
+        
+        if (!cpErr && couponProducts) {
+          const allowedProductIds = couponProducts.map(cp => cp.product_id);
+          const cartProductIds = cartItems.map(item => item.product.id);
+          const hasAllowedProduct = cartProductIds.some(id => allowedProductIds.includes(id));
+          
+          if (!hasAllowedProduct) {
+            setCouponError('このクーポンは対象商品に適用できません');
+            setAppliedCoupon(null);
+            return;
+          }
+        }
+      }
+      
+      // 検証成功
+      setAppliedCoupon({
+        id: coupon.id,
+        code: coupon.code,
+        name: coupon.name,
+        discount_type: coupon.discount_type,
+        discount_value: coupon.discount_value,
+      });
+      setCouponError(null);
+    } catch (err: any) {
+      console.error('クーポン検証エラー:', err);
+      setCouponError(err.message || 'クーポンの検証に失敗しました');
+      setAppliedCoupon(null);
+    } finally {
+      setCouponValidating(false);
+    }
+  };
+  
+  // 割引額を計算
+  const discountAmount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    
+    if (appliedCoupon.discount_type === 'percentage') {
+      // 割引率: 小計に対して適用（送料は対象外）
+      return Math.floor(subtotal * appliedCoupon.discount_value / 100);
+    } else {
+      // 固定額: 小計から引く（ただし小計を超えない）
+      return Math.min(appliedCoupon.discount_value, subtotal);
+    }
+  }, [appliedCoupon, subtotal]);
+  
+  const total = subtotal + shippingCost - discountAmount;
 
   // PaymentIntent 作成（ElementsにclientSecretを渡すため、ここで作る）
   useEffect(() => {
@@ -1046,6 +1184,8 @@ const Checkout = () => {
           ),
           subtotal: subtotal,
           shipping_cost: shippingCost,
+          discount_amount: discountAmount,
+          coupon_id: appliedCoupon?.id || null,
           total: total,
           payment_status: 'pending',
           payment_intent_id: paymentIntentId,
@@ -1088,7 +1228,7 @@ const Checkout = () => {
     };
 
     upsertOrderDraft();
-  }, [supabase, authUser, paymentIntentId, cartItems, total, subtotal, shippingCost, formData, shippingPlan]);
+  }, [supabase, authUser, paymentIntentId, cartItems, total, subtotal, shippingCost, discountAmount, appliedCoupon, formData, shippingPlan]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -1529,12 +1669,71 @@ const Checkout = () => {
                     ))}
                   </div>
 
+                  {/* クーポン入力 */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <h3 className="text-sm font-medium mb-3">クーポンコード</h3>
+                    {appliedCoupon ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-green-900">{appliedCoupon.name}</p>
+                            <p className="text-xs text-green-700">{appliedCoupon.code}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAppliedCoupon(null);
+                              setCouponCode('');
+                              setCouponError(null);
+                            }}
+                            className="text-xs text-green-700 hover:text-green-900 underline"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              validateCoupon(couponCode);
+                            }
+                          }}
+                          placeholder="クーポンコードを入力"
+                          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => validateCoupon(couponCode)}
+                          disabled={couponValidating || !couponCode.trim()}
+                          className="px-4 py-2 text-sm bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {couponValidating ? '確認中...' : '適用'}
+                        </button>
+                      </div>
+                    )}
+                    {couponError && (
+                      <p className="text-xs text-red-600 mt-2">{couponError}</p>
+                    )}
+                  </div>
+
                   {/* 合計 */}
                   <div className="space-y-2 pt-4 border-t border-gray-200">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">小計</span>
                       <span className="font-serif">¥{subtotal.toLocaleString()}</span>
                     </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>割引</span>
+                        <span className="font-serif">-¥{discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">送料</span>
                       <span className="font-serif">¥{shippingCost.toLocaleString()}</span>
