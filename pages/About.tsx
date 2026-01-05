@@ -145,8 +145,8 @@ const About = () => {
       <section className="py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
          {/* Story 1 */}
          <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center mb-32">
-            <FadeInSection className="w-full md:w-1/2 relative">
-               <div className="aspect-[3/4] bg-gray-100 relative z-10">
+            <FadeInSection className="w-full md:w-2/5 relative">
+               <div className="aspect-[3/4] bg-gray-100 relative z-10 max-w-md mx-auto md:mx-0">
                  <ScrollGrayscaleImage src="/images/about/stories/IMG_8832.jpg" alt="Farmer" />
                </div>
                <div className="absolute -bottom-10 -right-10 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
