@@ -95,11 +95,11 @@ const About = () => {
          
          {/* Image Section */}
          <div className="relative w-full pb-4 flex justify-center">
-            <div className="relative w-full max-w-4xl h-[50vh] md:h-[60vh] overflow-hidden mx-auto">
+            <div className="relative w-full max-w-4xl h-auto md:h-[60vh] overflow-hidden mx-auto">
                <img 
                  src="/images/about/hero/about_hero_taue_92.jpg"
                  alt="IKEVEGE" 
-                 className="w-full h-full object-cover object-center"
+                 className="w-full h-auto md:h-full object-contain md:object-cover object-center"
                />
                {/* subtle dark overlay */}
                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/30 to-black/15" />
