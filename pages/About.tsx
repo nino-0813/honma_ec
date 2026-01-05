@@ -135,7 +135,7 @@ const About = () => {
       <section className="py-8 md:py-16 bg-secondary/30 relative">
         <div className="max-w-6xl mx-auto px-6">
            <FadeInSection className="text-center">
-             <h3 className="text-2xl font-serif tracking-widest mb-4">OUR 3 STANCES</h3>
+             <h3 className="text-2xl md:text-4xl font-serif tracking-widest mb-4">OUR 3 STANCES</h3>
              <div className="w-12 h-px bg-primary mx-auto"></div>
            </FadeInSection>
         </div>
