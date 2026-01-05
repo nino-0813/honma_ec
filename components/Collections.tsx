@@ -12,7 +12,7 @@ const collections: Collection[] = [
 const Collections = () => {
   return (
     <section className="py-8 md:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-0.5 bg-white md:bg-secondary">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-4 bg-white">
         {collections.map((collection) => (
           <Link key={collection.id} href={collection.path || `/collections/rice/${collection.handle}`}>
             <a className="group relative overflow-hidden bg-gray-200 block aspect-[2.5/1] md:aspect-auto border border-gray-200/40 md:border-0">
