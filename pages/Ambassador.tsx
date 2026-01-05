@@ -9,8 +9,8 @@ const Ambassador = () => {
   return (
     <div className="pt-20 animate-fade-in bg-white">
       {/* Top Title Section - About US style */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-24 pb-8 md:pb-12 text-center">
-        <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-2">JOIN US</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16 pb-12 md:pb-16 text-center flex items-center justify-center">
+        <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal">JOIN US</h1>
       </div>
 
       {/* Hero Image */}
