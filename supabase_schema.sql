@@ -152,10 +152,16 @@ CREATE TABLE IF NOT EXISTS public.inquiries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   email TEXT NOT NULL,
+  phone TEXT,
+  company_name TEXT,
   message TEXT NOT NULL,
   status TEXT DEFAULT 'unread', -- 'unread', 'read', 'replied'
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- inquiries: 既存環境向けに不足カラムを追加（安全に実行可能）
+ALTER TABLE public.inquiries ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.inquiries ADD COLUMN IF NOT EXISTS company_name TEXT;
 
 -- ==========================================
 -- 追加機能テーブル（統合版）
