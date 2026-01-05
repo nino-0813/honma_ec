@@ -97,10 +97,12 @@ const About = () => {
          <div className="relative w-full pb-4 flex justify-center">
             <div className="relative w-full max-w-4xl h-[50vh] md:h-[60vh] overflow-hidden mx-auto">
                <img 
-                 src="/images/about/hero/IMG_9172.jpg" 
+                 src="/images/about/hero/LINE_ALBUM_%E3%82%A4%E3%82%B1%E3%83%99%E3%82%B8%E7%94%B0%E6%A4%8D%E3%81%88_240613_92.jpg" 
                  alt="IKEVEGE" 
                  className="w-full h-full object-cover object-center"
                />
+               {/* Dark Overlay */}
+               <div className="absolute inset-0 bg-black/30"></div>
             </div>
          </div>
       </div>
