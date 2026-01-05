@@ -30,7 +30,7 @@ const Home = () => {
             <div className="inline-block border-t border-b border-gray-200 pt-4 md:pt-6 pb-3 md:pb-4">
               <p className="text-xs md:text-sm text-gray-500 mb-3 tracking-wider">第27回米・食味分析鑑定コンクール国際大会</p>
               <p className="text-sm md:text-base text-gray-600 mb-6">国際総合部門</p>
-              <h3 className="text-xl md:text-3xl font-serif font-medium text-gray-900">金賞受賞</h3>
+              <h3 className="text-xl md:text-3xl font-serif font-medium text-gray-900">最高金賞受賞</h3>
             </div>
           </div>
         </div>
