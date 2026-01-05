@@ -241,7 +241,7 @@ const About = () => {
 
       {/* Note Link Section */}
       <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto px-6 text-left md:text-center">
           <FadeInSection>
             <Link href="/blog">
               <a className="inline-block text-gray-900 hover:text-gray-700 transition-colors">
