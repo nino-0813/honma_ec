@@ -346,7 +346,7 @@ export const MenuDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             BLOG
           </button>
           <button onClick={() => navigate('/ambassador')} className="text-left border-b border-gray-100 py-4 hover:text-gray-500 transition-colors block w-full">
-            AMBASSADOR
+            JOIN US
           </button>
           <button onClick={() => navigate('/contact')} className="text-left border-b border-gray-100 py-4 hover:text-gray-500 transition-colors block w-full">
             CONTACT
