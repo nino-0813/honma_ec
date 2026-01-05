@@ -240,7 +240,7 @@ const About = () => {
       </section>
 
       {/* Note Link Section */}
-      <section className="py-16 md:py-24 bg-white">
+      <section className="pt-8 pb-16 md:py-24 bg-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <FadeInSection>
             <Link href="/blog">
