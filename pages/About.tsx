@@ -119,7 +119,7 @@ const About = () => {
              <p className="text-xs font-bold tracking-[0.3em] text-gray-400 uppercase mb-4 md:mb-8">CONCEPT</p>
              <h2 className="text-2xl md:text-4xl font-serif font-medium tracking-widest leading-relaxed mb-8 md:mb-16">
                Farm to Social<br/>
-               <span className="text-base md:text-2xl mt-2 md:mt-4 block text-gray-600">農から社会へアプローチする</span>
+               <span className="text-base md:text-2xl mt-2 md:mt-4 block text-gray-600">農から社会へ</span>
              </h2>
              
            </FadeInSection>
