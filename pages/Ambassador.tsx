@@ -84,7 +84,7 @@ const Ambassador = () => {
             <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
                 <img 
-                  src="/images/ambassador/banner/スクリーンショット 2025-12-12 0.59.49.png" 
+                  src="/images/ambassador/banner/ambassador_plan.png" 
                   alt="アンバサダープラン" 
                   className="w-full h-full object-cover"
                 />
@@ -133,7 +133,7 @@ const Ambassador = () => {
             <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
                 <img 
-                  src="/images/ambassador/banner/スクリーンショット 2025-12-12 0.59.49.png" 
+                  src="/images/ambassador/banner/ambassador_plan.png" 
                   alt="アンバサダープラン" 
                   className="w-full h-full object-cover"
                 />

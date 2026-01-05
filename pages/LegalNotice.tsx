@@ -62,7 +62,7 @@ const LegalNotice = () => {
                 <h3 className="text-lg font-medium text-gray-900 mb-3">【佐渡発】</h3>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <img 
-                    src="/images/features/スクリーンショット 2025-12-08 9.57.29.png" 
+                    src="/images/features/feature_screenshot_2025_12_08.png" 
                     alt="佐渡発送料表" 
                     className="w-full h-auto rounded border border-gray-200"
                   />
