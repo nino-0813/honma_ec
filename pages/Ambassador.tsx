@@ -15,11 +15,11 @@ const Ambassador = () => {
 
       {/* Hero Image */}
       <div className="relative w-full pb-4 flex justify-center">
-        <div className="relative w-full max-w-4xl h-[50vh] md:h-[60vh] overflow-hidden mx-auto">
+        <div className="relative w-full max-w-4xl h-auto md:h-[60vh] overflow-hidden mx-auto">
           <img 
             src="/images/ambassador/banner/ambassador_banner_design.png" 
             alt="IKEVEGE" 
-            className="w-full h-full object-cover object-center"
+            className="w-full h-auto md:h-full object-contain md:object-cover object-center"
           />
         </div>
       </div>
