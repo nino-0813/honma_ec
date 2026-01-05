@@ -142,7 +142,7 @@ const About = () => {
       </section>
 
       {/* Visual Storytelling Section */}
-      <section className="py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-16 md:py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
          {/* Story 1 */}
          <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center mb-32">
             <FadeInSection className="w-full md:w-2/5 relative">
