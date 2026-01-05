@@ -149,7 +149,6 @@ const About = () => {
                <div className="aspect-[3/4] bg-gray-100 relative z-10 max-w-md mx-auto md:mx-0">
                  <ScrollGrayscaleImage src="/images/about/stories/IMG_8832.jpg" alt="Farmer" />
                </div>
-               <div className="absolute -bottom-10 -right-10 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
             </FadeInSection>
             <FadeInSection className="w-full md:w-1/2 space-y-8">
                <h3 className="text-2xl md:text-3xl font-serif tracking-widest">作り手が楽しむ</h3>
