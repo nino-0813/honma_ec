@@ -28,7 +28,7 @@ const Home = () => {
       <div className="w-full bg-white py-8 md:py-12">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInImage
-            src="/images/home/collections/Shopify お米補完画像(2048 x 2048 px).png"
+            src="/images/home/collections/rice_supplement.png"
             alt="お米補完画像"
             className="w-full max-w-lg mx-auto h-auto object-contain rounded-lg"
           />
