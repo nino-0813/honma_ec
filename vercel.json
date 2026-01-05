@@ -8,10 +8,6 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/$1"
-    },
-    {
-      "source": "/((?!images|favicon|.*\\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|css|js|json|xml|txt|pdf)).*)",
-      "destination": "/index.html"
     }
   ],
   "headers": [
