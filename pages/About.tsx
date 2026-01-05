@@ -89,7 +89,7 @@ const About = () => {
       {/* Hero Image - Full Screen with Parallax feel */}
       <div className="relative w-full">
          {/* Text Section - Above Image */}
-         <div className="relative z-10 bg-white pt-12 md:pt-16 pb-12 md:pb-16 flex flex-col items-center justify-center text-black">
+         <div className="relative z-10 bg-white pt-4 md:pt-8 pb-12 md:pb-16 flex flex-col items-center justify-center text-black">
             <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-2">ABOUT US</h1>
          </div>
          
