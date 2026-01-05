@@ -114,7 +114,7 @@ const About = () => {
           自然と共に
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 text-left md:text-center relative z-10">
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
            <FadeInSection>
              <p className="text-xs font-bold tracking-[0.3em] text-gray-400 uppercase mb-4 md:mb-8">CONCEPT</p>
              <h2 className="text-2xl md:text-4xl font-serif font-medium tracking-widest leading-relaxed mb-8 md:mb-16">
@@ -134,7 +134,7 @@ const About = () => {
       {/* Three Stances Section */}
       <section className="py-8 md:py-16 bg-secondary/30 relative">
         <div className="max-w-6xl mx-auto px-6">
-           <FadeInSection className="text-left md:text-center">
+           <FadeInSection className="text-center">
              <h3 className="text-2xl md:text-4xl font-serif tracking-widest mb-4">OUR 3 STANCES</h3>
              <div className="w-12 h-px bg-primary mx-auto"></div>
            </FadeInSection>
@@ -241,7 +241,7 @@ const About = () => {
 
       {/* Note Link Section */}
       <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-left md:text-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <FadeInSection>
             <Link href="/blog">
               <a className="inline-block text-gray-900 hover:text-gray-700 transition-colors">
