@@ -5,8 +5,8 @@ import { Collection } from '../types';
 const collections: Collection[] = [
   { id: '1', title: 'コシヒカリ', handle: 'koshihikari', image: '/images/home/collections/collection_koshihikari.png', path: '/collections/rice/koshihikari' },
   { id: '2', title: '亀の尾', handle: 'kamenoo', image: '/images/home/collections/collection_kamenoo.png', path: '/collections/rice/kamenoo' },
-  { id: '3', title: 'にこまる', handle: 'nikomaru', image: '/images/home/collections/collection_nikomaru.png', path: '/collections/rice/nikomaru' },
-  { id: '4', title: '年間契約', handle: 'yearly', image: '/images/home/collections/collection_nenkankeiyaku.png', path: '/collections/rice/yearly' },
+  { id: '3', title: 'にこまる', handle: 'nikomaru', image: '/images/home/collections/4.png', path: '/collections/rice/nikomaru' },
+  { id: '4', title: '年間契約', handle: 'yearly', image: '/images/home/collections/2.png', path: '/collections/rice/yearly' },
 ];
 
 const Collections = () => {
