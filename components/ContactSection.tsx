@@ -36,6 +36,7 @@ const ContactSection = () => {
             name,
             email,
             phone: phone || null,
+            company_name: company || null,
             message,
             status: 'new',
             created_at: new Date().toISOString(),
