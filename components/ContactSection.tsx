@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 
 const ContactSection = () => {
   const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
@@ -47,6 +48,7 @@ const ContactSection = () => {
 
       setSubmitStatus('success');
       setName('');
+      setCompany('');
       setEmail('');
       setPhone('');
       setMessage('');
@@ -77,29 +79,39 @@ const ContactSection = () => {
         )}
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="flex flex-col gap-2">
-               <label htmlFor="name" className="text-sm font-serif">お名前 *</label>
-               <input 
-                 type="text" 
-                 id="name" 
-                 value={name}
-                 onChange={(e) => setName(e.target.value)}
-                 className="border border-gray-200 p-3 focus:border-primary outline-none transition-colors bg-white" 
-                 required
-               />
-             </div>
-             <div className="flex flex-col gap-2">
-               <label htmlFor="email" className="text-sm font-serif">メールアドレス *</label>
-               <input 
-                 type="email" 
-                 id="email" 
-                 value={email}
-                 onChange={(e) => setEmail(e.target.value)}
-                 className="border border-gray-200 p-3 focus:border-primary outline-none transition-colors bg-white" 
-                 required
-               />
-             </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="name" className="text-sm font-serif">お名前 *</label>
+            <input 
+              type="text" 
+              id="name" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border border-gray-200 p-3 focus:border-primary outline-none transition-colors bg-white" 
+              required
+            />
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <label htmlFor="company" className="text-sm font-serif">法人名</label>
+            <input 
+              type="text" 
+              id="company" 
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="border border-gray-200 p-3 focus:border-primary outline-none transition-colors bg-white" 
+            />
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <label htmlFor="email" className="text-sm font-serif">メールアドレス *</label>
+            <input 
+              type="email" 
+              id="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="border border-gray-200 p-3 focus:border-primary outline-none transition-colors bg-white" 
+              required
+            />
           </div>
           
           <div className="flex flex-col gap-2">
