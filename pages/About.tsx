@@ -188,7 +188,7 @@ const About = () => {
          <div className="flex flex-col md:flex-row-reverse gap-12 md:gap-24 items-center mb-32">
             <FadeInSection className="w-full md:w-1/2 relative">
                <div className="aspect-square bg-gray-100 relative z-10">
-                 <ScrollGrayscaleImage src="/images/about/stories/P3A9707.jpg" alt="Sunset Rice Field" />
+                 <ScrollGrayscaleImage src="/images/about/stories/IMG_8832.jpg" alt="Sunset Rice Field" />
                </div>
                <div className="absolute -top-10 -left-10 w-2/3 h-1/2 bg-secondary z-0 hidden md:block"></div>
             </FadeInSection>
