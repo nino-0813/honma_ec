@@ -121,7 +121,12 @@ const About = () => {
                Farm to Social<br/>
                <span className="text-base md:text-2xl mt-2 md:mt-4 block text-gray-600">農から社会へ</span>
              </h2>
-             
+             <div className="text-sm md:text-base font-light leading-loose md:leading-loose text-gray-700 space-y-4 md:space-y-6 max-w-2xl mx-auto">
+               <p>自然界では、多様な命が、無理なく、</p>
+               <p>あるがままに響き合い、永遠にめぐっている。</p>
+               <p>そんな「ありのまま」が調和する "イケてる"社会をつくりたい。</p>
+               <p>子どもたちがここに生まれてよかったと思えるように。</p>
+             </div>
            </FadeInSection>
         </div>
       </section>
