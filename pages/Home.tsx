@@ -5,6 +5,7 @@ import ParallaxSection from '../components/ParallaxSection';
 import ProductGrid from '../components/ProductGrid';
 import ContactSection from '../components/ContactSection';
 import Testimonials from '../components/Testimonials';
+import { FadeInImage } from '../components/UI';
 
 const Home = () => {
   return (
@@ -20,6 +21,17 @@ const Home = () => {
           <div className="text-sm md:text-base font-medium md:font-normal leading-relaxed md:leading-relaxed text-gray-600">
             <p>自然栽培の考えをベースに、品種が秘めた旨みと香りをまっすぐに届けるため、<br className="mb-2"/><br className="mb-2"/>島の有機資源で土を磨き上げ、農薬に頼らず育てました。<br className="mb-2"/><br className="mb-2"/>佐渡ヶ島の森里海とそこで暮らす様々な命が織りなす循環の一粒をご賞味ください。</p>
           </div>
+        </div>
+      </div>
+
+      {/* Image Section */}
+      <div className="w-full bg-white py-8 md:py-12">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInImage
+            src="/images/home/collections/Shopify お米補完画像(2048 x 2048 px).png"
+            alt="お米補完画像"
+            className="w-full max-w-lg mx-auto h-auto object-contain rounded-lg"
+          />
         </div>
       </div>
 
