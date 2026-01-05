@@ -102,7 +102,7 @@ const About = () => {
                  className="w-full h-full object-cover object-center"
                />
                {/* subtle dark overlay */}
-               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
+               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/30 to-black/15" />
             </div>
          </div>
       </div>
