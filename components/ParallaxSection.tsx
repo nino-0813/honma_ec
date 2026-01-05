@@ -8,7 +8,7 @@ const ParallaxSection = () => {
       <div className="md:hidden">
         <div className="w-full h-[450px] relative">
           <img 
-            src="/images/home/parallax/P3A0020.jpg" 
+            src="/images/home/parallax/夕日と田植え-7.jpg" 
             alt="IKEVEGE" 
             className="w-full h-full object-cover"
             loading="lazy"
@@ -62,7 +62,7 @@ const ParallaxSection = () => {
       <div className="hidden md:flex h-[650px] items-center justify-end overflow-hidden relative">
         <div className="absolute inset-0">
           <img 
-            src="/images/home/parallax/P3A0020.jpg" 
+            src="/images/home/parallax/夕日と田植え-7.jpg" 
             alt="IKEVEGE" 
             className="w-full h-full object-cover parallax-bg"
             loading="lazy"
