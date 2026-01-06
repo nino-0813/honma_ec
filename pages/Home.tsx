@@ -12,7 +12,7 @@ const Home = () => {
     <div className="animate-fade-in">
       <HeroVideo />
       
-      <div className="pt-24 md:pt-32 pb-8 md:pb-16 text-center px-4 animate-slide-up bg-white">
+      <div className="pt-24 md:pt-32 pb-8 md:pb-16 text-left md:text-center px-4 animate-slide-up bg-white">
         <div className="max-w-2xl mx-auto space-y-6">
           <h2 className="text-2xl md:text-3xl font-serif font-medium tracking-normal mb-6 md:mb-8">
             余計なものは足さない<br />
