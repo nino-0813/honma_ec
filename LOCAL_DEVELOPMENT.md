@@ -129,3 +129,4 @@ npm run dev
 3. Vercelの環境変数に`STRIPE_SECRET_KEY`を設定
 4. 本番環境で動作確認
 
+
