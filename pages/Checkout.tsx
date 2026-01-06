@@ -5,7 +5,6 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { CartContext } from '../App';
 import { FadeInImage } from '../components/UI';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import AuthForm from '../components/AuthForm';
 import { supabase, checkStockAvailability } from '../lib/supabase';
 import { ShippingMethod, AreaFees } from '../types';
@@ -1749,8 +1748,6 @@ const Checkout = () => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };
