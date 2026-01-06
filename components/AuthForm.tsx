@@ -114,8 +114,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, initialEmail = '' })
               <h2 className="text-2xl font-bold text-blue-700">新規登録</h2>
               <span className="text-xs font-semibold text-white bg-blue-600 px-3 py-1 rounded-full">NEW</span>
             </div>
-            <p className="text-sm font-medium text-blue-600">
-              ✨ 新規アカウントを作成して始めましょう
+            <p className="text-xs md:text-sm font-medium text-blue-600">
+              新規アカウントを作成して始めましょう
             </p>
           </div>
         ) : (
