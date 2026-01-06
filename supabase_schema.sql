@@ -132,6 +132,8 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS discount_amount INTEGER DEFAULT 0;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS coupon_id UUID REFERENCES public.coupons(id) ON DELETE SET NULL;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivery_time_slot TEXT; -- 配送時間希望
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS notes TEXT; -- 備考
 ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS variant TEXT;
 ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS selected_options JSONB;
 

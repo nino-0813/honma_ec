@@ -403,7 +403,9 @@ const Checkout = () => {
     city: '',
     address: '',
     building: '',
-    shippingMethod: '' // 互換用（旧仕様）。現在は自動割り当てのため選択不要。
+    shippingMethod: '', // 互換用（旧仕様）。現在は自動割り当てのため選択不要。
+    deliveryTimeSlot: '', // 配送時間希望
+    notes: '' // 備考
   });
 
   // 発送方法と送料計算の状態
@@ -1189,6 +1191,8 @@ const Checkout = () => {
           payment_status: 'pending',
           payment_intent_id: paymentIntentId,
           order_status: 'pending',
+          delivery_time_slot: formData.deliveryTimeSlot || null,
+          notes: formData.notes || null,
           updated_at: new Date().toISOString(),
         };
 
@@ -1229,7 +1233,7 @@ const Checkout = () => {
     upsertOrderDraft();
   }, [supabase, authUser, paymentIntentId, cartItems, total, subtotal, shippingCost, discountAmount, appliedCoupon, formData, shippingPlan]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -1573,6 +1577,98 @@ const Checkout = () => {
                     )}
                   </div>
                 )}
+
+                {/* 配送時間希望 */}
+                <div className="border-t border-gray-200 pt-6">
+                  <h2 className="text-lg font-medium mb-4">配送時間希望</h2>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryTimeSlot"
+                        value=""
+                        checked={formData.deliveryTimeSlot === ''}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                      />
+                      <span className="text-sm">時間帯 指定しない</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryTimeSlot"
+                        value="8~12時"
+                        checked={formData.deliveryTimeSlot === '8~12時'}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                      />
+                      <span className="text-sm">8~12時</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryTimeSlot"
+                        value="14~16時"
+                        checked={formData.deliveryTimeSlot === '14~16時'}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                      />
+                      <span className="text-sm">14~16時</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryTimeSlot"
+                        value="16~18時"
+                        checked={formData.deliveryTimeSlot === '16~18時'}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                      />
+                      <span className="text-sm">16~18時</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryTimeSlot"
+                        value="18~20時"
+                        checked={formData.deliveryTimeSlot === '18~20時'}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                      />
+                      <span className="text-sm">18~20時</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryTimeSlot"
+                        value="19~21時"
+                        checked={formData.deliveryTimeSlot === '19~21時'}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                      />
+                      <span className="text-sm">19~21時</span>
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-4">
+                    ※配送日は指定できません。何かご事情等ありましたら備考に記載いただければ幸いです。
+                  </p>
+                </div>
+
+                {/* 備考欄 */}
+                <div className="border-t border-gray-200 pt-6">
+                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                    備考
+                  </label>
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full px-4 py-3 bg-white border border-gray-200 focus:outline-none focus:border-black transition-colors resize-none"
+                    placeholder="ご要望やご質問がございましたらご記入ください"
+                  />
+                </div>
                   </div>
 
                   {/* Stripe決済フォーム（配送の選択は不要なので常時表示） */}
