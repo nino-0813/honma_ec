@@ -214,11 +214,12 @@ const resolvePrefectureForShipping = (formData: any): string | null => {
 };
 
 // 決済フォームコンポーネント
-const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
+const CheckoutForm = ({ formData, total, clientSecret, onSuccess, shippingCostIssue }: {
   formData: any;
   total: number;
   clientSecret: string;
   onSuccess: () => void;
+  shippingCostIssue?: string | null;
 }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -229,6 +230,12 @@ const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 送料が計算できない場合は決済を進めない
+    if (shippingCostIssue) {
+      setError(`送料が計算できません: ${shippingCostIssue}`);
+      return;
+    }
 
     // 住所/連絡先の必須項目（このフォームは配送先入力とは別なので、ここで必須チェックする）
     const hasRequired =
@@ -375,10 +382,10 @@ const CheckoutForm = ({ formData, total, clientSecret, onSuccess }: {
       <div className="border-t border-gray-200 pt-6">
         <button
           type="submit"
-          disabled={!stripe || !elements || loading}
+          disabled={!stripe || !elements || loading || !!shippingCostIssue}
           className="w-full py-4 bg-primary text-white text-sm tracking-widest uppercase hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? '処理中...' : `¥${total.toLocaleString()} を支払う`}
+          {loading ? '処理中...' : shippingCostIssue ? '送料を確認してください' : `¥${total.toLocaleString()} を支払う`}
         </button>
       </div>
     </form>
@@ -925,6 +932,48 @@ const Checkout = () => {
   // 送料（複数口を想定して「方法ごとの合計」を表示）
   const shippingCost = shippingPlan.totalCost || 0;
   
+  // 送料が0円になる理由を判定
+  const getShippingCostIssue = (): string | null => {
+    if (cartItems.length === 0) return null; // カートが空の場合はチェックしない
+    
+    if (!formData.postalCode || formData.postalCode.replace(/[^0-9]/g, '').length !== 7) {
+      return '郵便番号を正しく入力してください';
+    }
+    
+    const prefecture = resolvePrefectureForShipping(formData);
+    if (!prefecture) {
+      return '都道府県が正しく入力されていません';
+    }
+    
+    const areaKey = getAreaFromPrefecture(prefecture);
+    if (!areaKey) {
+      return '都道府県から送料を計算できません';
+    }
+    
+    if (shippingMethods.length === 0) {
+      return '商品に発送方法が設定されていません。管理画面で商品に発送方法を紐づけてください。';
+    }
+    
+    // 商品と発送方法の紐づけをチェック
+    const hasLinkedProducts = cartItems.some(item => {
+      const linkedIds = productShippingMethodIds[item.product.id] || [];
+      return linkedIds.length > 0;
+    });
+    
+    if (!hasLinkedProducts) {
+      return 'カート内の商品に発送方法が紐づけられていません。管理画面で商品に発送方法を設定してください。';
+    }
+    
+    // 送料が0円になる場合（送料設定が0円の場合も問題として扱う）
+    if (shippingCost === 0) {
+      return '送料が0円と計算されました。発送方法の設定を確認してください。';
+    }
+    
+    return null;
+  };
+  
+  const shippingCostIssue = getShippingCostIssue();
+  
   // デバッグ: 送料計算の状態を確認
   useEffect(() => {
     if (cartItems.length > 0) {
@@ -935,9 +984,10 @@ const Checkout = () => {
         productShippingMethodIds,
         shippingPlan,
         shippingCost,
+        shippingCostIssue,
       });
     }
-  }, [formData.postalCode, formData.prefecture, shippingMethods, productShippingMethodIds, shippingPlan, shippingCost, cartItems]);
+  }, [formData.postalCode, formData.prefecture, shippingMethods, productShippingMethodIds, shippingPlan, shippingCost, cartItems, shippingCostIssue]);
   
   // クーポン関連の状態
   const [couponCode, setCouponCode] = useState('');
@@ -1550,6 +1600,11 @@ const Checkout = () => {
                     <h2 className="text-lg font-medium mb-4">配送</h2>
                     {!formData.postalCode ? (
                       <p className="text-sm text-gray-500">郵便番号を入力すると送料の詳細が表示されます</p>
+                    ) : shippingCostIssue ? (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-sm font-medium text-yellow-800 mb-2">⚠️ 送料が計算できません</p>
+                        <p className="text-sm text-yellow-700">{shippingCostIssue}</p>
+                      </div>
                     ) : (
                       <div className="space-y-3">
                         {availableShippingMethods.map((method) => {
@@ -1709,18 +1764,28 @@ const Checkout = () => {
                           </span>
                         </div>
                       ) : paymentClientSecret ? (
-                        <Elements
-                          stripe={stripePromise}
-                          options={{ clientSecret: paymentClientSecret, locale: 'ja' }}
-                          key={paymentClientSecret}
-                        >
-                          <CheckoutForm
-                            formData={formData}
-                            total={total}
-                            clientSecret={paymentClientSecret}
-                            onSuccess={handleSuccess}
-                          />
-                        </Elements>
+                        <>
+                          {shippingCostIssue && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                              <p className="font-medium mb-1">⚠️ 送料が計算できません</p>
+                              <p className="text-sm">{shippingCostIssue}</p>
+                              <p className="text-xs mt-2">送料が正しく計算されるまで、決済に進むことはできません。</p>
+                            </div>
+                          )}
+                          <Elements
+                            stripe={stripePromise}
+                            options={{ clientSecret: paymentClientSecret, locale: 'ja' }}
+                            key={paymentClientSecret}
+                          >
+                            <CheckoutForm
+                              formData={formData}
+                              total={total}
+                              clientSecret={paymentClientSecret}
+                              onSuccess={handleSuccess}
+                              shippingCostIssue={shippingCostIssue}
+                            />
+                          </Elements>
+                        </>
                       ) : (
                         <div className="border border-gray-200 p-6 rounded bg-gray-50">
                           <p className="text-sm text-gray-500">決済システムを初期化中...</p>
