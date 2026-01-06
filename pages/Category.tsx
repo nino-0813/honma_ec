@@ -240,8 +240,8 @@ const Category = () => {
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* Sort Bar */}
-            <div className="flex justify-end mb-8 animate-fade-in">
+            {/* Sort Bar - Hidden on mobile */}
+            <div className="hidden md:flex justify-end mb-8 animate-fade-in">
                <div className="relative group inline-block text-left">
                   <button className="inline-flex justify-center items-center w-full text-xs font-medium text-gray-700 hover:text-gray-900 tracking-widest">
                     オススメ
