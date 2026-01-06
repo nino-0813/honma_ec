@@ -30,7 +30,7 @@ const Home = () => {
           <FadeInImage
             src="/images/home/collections/rice_supplement.png"
             alt="お米補完画像"
-            className="w-full max-w-lg mx-auto h-auto object-contain rounded-lg"
+            className="w-full max-w-[280px] md:max-w-lg mx-auto h-auto object-contain rounded-lg"
           />
         </div>
       </div>

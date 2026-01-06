@@ -156,7 +156,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
             <Link href="/account">
               <a className={`hidden sm:block transition-colors ${
                 isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
-              }`} title={isLoggedIn ? 'マイページ' : 'ログイン'}>
+              }`} title={isLoggedIn ? 'mypage' : 'ログイン'}>
                 <IconUser className="w-5 h-5" />
               </a>
             </Link>
