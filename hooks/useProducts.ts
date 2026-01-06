@@ -55,18 +55,6 @@ export const useProducts = () => {
               return 0;
             });
           
-          // デバッグ用：取得した商品のdisplay_orderを確認
-          console.log('=== 商品データ取得デバッグ ===');
-          console.log('取得した商品数:', convertedProducts.length);
-          console.log('各商品のdisplay_order:', convertedProducts.map(p => ({ 
-            id: p.id.substring(0, 8) + '...', 
-            title: p.title.substring(0, 20) + '...', 
-            display_order: p.display_order,
-            is_visible: p.is_visible
-          })));
-          console.log('ソート後の順序:', convertedProducts.map(p => p.title.substring(0, 20) + '...'));
-          console.log('========================');
-          
           setProducts(convertedProducts);
         } else {
           // データがない場合は空配列
