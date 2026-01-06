@@ -1380,7 +1380,7 @@ const Checkout = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* 左側: 注文内容 */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 order-2 lg:order-1">
               <h1 className="text-2xl font-serif tracking-wider mb-8">お客様情報</h1>
 
               {/* 認証セクション */}
@@ -1802,8 +1802,8 @@ const Checkout = () => {
             </div>
 
             {/* 右側: 注文サマリー */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24">
+            <div className="lg:col-span-1 order-1 lg:order-2">
+              <div className="lg:sticky top-24">
                 <h2 className="text-lg font-medium mb-6">注文内容</h2>
                 
                 <div className="border border-gray-200 p-6 space-y-4">
