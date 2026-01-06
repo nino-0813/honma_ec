@@ -5,7 +5,7 @@ import { Product } from '../types';
 import { IconChevronDown } from '../components/Icons';
 import { FadeInImage, LoadingButton } from '../components/UI';
 import { CartContext } from '../App';
-import { supabase, convertDatabaseProductToProduct, DatabaseProduct, checkStockAvailability } from '../lib/supabase';
+import { supabase, convertDatabaseProductToProduct, DatabaseProduct, checkStockAvailability, getStockForVariant } from '../lib/supabase';
 
 const ProductDetail = () => {
   const [match, params] = useRoute<{ handle?: string }>("/products/:handle");
@@ -253,7 +253,11 @@ const ProductDetail = () => {
             )}
             <div className="flex-1 w-full relative">
                <img src={product.images && product.images.length > 0 ? product.images[selectedImage] : (product.image || '')} alt={product.title} className={`w-full h-auto object-contain block transition-opacity duration-500 ${isMainImageLoaded ? 'opacity-100' : 'opacity-0'}`} onLoad={() => setIsMainImageLoaded(true)} />
-               {product.soldOut && <span className="absolute top-4 left-4 bg-primary text-white px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase z-10">Sold Out</span>}
+               {(() => {
+                 const currentStock = product ? getStockForVariant(product, selectedOptions) : null;
+                 const isOutOfStock = currentStock !== null && currentStock === 0;
+                 return isOutOfStock ? <span className="absolute top-4 left-4 bg-primary text-white px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase z-10">Sold Out</span> : null;
+               })()}
             </div>
           </div>
 
@@ -321,87 +325,105 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 mb-8">
-                <span className={`w-2 h-2 rounded-full ${!product.soldOut ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                <span className="text-sm text-gray-600">{!product.soldOut ? '在庫あり' : '在庫なし'}</span>
-              </div>
+              {(() => {
+                const currentStock = product ? getStockForVariant(product, selectedOptions) : null;
+                const stockStatus = currentStock === null ? 'unlimited' : currentStock === 0 ? 'out' : currentStock <= 5 ? 'low' : 'available';
+                const statusText = stockStatus === 'out' ? '在庫なし' : stockStatus === 'low' ? '在庫わずか' : stockStatus === 'unlimited' ? '在庫あり' : '在庫あり';
+                const statusColor = stockStatus === 'out' ? 'bg-red-500' : stockStatus === 'low' ? 'bg-yellow-500' : 'bg-green-500';
+                
+                return (
+                  <div className="flex items-center gap-2 mb-8">
+                    <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
+                    <span className="text-sm text-gray-600">{statusText}</span>
+                  </div>
+                );
+              })()}
 
               <div className="space-y-4 mb-12">
-                 {!product.soldOut && (
-                   <div className="flex items-center justify-between border border-gray-200 p-1 max-w-[140px] mb-6">
-                      <button type="button" onClick={(e) => { 
-                        e.preventDefault(); 
-                        setQuantity(Math.max(1, quantity - 1));
-                        setStockError('');
-                      }} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-black transition-colors">−</button>
-                      <span className="text-sm font-serif w-8 text-center">{quantity}</span>
-                      <button type="button" onClick={(e) => { 
-                        e.preventDefault();
-                        setStockError('');
-                        // 在庫チェック
-                        const existingCartItem = cartItems.find(
-                          item => item.product.id === product.id && item.variant === getSelectedVariantString()
-                        );
-                        const currentCartQuantity = existingCartItem?.quantity || 0;
-                        const stockCheck = checkStockAvailability(
-                          product,
-                          selectedOptions,
-                          quantity + 1,
-                          currentCartQuantity
-                        );
-                        if (stockCheck.available) {
-                          setQuantity(quantity + 1);
-                        } else {
-                          setStockError(stockCheck.message);
-                        }
-                      }} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-black transition-colors">+</button>
-                   </div>
-                 )}
-                 {product.soldOut ? (
-                   <button disabled className="w-full py-4 text-sm tracking-widest uppercase bg-gray-200 text-gray-400 cursor-not-allowed">Sold Out</button>
-                 ) : (
-                   <>
-                     <LoadingButton 
-                       onClick={() => {
-                         if (product) {
-                           setStockError('');
-                           const variantString = getSelectedVariantString();
-                           
-                           // カート内の既存数量を取得
-                           const existingCartItem = cartItems.find(
-                             item => item.product.id === product.id && item.variant === variantString
-                           );
-                           const currentCartQuantity = existingCartItem?.quantity || 0;
-                           
-                           // 在庫チェック
-                           const stockCheck = checkStockAvailability(
-                             product,
-                             selectedOptions,
-                             quantity,
-                             currentCartQuantity
-                           );
-                           
-                           if (!stockCheck.available) {
-                             setStockError(stockCheck.message);
-                             return;
-                           }
-                           
-                           addToCart(product, quantity, variantString, calculatedPrice, selectedOptions);
-                           openCart();
-                         }
-                       }}
-                       className="w-full py-4 text-sm tracking-widest bg-white text-black border border-black hover:bg-gray-50 transition-colors group relative"
-                     >
-                       <div className="flex items-center justify-center w-full">
-                         <span>カートに追加する</span>
-                         <span className="absolute right-4 text-lg transition-transform duration-300 group-hover:translate-x-1">→</span>
-                       </div>
-                     </LoadingButton>
-                     {stockError && (
-                       <p className="text-sm text-red-600 mt-2 text-center">{stockError}</p>
-                     )}
-                   </>
-                 )}
+                 {(() => {
+                   const currentStock = product ? getStockForVariant(product, selectedOptions) : null;
+                   const isOutOfStock = currentStock !== null && currentStock === 0;
+                   
+                   return (
+                     <>
+                       {!isOutOfStock && (
+                         <div className="flex items-center justify-between border border-gray-200 p-1 max-w-[140px] mb-6">
+                            <button type="button" onClick={(e) => { 
+                              e.preventDefault(); 
+                              setQuantity(Math.max(1, quantity - 1));
+                              setStockError('');
+                            }} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-black transition-colors">−</button>
+                            <span className="text-sm font-serif w-8 text-center">{quantity}</span>
+                            <button type="button" onClick={(e) => { 
+                              e.preventDefault();
+                              setStockError('');
+                              // 在庫チェック
+                              const existingCartItem = cartItems.find(
+                                item => item.product.id === product.id && item.variant === getSelectedVariantString()
+                              );
+                              const currentCartQuantity = existingCartItem?.quantity || 0;
+                              const stockCheck = checkStockAvailability(
+                                product,
+                                selectedOptions,
+                                quantity + 1,
+                                currentCartQuantity
+                              );
+                              if (stockCheck.available) {
+                                setQuantity(quantity + 1);
+                              } else {
+                                setStockError(stockCheck.message);
+                              }
+                            }} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-black transition-colors">+</button>
+                         </div>
+                       )}
+                       {isOutOfStock ? (
+                         <button disabled className="w-full py-4 text-sm tracking-widest uppercase bg-gray-200 text-gray-400 cursor-not-allowed">SOLD OUT</button>
+                       ) : (
+                         <>
+                           <LoadingButton 
+                             onClick={() => {
+                               if (product) {
+                                 setStockError('');
+                                 const variantString = getSelectedVariantString();
+                                 
+                                 // カート内の既存数量を取得
+                                 const existingCartItem = cartItems.find(
+                                   item => item.product.id === product.id && item.variant === variantString
+                                 );
+                                 const currentCartQuantity = existingCartItem?.quantity || 0;
+                                 
+                                 // 在庫チェック
+                                 const stockCheck = checkStockAvailability(
+                                   product,
+                                   selectedOptions,
+                                   quantity,
+                                   currentCartQuantity
+                                 );
+                                 
+                                 if (!stockCheck.available) {
+                                   setStockError(stockCheck.message);
+                                   return;
+                                 }
+                                 
+                                 addToCart(product, quantity, variantString, calculatedPrice, selectedOptions);
+                                 openCart();
+                               }
+                             }}
+                             className="w-full py-4 text-sm tracking-widest bg-white text-black border border-black hover:bg-gray-50 transition-colors group relative"
+                           >
+                             <div className="flex items-center justify-center w-full">
+                               <span>カートに追加する</span>
+                               <span className="absolute right-4 text-lg transition-transform duration-300 group-hover:translate-x-1">→</span>
+                             </div>
+                           </LoadingButton>
+                           {stockError && (
+                             <p className="text-sm text-red-600 mt-2 text-center">{stockError}</p>
+                           )}
+                         </>
+                       )}
+                     </>
+                   );
+                 })()}
                  <div className="text-center pt-2"><a href="#" className="text-xs text-gray-500 underline hover:text-black decoration-gray-400">別のお支払い方法</a></div>
               </div>
 
