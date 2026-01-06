@@ -6,11 +6,12 @@ const ParallaxSection = () => {
     <section className="relative py-8 md:py-16">
       {/* Mobile Layout: Image with Overlay Box */}
       <div className="md:hidden">
-        <div className="w-full h-[450px] relative">
+        <div className="w-full h-[450px] relative overflow-hidden">
           <img 
             src="/images/home/parallax/sunset_riceplanting_7.jpg" 
             alt="IKEVEGE" 
             className="w-full h-full object-cover"
+            style={{ objectPosition: '70% center' }}
             loading="lazy"
           />
         </div>
