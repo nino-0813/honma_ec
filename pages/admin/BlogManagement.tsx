@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { supabase } from '../../lib/supabase';
-import { IconEdit, IconTrash, IconRefreshCw, IconPlus, IconExternalLink } from '../../components/Icons';
+import { IconEdit, IconTrash, IconRefreshCw, IconPlus, IconExternalLink, IconFileText } from '../../components/Icons';
 import { IconX, IconImage, IconList, IconHash, IconQuote, IconCode, IconMinus, IconPaperclip, IconTable, IconMic, IconSparkles, IconDollarSign, IconLink } from '../../components/Icons';
 import { LoadingButton } from '../../components/UI';
 
@@ -499,6 +499,14 @@ const BlogManagement = () => {
         >
           <IconTable className="w-4 h-4" />
           <span>目次</span>
+        </button>
+
+        <button
+          onClick={() => { addInlineBlock(blockId, 'paragraph'); setInlineBlockMenu(null); }}
+          className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
+        >
+          <IconFileText className="w-4 h-4" />
+          <span>段落</span>
         </button>
 
         <button
@@ -1097,9 +1105,9 @@ const BlogManagement = () => {
                 onDragOver={(e) => handleDragOver(e, block.id)}
                 onDrop={(e) => handleDrop(e, block.id)}
               >
-                {/* 左側の＋ボタン（ホバーまたはメニュー展開中に表示） */}
+                {/* 左側の＋ボタン（常に表示） */}
                 <div className={`absolute left-0 top-1.5 transition-opacity duration-200 ${
-                  inlineBlockMenu === block.id ? 'opacity-100 z-30' : 'opacity-0 group-hover:opacity-100'
+                  inlineBlockMenu === block.id ? 'opacity-100 z-30' : 'opacity-100'
                 }`}>
                   <div className="relative">
                     <button
@@ -1166,6 +1174,14 @@ const BlogManagement = () => {
                           >
                             <IconTable className="w-4 h-4" />
                             <span>目次</span>
+                          </button>
+
+                          <button
+                            onClick={() => { addInlineBlock(block.id, 'paragraph'); setInlineBlockMenu(null); }}
+                            className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
+                          >
+                            <IconFileText className="w-4 h-4" />
+                            <span>段落</span>
                           </button>
 
                           <button
