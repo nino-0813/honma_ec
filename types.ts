@@ -8,6 +8,8 @@ export interface Product {
   handle: string;
   category: string;
   subcategory?: string; // サブカテゴリー (koshihikari, kamenoo, nikomaru, yearly など)
+  categories?: string[]; // カテゴリー（複数選択対応）
+  subcategories?: string[]; // サブカテゴリー（複数選択対応）
   description?: string;
   hasVariants?: boolean; // 種類選択を表示するかどうか
   variants?: string[]; // 選択肢のリスト（旧仕様）

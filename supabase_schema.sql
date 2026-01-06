@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS public.products (
   images TEXT[] DEFAULT '{}', -- 複数画像URL
   category TEXT NOT NULL,
   subcategory TEXT, -- サブカテゴリー (コシヒカリ等)
+  categories TEXT[] DEFAULT '{}', -- カテゴリー（複数選択対応）
+  subcategories TEXT[] DEFAULT '{}', -- サブカテゴリー（複数選択対応）
   stock INTEGER DEFAULT 0, -- 在庫数
   sku TEXT, -- 商品番号
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'draft', 'archived')), -- 公開ステータス
@@ -70,6 +72,8 @@ ALTER TABLE public.products ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS has_variants BOOLEAN DEFAULT false;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS variants TEXT[] DEFAULT '{}';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS variants_config JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS categories TEXT[] DEFAULT '{}';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS subcategories TEXT[] DEFAULT '{}';
 
 -- products: 互換性のために status の値制約を付与（既にある場合は上書きしない）
 DO $$ BEGIN

@@ -58,17 +58,32 @@ const Category = () => {
     if (loading) return;
 
     let result = [...supabaseProducts];
+
+    const getProductCategories = (p: Product): string[] => {
+      const cats = (p as any).categories;
+      if (Array.isArray(cats) && cats.length > 0) return cats;
+      return p.category ? [p.category] : [];
+    };
+
+    const getProductSubcategories = (p: Product): string[] => {
+      const subs = (p as any).subcategories;
+      if (Array.isArray(subs) && subs.length > 0) return subs;
+      return p.subcategory ? [p.subcategory] : [];
+    };
     
     // Filter by category
     if (currentCategory !== 'ALL') {
       if (currentCategory === 'お米') {
-        // お米カテゴリーの場合：お米と年間契約の両方の商品を表示
+        // お米カテゴリーの場合：category/categoriesに「お米」を含む、またはsubcategoriesに「年間契約」を含む商品を表示
         result = supabaseProducts.filter(p => {
-          return p.category === 'お米' || p.category === '年間契約';
+          const cats = getProductCategories(p);
+          const subs = getProductSubcategories(p);
+          return cats.includes('お米') || subs.includes('年間契約') || p.title.includes('年間契約');
         });
       } else {
         result = supabaseProducts.filter(p => {
-          return p.category === currentCategory || p.title.includes(currentCategory);
+          const cats = getProductCategories(p);
+          return cats.includes(currentCategory) || p.title.includes(currentCategory);
         });
       }
     }
@@ -77,21 +92,14 @@ const Category = () => {
     if (currentSubcategory && currentCategory === 'お米') {
       const subcategoryName = getSubcategoryNameFromParam(currentSubcategory);
       result = result.filter(p => {
-        // サブカテゴリーフィールドが設定されている場合はそれを使用
-        if (p.subcategory) {
-          return p.subcategory === subcategoryName;
-        } else {
-          // 既存データのためのフォールバック（タイトルで判定）
-          if (currentSubcategory === 'koshihikari') {
-            return p.title.includes('コシヒカリ');
-          } else if (currentSubcategory === 'kamenoo') {
-            return p.title.includes('亀の尾');
-          } else if (currentSubcategory === 'nikomaru') {
-            return p.title.includes('にこまる');
-          } else if (currentSubcategory === 'yearly') {
-            return p.title.includes('年間契約') || p.category === '年間契約';
-          }
-        }
+        const subs = getProductSubcategories(p);
+        if (subs.includes(subcategoryName)) return true;
+
+        // 既存データのためのフォールバック（タイトルで判定）
+        if (currentSubcategory === 'koshihikari') return p.title.includes('コシヒカリ');
+        if (currentSubcategory === 'kamenoo') return p.title.includes('亀の尾');
+        if (currentSubcategory === 'nikomaru') return p.title.includes('にこまる');
+        if (currentSubcategory === 'yearly') return p.title.includes('年間契約');
         return false;
       });
     }

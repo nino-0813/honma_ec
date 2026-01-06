@@ -38,8 +38,8 @@ const ProductEditor = () => {
   // Form State
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
-  const [category, setCategory] = useState('お米');
-  const [subcategory, setSubcategory] = useState('コシヒカリ');
+  const [categories, setCategories] = useState<string[]>(['お米']);
+  const [subcategories, setSubcategories] = useState<string[]>(['コシヒカリ']);
   const [description, setDescription] = useState('');
   const [handle, setHandle] = useState('');
   const [stock, setStock] = useState('0');
@@ -89,17 +89,30 @@ const ProductEditor = () => {
     }
   }, [routeHandle, isNew]);
 
-  // Handle category change to reset subcategory
+  // Category/Subcategory multi-select guard
   useEffect(() => {
-    const selectedCategory = CATEGORIES.find(c => c.id === category);
-    if (selectedCategory && selectedCategory.subcategories.length > 0) {
-      if (!selectedCategory.subcategories.includes(subcategory)) {
-        setSubcategory(selectedCategory.subcategories[0]);
-      }
-    } else {
-      setSubcategory('');
+    // keep at least one category
+    if (!categories || categories.length === 0) {
+      setCategories(['お米']);
+      return;
     }
-  }, [category]);
+
+    const riceSubs = CATEGORIES.find(c => c.id === 'お米')?.subcategories || [];
+    const riceSelected = categories.includes('お米');
+
+    if (!riceSelected) {
+      if (subcategories.length > 0) setSubcategories([]);
+      return;
+    }
+
+    // rice selected: ensure subcategories only contains valid ones
+    const next = subcategories.filter(s => riceSubs.includes(s));
+    if (next.length === 0) {
+      setSubcategories([riceSubs[0] || 'コシヒカリ']);
+    } else if (next.length !== subcategories.length) {
+      setSubcategories(next);
+    }
+  }, [categories]);
 
   const fetchShippingMethods = async () => {
     try {
@@ -129,8 +142,14 @@ const ProductEditor = () => {
       if (data) {
         setTitle(data.title);
         setPrice(data.price.toString());
-        setCategory(data.category);
-        setSubcategory(data.subcategory || '');
+        const loadedCategories = Array.isArray(data.categories) && data.categories.length > 0
+          ? data.categories
+          : (data.category ? [data.category] : ['お米']);
+        const loadedSubcategories = Array.isArray(data.subcategories) && data.subcategories.length > 0
+          ? data.subcategories
+          : (data.subcategory ? [data.subcategory] : []);
+        setCategories(loadedCategories);
+        setSubcategories(loadedSubcategories);
         setDescription(data.description || '');
         setHandle(data.handle);
         setStock(data.stock?.toString() || '0');
@@ -435,8 +454,12 @@ const ProductEditor = () => {
       const productData = {
         title,
         price: Number(price),
-        category,
-        subcategory: subcategory || null,
+        // legacy fields (互換性): 先頭要素を保存
+        category: categories[0] || 'お米',
+        subcategory: subcategories[0] || null,
+        // new fields: 複数選択
+        categories: categories,
+        subcategories: subcategories,
         description,
         handle,
         stock: 0, // 基本在庫は使用しないため、常に0として保存
@@ -900,29 +923,60 @@ const ProductEditor = () => {
              <div className="space-y-4">
                <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">カテゴリー</label>
-                  <select 
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-sm bg-white"
-                  >
-                    {CATEGORIES.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                  <div className="space-y-2">
+                    {CATEGORIES.map(c => {
+                      const checked = categories.includes(c.id);
+                      return (
+                        <label key={c.id} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              setCategories(prev => {
+                                const next = checked ? prev.filter(x => x !== c.id) : [...prev, c.id];
+                                // prevent empty
+                                return next.length > 0 ? next : prev;
+                              });
+                            }}
+                            className="rounded border-gray-300 text-black focus:ring-black bg-white"
+                          />
+                          <span className="text-gray-800">{c.name}</span>
+                        </label>
+                      );
+                    })}
+                    <p className="text-[11px] text-gray-500">
+                      複数選択できます（例：お米＋その他）
+                    </p>
+                  </div>
                </div>
                
-               {selectedCategoryObj && selectedCategoryObj.subcategories.length > 0 && (
+               {categories.includes('お米') && (
                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">サブカテゴリー</label>
-                    <select 
-                      value={subcategory}
-                      onChange={(e) => setSubcategory(e.target.value)}
-                      className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-sm bg-white"
-                    >
-                      {selectedCategoryObj.subcategories.map(sub => (
-                        <option key={sub} value={sub}>{sub}</option>
-                      ))}
-                    </select>
+                   <label className="block text-xs font-medium text-gray-700 mb-1">サブカテゴリー</label>
+                   <div className="grid grid-cols-2 gap-2">
+                     {CATEGORIES.find(c => c.id === 'お米')!.subcategories.map(sub => {
+                       const checked = subcategories.includes(sub);
+                       return (
+                         <label key={sub} className="flex items-center gap-2 text-sm">
+                           <input
+                             type="checkbox"
+                             checked={checked}
+                             onChange={() => {
+                               setSubcategories(prev => {
+                                 const next = checked ? prev.filter(x => x !== sub) : [...prev, sub];
+                                 return next.length > 0 ? next : prev; // keep at least one when rice selected
+                               });
+                             }}
+                             className="rounded border-gray-300 text-black focus:ring-black bg-white"
+                           />
+                           <span className="text-gray-800">{sub}</span>
+                         </label>
+                       );
+                     })}
+                   </div>
+                   <p className="text-[11px] text-gray-500 mt-2">
+                     複数選択できます（例：コシヒカリ＋年間契約）
+                   </p>
                  </div>
                )}
 

@@ -23,6 +23,8 @@ export interface DatabaseProduct {
   handle: string;
   category: string;
   subcategory: string | null;
+  categories?: string[] | null;
+  subcategories?: string[] | null;
   description: string | null;
   has_variants: boolean; // 種類選択の有無
   variants: string[] | null; // 選択肢リスト
@@ -51,6 +53,8 @@ export const convertDatabaseProductToProduct = (dbProduct: DatabaseProduct): Pro
     handle: dbProduct.handle,
     category: dbProduct.category,
     subcategory: dbProduct.subcategory || undefined,
+    categories: (dbProduct as any).categories || undefined,
+    subcategories: (dbProduct as any).subcategories || undefined,
     description: dbProduct.description || undefined,
     // has_variants がfalseでも variants_config が入っているケースに対応
     hasVariants: dbProduct.has_variants || hasVariantsFromConfig,
@@ -77,6 +81,8 @@ export const convertProductToDatabaseProduct = (product: Partial<Product> & { st
     handle: product.handle,
     category: product.category,
     subcategory: product.subcategory || null,
+    categories: (product as any).categories || null,
+    subcategories: (product as any).subcategories || null,
     description: product.description || null,
     has_variants: product.hasVariants || false,
     variants: product.variants || null,
