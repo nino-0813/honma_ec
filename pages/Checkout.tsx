@@ -953,11 +953,14 @@ const Checkout = () => {
     setCouponError(null);
     
     try {
-      // クーポンを取得
+      // クーポンを取得（大文字・小文字を区別しない検索）
+      const normalizedCode = code.trim().toLowerCase();
+      const upperCode = code.trim().toUpperCase();
+      // 大文字・小文字の両方を試す
       const { data: coupon, error: couponErr } = await supabase
         .from('coupons')
         .select('*')
-        .eq('code', code.trim().toUpperCase())
+        .or(`code.eq.${normalizedCode},code.eq.${upperCode},code.eq.${code.trim()}`)
         .eq('is_active', true)
         .single();
       
@@ -1783,7 +1786,7 @@ const Checkout = () => {
                         <input
                           type="text"
                           value={couponCode}
-                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          onChange={(e) => setCouponCode(e.target.value)}
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
