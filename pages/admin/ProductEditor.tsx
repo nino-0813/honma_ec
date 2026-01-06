@@ -549,8 +549,6 @@ const ProductEditor = () => {
     );
   }
 
-  const selectedCategoryObj = CATEGORIES.find(c => c.id === category);
-
   return (
     <>
       <div className="flex items-center justify-between mb-6">
