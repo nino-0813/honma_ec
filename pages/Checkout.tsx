@@ -1594,14 +1594,6 @@ const Checkout = () => {
                           </span>
                         </div>
                       ) : paymentClientSecret ? (
-                        <>
-                          {import.meta.env.DEV && (
-                            <div className="border border-gray-200 bg-gray-50 text-gray-700 px-4 py-3 rounded mb-4 text-xs">
-                              <div><span className="font-semibold">[debug]</span> publishableKey: <span className="font-mono">{STRIPE_PUBLISHABLE_KEY.startsWith('pk_test') ? 'pk_test' : STRIPE_PUBLISHABLE_KEY.startsWith('pk_live') ? 'pk_live' : 'unknown'}</span></div>
-                              <div><span className="font-semibold">[debug]</span> PaymentIntent.livemode: <span className="font-mono">{paymentIntentLivemode === null ? 'unknown' : String(paymentIntentLivemode)}</span></div>
-                              <div><span className="font-semibold">[debug]</span> secretKeyPrefix: <span className="font-mono">{paymentIntentSecretKeyPrefix ?? 'unknown'}</span></div>
-                            </div>
-                          )}
                         <Elements
                           stripe={stripePromise}
                           options={{ clientSecret: paymentClientSecret, locale: 'ja' }}
@@ -1614,7 +1606,6 @@ const Checkout = () => {
                             onSuccess={handleSuccess}
                           />
                         </Elements>
-                        </>
                       ) : (
                         <div className="border border-gray-200 p-6 rounded bg-gray-50">
                           <p className="text-sm text-gray-500">決済システムを初期化中...</p>
