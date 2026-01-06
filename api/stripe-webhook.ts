@@ -38,6 +38,51 @@ function getSupabaseAdmin() {
   });
 }
 
+async function postToGAS(payload: any) {
+  const gasUrl = getEnv('GAS_URL');
+  if (!gasUrl) {
+    console.log('[GAS] GAS_URL is not set. Skipping GAS notification.');
+    return;
+  }
+
+  if (typeof fetch !== 'function') {
+    console.error('[GAS] global fetch is not available in this runtime. Skipping GAS notification.');
+    return;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7000);
+
+  try {
+    console.log('[GAS] sending order payload', {
+      gasUrl,
+      order_number: payload?.order_number,
+      payment_status: payload?.payment_status,
+      order_status: payload?.order_status,
+    });
+
+    const resp = await fetch(gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    const text = await resp.text().catch(() => '');
+    if (!resp.ok) {
+      console.error('[GAS] request failed', { status: resp.status, statusText: resp.statusText, body: text });
+      return;
+    }
+
+    console.log('[GAS] request succeeded', { status: resp.status, body: text });
+  } catch (err: any) {
+    // MUST NOT break Stripe webhook flow
+    console.error('[GAS] request error (ignored)', err?.message || err, err);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
@@ -82,7 +127,7 @@ export default async function handler(req: any, res: any) {
 
       const { data: order, error: orderErr } = await supabaseAdmin
         .from('orders')
-        .select('id, total, payment_status, coupon_id')
+        .select('id, created_at, order_number, first_name, last_name, email, phone, shipping_address, shipping_city, shipping_postal_code, subtotal, shipping_cost, total, payment_status, order_status, coupon_id')
         .eq('payment_intent_id', paymentIntentId)
         .maybeSingle();
 
@@ -109,6 +154,28 @@ export default async function handler(req: any, res: any) {
           })
           .eq('id', order.id);
         if (updErr) throw updErr;
+
+        // Notify Google Apps Script (best-effort; do not break webhook)
+        try {
+          const payload = {
+            created_at: order.created_at,
+            order_number: order.order_number,
+            name: `${order.last_name ?? ''}${order.first_name ? ` ${order.first_name}` : ''}`.trim() || `${order.first_name ?? ''} ${order.last_name ?? ''}`.trim(),
+            email: order.email,
+            phone: order.phone,
+            shipping_address: order.shipping_address,
+            shipping_city: order.shipping_city,
+            shipping_postal_code: order.shipping_postal_code,
+            subtotal: order.subtotal,
+            shipping_cost: order.shipping_cost,
+            total: order.total,
+            payment_status: 'paid',
+            order_status: order.order_status,
+          };
+          await postToGAS(payload);
+        } catch (gasErr: any) {
+          console.error('[GAS] unexpected error (ignored)', gasErr?.message || gasErr, gasErr);
+        }
 
         // Decrement stock for each order item (atomic inside RPC)
         const { data: items, error: itemsErr } = await supabaseAdmin
