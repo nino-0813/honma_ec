@@ -670,6 +670,54 @@ BEGIN
 END;
 $$;
 
+-- クーポンコードで大文字・小文字を区別しない検索を行う関数
+CREATE OR REPLACE FUNCTION public.get_coupon_by_code(
+  p_code TEXT
+) RETURNS TABLE (
+  id UUID,
+  name TEXT,
+  code TEXT,
+  discount_type TEXT,
+  discount_value INTEGER,
+  is_active BOOLEAN,
+  starts_at TIMESTAMP WITH TIME ZONE,
+  ends_at TIMESTAMP WITH TIME ZONE,
+  usage_count INTEGER,
+  usage_limit INTEGER,
+  min_order_amount INTEGER,
+  once_per_user BOOLEAN,
+  applies_to_all BOOLEAN,
+  created_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE
+) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    c.id,
+    c.name,
+    c.code,
+    c.discount_type,
+    c.discount_value,
+    c.is_active,
+    c.starts_at,
+    c.ends_at,
+    c.usage_count,
+    c.usage_limit,
+    c.min_order_amount,
+    c.once_per_user,
+    c.applies_to_all,
+    c.created_at,
+    c.updated_at
+  FROM public.coupons c
+  WHERE LOWER(c.code) = LOWER(p_code)
+    AND c.is_active = true
+  LIMIT 1;
+END;
+$$;
+
 -- ==========================================
 -- reviews テーブル (お客様の声/レビュー)
 -- ==========================================

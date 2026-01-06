@@ -954,15 +954,11 @@ const Checkout = () => {
     
     try {
       // クーポンを取得（大文字・小文字を区別しない検索）
-      const normalizedCode = code.trim().toLowerCase();
-      const upperCode = code.trim().toUpperCase();
-      // 大文字・小文字の両方を試す
-      const { data: coupon, error: couponErr } = await supabase
-        .from('coupons')
-        .select('*')
-        .or(`code.eq.${normalizedCode},code.eq.${upperCode},code.eq.${code.trim()}`)
-        .eq('is_active', true)
-        .single();
+      const normalizedCode = code.trim();
+      const { data: couponData, error: couponErr } = await supabase
+        .rpc('get_coupon_by_code', { p_code: normalizedCode });
+      
+      const coupon = (Array.isArray(couponData) && couponData.length > 0 ? couponData[0] : null) as any;
       
       if (couponErr || !coupon) {
         setCouponError('クーポンコードが見つかりません');
