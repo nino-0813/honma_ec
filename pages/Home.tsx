@@ -19,7 +19,7 @@ const Home = () => {
             らしさの追求
           </h2>
           <div className="text-sm md:text-base font-medium md:font-normal leading-relaxed md:leading-relaxed text-gray-600">
-            <p>自然栽培の考えをベースに、品種が秘めた旨みと香りをまっすぐに届けるため、<br className="mb-2"/><br className="mb-2"/>島の有機資源で土を磨き上げ、農薬に頼らず育てました。<br className="mb-2"/><br className="mb-2"/>佐渡ヶ島の森里海とそこで暮らす様々な命が織りなす循環の一粒をご賞味ください。</p>
+            <p>自然栽培の考えをベースに、品種が秘めた旨みと香りをまっすぐに届けるため、<br />島の有機資源で土を磨き上げ、農薬に頼らず育てました。<br />佐渡ヶ島の森里海とそこで暮らす様々な命が織りなす循環の一粒をご賞味ください。</p>
           </div>
         </div>
       </div>
