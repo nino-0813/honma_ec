@@ -74,12 +74,6 @@ const LegalNotice = () => {
                 <p className="text-sm text-gray-500 italic">（準備中）</p>
               </div>
             </div>
-
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm md:text-base leading-relaxed text-gray-700">
-                ※年間契約のお米に関しては送料が無料となっております。対象の商品については商品説明欄をご確認くださいませ。
-              </p>
-            </div>
           </section>
 
           {/* 発送に関して */}
