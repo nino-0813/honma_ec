@@ -67,7 +67,7 @@ const Blog = () => {
     <div className="pt-28 pb-24 min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="mb-12">
-          <h1 className="text-3xl md:text-4xl font-serif tracking-widest text-primary mb-4">BLOG</h1>
+          <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-4">BLOG</h1>
           <div className="w-12 h-px bg-primary"></div>
         </div>
 

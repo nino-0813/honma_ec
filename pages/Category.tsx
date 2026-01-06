@@ -156,7 +156,7 @@ const Category = () => {
         
         {/* Page Header */}
         <div className="text-center mb-16 md:mb-24 animate-fade-in">
-          <h1 className="text-3xl md:text-4xl font-serif tracking-[0.1em] text-primary mb-4">{getPageTitle()}</h1>
+          <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-4">{getPageTitle()}</h1>
         </div>
 
         <div className="flex flex-col md:flex-row gap-12 lg:gap-20">

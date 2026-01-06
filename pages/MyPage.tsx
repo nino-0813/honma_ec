@@ -165,7 +165,7 @@ const MyPage = () => {
         <main className="flex-1 pt-32 pb-24">
           <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8 text-center">
-              <h1 className="text-3xl md:text-4xl font-serif tracking-[0.1em] text-primary mb-2">
+              <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-2">
                 <span className="md:hidden">my page</span>
                 <span className="hidden md:inline">マイページ</span>
               </h1>
@@ -190,7 +190,7 @@ const MyPage = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-3xl md:text-4xl font-serif tracking-[0.1em] text-primary mb-2">
+          <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-2">
             <span className="md:hidden">my page</span>
             <span className="hidden md:inline">マイページ</span>
           </h1>
