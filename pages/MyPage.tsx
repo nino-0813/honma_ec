@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, Link } from 'wouter';
 import { supabase, getProfile, updateProfile, getOrders, Order, Profile } from '../lib/supabase';
 import { IconChevronDown, IconChevronRight } from '../components/Icons';
@@ -6,6 +6,8 @@ import { FadeInImage, LoadingButton } from '../components/UI';
 import AuthForm from '../components/AuthForm';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { CartDrawer, MenuDrawer } from '../components/Drawers';
+import { CartContext } from '../App';
 
 const MyPage = () => {
   const [, setLocation] = useLocation();
@@ -16,6 +18,9 @@ const MyPage = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'profile'>('orders');
   const [editingProfile, setEditingProfile] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { cartItems, removeFromCart, updateQuantity } = useContext(CartContext);
   
   // プロフィール編集フォームの状態
   const [formData, setFormData] = useState({
@@ -156,11 +161,14 @@ const MyPage = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary">
-        <Header onOpenCart={() => {}} onOpenMenu={() => {}} />
+        <Header onOpenCart={() => setIsCartOpen(true)} onOpenMenu={() => setIsMenuOpen(true)} />
         <main className="flex-1 pt-32 pb-24">
           <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8 text-center">
-              <h1 className="text-3xl md:text-4xl font-serif tracking-widest mb-2">マイページ</h1>
+              <h1 className="text-3xl md:text-4xl font-serif tracking-[0.1em] text-primary mb-2">
+                <span className="md:hidden">my page</span>
+                <span className="hidden md:inline">マイページ</span>
+              </h1>
               <p className="text-sm text-gray-500">ログインしてマイページをご利用ください</p>
             </div>
             <div className="bg-white border border-gray-200 rounded-lg p-8">
@@ -169,16 +177,23 @@ const MyPage = () => {
           </div>
         </main>
         <Footer />
+        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} />
+        <MenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       </div>
     );
   }
 
   return (
-    <div className="pt-32 pb-24 bg-white min-h-screen animate-fade-in">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary">
+      <Header onOpenCart={() => setIsCartOpen(true)} onOpenMenu={() => setIsMenuOpen(true)} />
+      <main className="flex-1 pt-32 pb-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-3xl md:text-4xl font-serif tracking-widest mb-2">マイページ</h1>
+          <h1 className="text-3xl md:text-4xl font-serif tracking-[0.1em] text-primary mb-2">
+            <span className="md:hidden">my page</span>
+            <span className="hidden md:inline">マイページ</span>
+          </h1>
           <p className="text-sm text-gray-500">ご注文履歴とアカウント設定</p>
         </div>
 
@@ -457,7 +472,11 @@ const MyPage = () => {
             )}
           </div>
         )}
-      </div>
+        </div>
+      </main>
+      <Footer />
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} />
+      <MenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </div>
   );
 };

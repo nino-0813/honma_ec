@@ -65,7 +65,7 @@ const ContactSection = () => {
   return (
     <section className="py-8 md:py-16 bg-white" id="contact">
       <div className="max-w-2xl mx-auto px-4">
-        <h2 className="text-3xl font-serif text-center mb-12 tracking-wide">Contact us</h2>
+        <h2 className="hidden md:block text-3xl font-serif text-center mb-12 tracking-wide">Contact us</h2>
         
         {submitStatus === 'success' && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">

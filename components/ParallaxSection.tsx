@@ -11,7 +11,7 @@ const ParallaxSection = () => {
             src="/images/home/parallax/sunset_riceplanting_7.jpg" 
             alt="IKEVEGE" 
             className="w-full h-full object-cover"
-            style={{ objectPosition: '70% center' }}
+            style={{ objectPosition: '18% center' }}
             loading="lazy"
           />
         </div>

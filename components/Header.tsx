@@ -160,9 +160,15 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
                 <IconUser className="w-5 h-5" />
               </a>
             </Link>
-            <button className={`transition-colors ${
-              isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
-            }`}>
+            <button 
+              onClick={() => {
+                // TODO: 検索機能を実装
+                console.log('検索機能は未実装です');
+              }}
+              className={`transition-colors ${
+                isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
+              }`}
+            >
               <IconSearch className="w-5 h-5" />
             </button>
             <button onClick={onOpenCart} className={`transition-colors relative ${
