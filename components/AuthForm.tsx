@@ -106,7 +106,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, initialEmail = '' })
   };
 
   return (
-    <div className={`space-y-6 ${isSignUp ? 'bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg border-2 border-blue-300 shadow-sm' : ''}`}>
+    <div className={`space-y-6 w-full overflow-x-hidden ${isSignUp ? 'bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg border-2 border-blue-300 shadow-sm' : ''}`}>
       <div>
         {isSignUp ? (
           <div className="mb-4">

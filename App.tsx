@@ -223,14 +223,14 @@ const MainLayout = () => {
 
   return (
     <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, openCart, restoreCart }}>
-      <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary selection:bg-black selection:text-white">
+      <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary selection:bg-black selection:text-white overflow-x-hidden w-full">
         <ScrollToTop />
         <Header 
           onOpenCart={() => setIsCartOpen(true)} 
           onOpenMenu={() => setIsMenuOpen(true)} 
         />
         
-        <main className="flex-1">
+        <main className="flex-1 w-full overflow-x-hidden">
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/about" component={About} />

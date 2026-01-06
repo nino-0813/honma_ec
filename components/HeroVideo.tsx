@@ -33,7 +33,7 @@ const HeroVideo = () => {
          {videoUrl && (
             <div className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
               <iframe 
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[177vh] h-[55vh] max-w-none"
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[177vh] h-[55vh] max-w-none pointer-events-none"
                 src={videoUrl}
                 title="IKEVEGE Hero Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

@@ -5,7 +5,6 @@ import { IconChevronDown, IconChevronRight } from '../components/Icons';
 import { FadeInImage, LoadingButton } from '../components/UI';
 import AuthForm from '../components/AuthForm';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { CartDrawer, MenuDrawer } from '../components/Drawers';
 import { CartContext } from '../App';
 
@@ -160,13 +159,13 @@ const MyPage = () => {
   // ログインしていない場合はログインフォームを表示
   if (!user) {
     return (
-      <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary">
+      <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary overflow-x-hidden w-full">
         <Header onOpenCart={() => setIsCartOpen(true)} onOpenMenu={() => setIsMenuOpen(true)} />
-        <main className="flex-1 pt-32 pb-24">
-          <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="flex-1 pt-24 md:pt-32 pb-24 w-full overflow-x-hidden">
+          <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <div className="mb-8 text-center">
               <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-2">
-                <span className="md:hidden">my page</span>
+                <span className="md:hidden">MY PAGE</span>
                 <span className="hidden md:inline">マイページ</span>
               </h1>
             </div>
@@ -175,7 +174,6 @@ const MyPage = () => {
             </div>
           </div>
         </main>
-        <Footer />
         <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} />
         <MenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       </div>
@@ -183,14 +181,14 @@ const MyPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary">
+    <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary overflow-x-hidden w-full">
       <Header onOpenCart={() => setIsCartOpen(true)} onOpenMenu={() => setIsMenuOpen(true)} />
-      <main className="flex-1 pt-32 pb-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 pt-24 md:pt-32 pb-24 w-full overflow-x-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-2">
-            <span className="md:hidden">my page</span>
+            <span className="md:hidden">MY PAGE</span>
             <span className="hidden md:inline">マイページ</span>
           </h1>
           <p className="text-sm text-gray-500">ご注文履歴とアカウント設定</p>
@@ -473,7 +471,6 @@ const MyPage = () => {
         )}
         </div>
       </main>
-      <Footer />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} />
       <MenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </div>
