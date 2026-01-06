@@ -52,7 +52,7 @@ const Dashboard = () => {
       // 注文データを取得
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, total_amount, created_at, payment_status')
+        .select('id, total, created_at, payment_status')
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: false });
 
@@ -83,7 +83,7 @@ const Dashboard = () => {
 
       // 統計を計算
       const totalSales = ordersData?.reduce((sum, order) => {
-        return sum + (order.payment_status === 'paid' ? order.total_amount : 0);
+        return sum + (order.payment_status === 'paid' ? order.total : 0);
       }, 0) || 0;
 
       const totalOrders = ordersData?.length || 0;
@@ -313,7 +313,7 @@ const Dashboard = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-gray-900">
-                        ¥{order.total_amount.toLocaleString()}
+                        ¥{order.total.toLocaleString()}
                       </p>
                       <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
                         order.payment_status === 'paid' 

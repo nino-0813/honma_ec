@@ -263,7 +263,7 @@ const MyPage = () => {
                           {getPaymentStatusText(order.payment_status)}
                         </span>
                         <span className="text-sm font-serif font-medium">
-                          ¥{order.total_amount.toLocaleString()}
+                          ¥{order.total.toLocaleString()}
                         </span>
                       </div>
                     </div>

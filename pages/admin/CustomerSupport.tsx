@@ -111,7 +111,7 @@ const CustomerSupport = () => {
             lastOrderDate: userOrders.length > 0 
               ? userOrders[0].created_at 
               : profile.created_at, // 注文がない場合は登録日を表示
-            totalSpent: userOrders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0),
+            totalSpent: userOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0),
           });
         }
       });
@@ -125,7 +125,7 @@ const CustomerSupport = () => {
             name: `${order.last_name || ''} ${order.first_name || ''}`.trim() || order.email,
             hasOrders: true,
             lastOrderDate: order.created_at,
-            totalSpent: order.total_amount || 0,
+            totalSpent: order.total || 0,
           });
         }
       });

@@ -93,7 +93,6 @@ const Customers = () => {
               last_name: profile.last_name || '',
               created_at: profile.created_at,
               total: 0,
-              total_amount: 0,
               auth_user_id: profile.id,
             };
           });
@@ -136,7 +135,7 @@ const Customers = () => {
         ? `${order.last_name} ${order.first_name}`.trim()
         : order.email || (order.auth_user_id ? `ユーザー ${order.auth_user_id.slice(0, 8)}` : '未登録ユーザー');
       const orderDate = new Date(order.created_at);
-      const total = order.total || order.total_amount || 0;
+      const total = order.total || 0;
 
       // 注文がない場合は注文数0として扱う（プロフィールのみの顧客）
       const hasOrder = !order.id?.startsWith('profile-') && total > 0;

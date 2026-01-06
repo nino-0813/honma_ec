@@ -165,7 +165,7 @@ export const updateProfile = async (
 export interface Order {
   id: string;
   order_number: string | null;
-  total_amount: number;
+  total: number;
   payment_status: string;
   created_at: string;
   updated_at: string;
@@ -217,7 +217,7 @@ export const getOrders = async (userId: string): Promise<Order[]> => {
   return (data || []).map((order: any) => ({
     id: order.id,
     order_number: order.order_number,
-    total_amount: order.total_amount,
+    total: order.total,
     payment_status: order.payment_status,
     created_at: order.created_at,
     updated_at: order.updated_at,

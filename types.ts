@@ -99,7 +99,7 @@ export interface EmailTemplate {
 export interface Order {
   id: string;
   order_number: string | null;
-  total_amount: number;
+  total: number;
   payment_status: string;
   created_at: string;
   updated_at: string;
