@@ -925,6 +925,20 @@ const Checkout = () => {
   // 送料（複数口を想定して「方法ごとの合計」を表示）
   const shippingCost = shippingPlan.totalCost || 0;
   
+  // デバッグ: 送料計算の状態を確認
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      console.log('[送料デバッグ]', {
+        postalCode: formData.postalCode,
+        prefecture: formData.prefecture,
+        shippingMethodsCount: shippingMethods.length,
+        productShippingMethodIds,
+        shippingPlan,
+        shippingCost,
+      });
+    }
+  }, [formData.postalCode, formData.prefecture, shippingMethods, productShippingMethodIds, shippingPlan, shippingCost, cartItems]);
+  
   // クーポン関連の状態
   const [couponCode, setCouponCode] = useState('');
   const [couponValidating, setCouponValidating] = useState(false);
@@ -1241,6 +1255,12 @@ const Checkout = () => {
   const handlePostalCodeSearch = async () => {
     if (!formData.postalCode) {
       setPostalCodeError('郵便番号を入力してください');
+      return;
+    }
+
+    // 既に都道府県と市区町村が入力されている場合は、郵便番号検索をスキップ（プロフィールから自動入力された場合など）
+    if (formData.prefecture && formData.city) {
+      setPostalCodeError(null);
       return;
     }
 
