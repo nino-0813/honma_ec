@@ -152,7 +152,7 @@ const About = () => {
             </FadeInSection>
             <FadeInSection className="w-full md:w-1/2 space-y-8">
                <h3 className="text-2xl md:text-3xl font-serif tracking-widest">作り手が楽しむ</h3>
-               <div className="space-y-6 text-gray-600 leading-loose font-light font-serif">
+               <div className="text-sm md:text-base space-y-6 text-gray-600 leading-loose font-light font-serif">
                  {/* Mobile: 短縮版 */}
                  <div className="md:hidden space-y-4">
                    <p>
@@ -194,7 +194,7 @@ const About = () => {
             </FadeInSection>
             <FadeInSection className="w-full md:w-1/2 space-y-8 text-left">
                <h3 className="text-2xl md:text-3xl font-serif tracking-widest">引き算のものづくり</h3>
-               <div className="space-y-6 text-gray-600 leading-loose font-light font-serif">
+               <div className="text-sm md:text-base space-y-6 text-gray-600 leading-loose font-light font-serif">
                  <p>
                    "美味しい"とは、品種が持つ本来の味わいがまっすぐに伝わること。
                  </p>
@@ -221,7 +221,7 @@ const About = () => {
             </FadeInSection>
             <FadeInSection className="w-full md:w-1/2 space-y-8">
                <h3 className="text-2xl md:text-3xl font-serif tracking-widest">農へのアクセスを良好に</h3>
-               <div className="space-y-6 text-gray-600 leading-loose font-light font-serif">
+               <div className="text-sm md:text-base space-y-6 text-gray-600 leading-loose font-light font-serif">
                  <p>
                    近年、農家の減少により、島の子どもたちですら、自然が「身近にはあるものの、生活とは切り離された存在」となりつつあります。
                  </p>
