@@ -319,7 +319,7 @@ const Category = () => {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col gap-2 text-center">
+                    <div className="flex-1 flex flex-col gap-2 text-center">
                       <h2 className="text-sm font-medium text-primary leading-relaxed group-hover:text-gray-600 transition-colors line-clamp-2 min-h-[2.8em]">
                         {product.title}
                       </h2>

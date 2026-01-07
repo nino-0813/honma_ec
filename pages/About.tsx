@@ -118,14 +118,24 @@ const About = () => {
            <FadeInSection>
              <p className="text-xs font-bold tracking-[0.3em] text-gray-400 uppercase mb-4 md:mb-8">CONCEPT</p>
              <h2 className="text-2xl md:text-4xl font-serif font-medium tracking-widest leading-relaxed mb-8 md:mb-16">
-               Farm to Social<br/>
+               <span className="relative inline-block">
+                 Farm to Social
+                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>
+               </span>
+               <br/>
                <span className="text-base md:text-2xl mt-2 md:mt-4 block text-gray-600">農から社会へ</span>
              </h2>
              <div className="text-sm md:text-base font-light leading-loose md:leading-loose text-gray-700 space-y-4 md:space-y-6 max-w-2xl mx-auto">
                <p>自然界では、多様な命が、無理なく、</p>
                <p>あるがままに響き合い、永遠にめぐっている。</p>
-               <p>そんな「ありのまま」が調和する "イケてる"社会をつくりたい。</p>
-               <p>子どもたちがここに生まれてよかったと思えるように。</p>
+               <p>
+                 そんな「ありのまま」が調和する<br />
+                 "イケてる"社会をつくりたい。
+               </p>
+               <p>
+                 子どもたちがここに生まれてよかった<br />
+                 と思える社会を創りたい。
+               </p>
              </div>
            </FadeInSection>
         </div>
@@ -156,7 +166,10 @@ const About = () => {
                  {/* Mobile: 短縮版 */}
                  <div className="md:hidden space-y-4">
                    <p>
-                     イケベジの田んぼではいつもスタッフのルカの大きな歌声が響いています。作物は作り手の状態を鏡のように映し出すもの。だからこそ、田んぼではまず「自分らしく楽しむこと」を第一に心がけています。
+                     イケベジの田んぼではいつもスタッフのルカの大きな歌声が響いています。
+                   </p>
+                   <p>
+                     作物は作り手の状態を鏡のように映し出すもの。だからこそ、田んぼではまず「自分らしく楽しむこと」を第一に心がけています。
                    </p>
                    <p>
                      そして美味しいお米を作り豊かな生態系を守る。その両立こそが私たちのモチベーションです。

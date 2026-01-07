@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation } from 'wouter';
-import { IconBag, IconSearch, IconMenu, IconUser, IconChevronDown } from './Icons';
+import { IconBag, IconMenu, IconUser, IconChevronDown } from './Icons';
 import { CartContext } from '../App';
 import { supabase } from '../lib/supabase';
 
@@ -68,10 +68,10 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
             <Link href="/">
               <a className="hover:opacity-70 transition-opacity block">
                 <img 
-                  src="/images/logo.png" 
+                  src="/images/ikevege_logo.png" 
                   alt="IKEVEGE" 
                   className={`w-auto object-contain transition-all duration-500 ${
-                    isScrolled ? 'h-12 md:h-20' : 'h-6 md:h-10'
+                    isScrolled ? 'h-16 md:h-24' : 'h-8 md:h-12'
                   }`}
                 />
               </a>
@@ -160,17 +160,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenMenu }) => {
                 <IconUser className="w-5 h-5" />
               </a>
             </Link>
-            <button 
-              onClick={() => {
-                // TODO: 検索機能を実装
-                console.log('検索機能は未実装です');
-              }}
-              className={`transition-colors ${
-                isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
-              }`}
-            >
-              <IconSearch className="w-5 h-5" />
-            </button>
             <button onClick={onOpenCart} className={`transition-colors relative ${
               isHomePage && !isScrolled ? 'text-white hover:text-white/80' : 'text-primary hover:text-gray-500'
             }`}>
