@@ -34,7 +34,9 @@ const ParallaxSection = () => {
             
             {/* Description */}
             <p className="text-sm md:text-base font-medium md:font-normal leading-relaxed md:leading-relaxed text-gray-600 text-center px-2 mb-6 md:mb-8">
-              商品を生産して終わりではなく、農を起点に社会にとって意味のある存在で在り続けたいと考えています。
+              商品を生産して終わりではなく、農を<br />
+              起点に社会にとって意味のある存在で<br />
+              在り続けたいと考えています。
             </p>
             
             {/* CTA Button */}
@@ -60,7 +62,7 @@ const ParallaxSection = () => {
       </div>
 
       {/* Desktop Layout: Parallax Background with Overlay Box */}
-      <div className="hidden md:flex h-[650px] items-center justify-end overflow-hidden relative">
+      <div className="hidden md:flex h-[650px] items-center overflow-hidden relative">
         <div className="absolute inset-0">
           <img 
             src="/images/home/parallax/sunset_riceplanting_7.jpg" 
@@ -70,12 +72,14 @@ const ParallaxSection = () => {
             decoding="async"
           />
         </div>
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 flex justify-end">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 flex justify-center lg:justify-end">
           <div className="bg-white/90 backdrop-blur-sm p-12 max-w-lg shadow-2xl">
               <p className="text-sm font-bold tracking-widest mb-4 text-gray-500 uppercase">About Us</p>
               <h2 className="text-4xl font-serif mb-6 text-primary tracking-[0.2em]">Farm to Social</h2>
               <p className="text-sm md:text-base font-medium md:font-normal leading-relaxed md:leading-relaxed text-gray-600 mb-8">
-                商品を生産して終わりではなく、農を起点に社会にとって意味のある存在で在り続けたいと考えています。
+                商品を生産して終わりではなく、農を<br />
+                起点に社会にとって意味のある存在で<br />
+                在り続けたいと考えています。
               </p>
               <Link href="/about">
                 <a className="inline-block border-b border-primary pb-1 text-primary hover:text-gray-600 transition-colors uppercase text-sm tracking-widest">
