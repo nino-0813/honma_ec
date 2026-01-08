@@ -18,7 +18,10 @@ const FadeInSection = ({ children, className = "" }: FadeInSectionProps) => {
           entry.target.classList.remove('opacity-0', 'translate-y-10');
         }
       });
-    }, { threshold: 0.1 });
+    }, { 
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px' // 少し早めにアニメーションを開始
+    });
 
     const currentElement = domRef.current;
     if (currentElement) {
@@ -232,7 +235,7 @@ const About = () => {
                </div>
                <FadeInSection className="mt-8">
                  <Link href="/blog">
-                   <a className="inline-block text-gray-900 hover:text-gray-700 transition-all duration-300 group hover:scale-105">
+                   <a className="inline-block text-gray-900 hover:text-gray-700 transition-all duration-300 group hover:scale-105 md:hover:scale-105 active:scale-95">
                      <div className="font-serif text-base md:text-lg leading-relaxed">
                        <p className="mb-2">read more</p>
                        <p className="mb-2 relative inline-block">
