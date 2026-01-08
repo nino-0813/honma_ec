@@ -230,7 +230,7 @@ const ProductDetail = () => {
   if (!loading && !product) return <div className="h-screen flex items-center justify-center text-center"><p className="text-gray-500 mb-4">商品なし</p><Link href="/collections"><a className="text-primary hover:underline">一覧に戻る</a></Link></div>;
 
   return (
-    <div className="pt-32 pb-24 bg-white min-h-screen animate-fade-in">
+    <div className="pt-32 pb-24 bg-white min-h-screen animate-fade-in overflow-x-hidden w-full">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-[10px] text-gray-400 mb-8 md:mb-12 tracking-widest uppercase">
           <Link href="/"><a className="hover:text-black transition-colors">Home</a></Link>

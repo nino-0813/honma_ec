@@ -9,7 +9,7 @@ import { FadeInImage } from '../components/UI';
 
 const Home = () => {
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in overflow-x-hidden w-full">
       <HeroVideo />
       
       <div className="pt-24 md:pt-32 pb-8 md:pb-16 text-left md:text-center px-4 animate-slide-up bg-white">

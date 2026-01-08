@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 
 const ParallaxSection = () => {
   return (
-    <section className="relative py-8 md:py-16">
+    <section className="relative py-8 md:py-16 overflow-x-hidden w-full">
       {/* Mobile Layout: Image with Overlay Box */}
       <div className="md:hidden">
         <div className="w-full h-[450px] relative overflow-hidden">

@@ -151,7 +151,7 @@ const Category = () => {
 
   // Product Grid View
   return (
-    <div className="pt-28 pb-32 min-h-screen bg-white">
+    <div className="pt-28 pb-32 min-h-screen bg-white overflow-x-hidden w-full">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">
         
         {/* Page Header */}
@@ -159,7 +159,7 @@ const Category = () => {
           <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-4">{getPageTitle()}</h1>
           
           {/* 横スクロールメニュー - タイトルの下に配置 */}
-          <div className="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
+          <div className="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide w-full">
             {currentCategory === 'お米' ? (
               <div className="flex gap-4 min-w-max justify-center md:justify-center">
                 <Link href="/collections">

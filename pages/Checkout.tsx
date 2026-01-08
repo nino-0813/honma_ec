@@ -1367,7 +1367,7 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary">
+    <div className="min-h-screen bg-white flex flex-col font-serif font-medium tracking-widest text-primary overflow-x-hidden w-full">
       <Header onOpenCart={() => {}} onOpenMenu={() => {}} />
       
       <main className="flex-1 pt-20 pb-16">

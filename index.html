@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <title>イケベジ | IKEVEGE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -88,6 +88,12 @@
       
       html {
         scroll-behavior: smooth;
+        overflow-x: hidden;
+        width: 100%;
+      }
+      
+      * {
+        box-sizing: border-box;
       }
 
       /* Vertical Text Utility */

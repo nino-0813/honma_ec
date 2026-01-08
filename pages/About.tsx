@@ -85,7 +85,7 @@ const About = () => {
   }, []);
 
   return (
-    <div className="pt-20 animate-fade-in bg-white">
+    <div className="pt-20 animate-fade-in bg-white overflow-x-hidden w-full">
       {/* Hero Image - Full Screen with Parallax feel */}
       <div className="relative w-full">
          {/* Text Section - Above Image */}

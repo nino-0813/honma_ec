@@ -7,7 +7,7 @@ const ContactPage = () => {
   }, []);
 
   return (
-    <div className="pt-20 animate-fade-in">
+    <div className="pt-20 animate-fade-in overflow-x-hidden w-full">
       <div className="pt-16 md:pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 text-center">
            <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal">CONTACT</h1>
