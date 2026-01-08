@@ -155,107 +155,50 @@ const Category = () => {
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">
         
         {/* Page Header */}
-        <div className="text-center mb-16 md:mb-24 animate-fade-in">
+        <div className="text-center mb-8 md:mb-12 animate-fade-in">
           <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-4">{getPageTitle()}</h1>
+          
+          {/* 横スクロールメニュー - タイトルの下に配置 */}
+          <div className="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
+            {currentCategory === 'お米' ? (
+              <div className="flex gap-4 min-w-max justify-center md:justify-center">
+                <Link href="/collections">
+                  <a className="px-4 py-2 rounded-full text-xs tracking-widest border transition-colors bg-white text-gray-600 border-gray-200 hover:bg-gray-50">ALL</a>
+                </Link>
+                <Link href="/collections/rice/koshihikari">
+                  <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'koshihikari' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>コシヒカリ</a>
+                </Link>
+                <Link href="/collections/rice/kamenoo">
+                  <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'kamenoo' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>亀の尾</a>
+                </Link>
+                <Link href="/collections/rice/nikomaru">
+                  <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'nikomaru' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>にこまる</a>
+                </Link>
+                <Link href="/collections/rice/yearly">
+                  <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'yearly' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>年間契約</a>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex gap-4 min-w-max justify-center md:justify-center">
+                <Link href="/collections">
+                  <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'ALL' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>ALL</a>
+                </Link>
+                <Link href="/collections/rice">
+                  <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'お米' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>お米</a>
+                </Link>
+                <Link href="/collections/crescent">
+                  <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'Crescentmoon' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>Crescentmoon</a>
+                </Link>
+                <Link href="/collections/other">
+                  <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'その他' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>その他</a>
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-12 lg:gap-20">
-          
-          {/* Sidebar (Desktop) */}
-          <aside className="w-full md:w-64 flex-shrink-0 animate-fade-in">
-            <div className="sticky top-32">
-              <h3 className="text-sm font-bold tracking-widest mb-6 uppercase border-b border-gray-200 pb-2 hidden md:block">
-                {currentCategory === 'お米' ? 'お米' : 'Category'}
-              </h3>
-              
-              {/* お米カテゴリーの場合：サブカテゴリーを表示 */}
-              {currentCategory === 'お米' ? (
-                <ul className="hidden md:flex flex-col space-y-1">
-                  <SidebarItem 
-                    label="コシヒカリ" 
-                    path="/collections/rice/koshihikari" 
-                    isActive={currentSubcategory === 'koshihikari'} 
-                  />
-                  <SidebarItem 
-                    label="亀の尾" 
-                    path="/collections/rice/kamenoo" 
-                    isActive={currentSubcategory === 'kamenoo'} 
-                  />
-                  <SidebarItem 
-                    label="にこまる" 
-                    path="/collections/rice/nikomaru" 
-                    isActive={currentSubcategory === 'nikomaru'} 
-                  />
-                  <SidebarItem 
-                    label="年間契約" 
-                    path="/collections/rice/yearly" 
-                    isActive={currentSubcategory === 'yearly'} 
-                  />
-                </ul>
-              ) : (
-                <ul className="hidden md:flex flex-col space-y-1">
-                  <SidebarItem label="ALL" path="/collections" isActive={currentCategory === 'ALL'} />
-                  <SidebarItem label="お米" path="/collections/rice" isActive={currentCategory === 'お米'} />
-                  <SidebarItem label="Crescentmoon" path="/collections/crescent" isActive={currentCategory === 'Crescentmoon'} />
-                  <SidebarItem label="その他" path="/collections/other" isActive={currentCategory === 'その他'} />
-                </ul>
-              )}
-
-              {/* Mobile Horizontal Scroll Menu */}
-              <div className="md:hidden overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
-                {currentCategory === 'お米' ? (
-                  <div className="flex gap-4 min-w-max">
-                    <Link href="/collections/rice/koshihikari">
-                      <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'koshihikari' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>コシヒカリ</a>
-                    </Link>
-                    <Link href="/collections/rice/kamenoo">
-                      <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'kamenoo' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>亀の尾</a>
-                    </Link>
-                    <Link href="/collections/rice/nikomaru">
-                      <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'nikomaru' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>にこまる</a>
-                    </Link>
-                    <Link href="/collections/rice/yearly">
-                      <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'yearly' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>年間契約</a>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="flex gap-4 min-w-max">
-                    <Link href="/collections">
-                      <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'ALL' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>ALL</a>
-                    </Link>
-                    <Link href="/collections/rice">
-                      <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'お米' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>お米</a>
-                    </Link>
-                    <Link href="/collections/crescent">
-                      <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'Crescentmoon' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>Crescentmoon</a>
-                    </Link>
-                    <Link href="/collections/other">
-                      <a className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'その他' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>その他</a>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          </aside>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            {/* Sort Bar - Hidden on mobile */}
-            <div className="hidden md:flex justify-end mb-8 animate-fade-in">
-               <div className="relative group inline-block text-left">
-                  <button className="inline-flex justify-center items-center w-full text-xs font-medium text-gray-700 hover:text-gray-900 tracking-widest">
-                    オススメ
-                    <IconChevronDown className="ml-2 h-3 w-3 transition-transform group-hover:rotate-180" />
-                  </button>
-                  <div className="origin-top-right absolute right-0 mt-2 w-40 rounded-sm shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 transform -translate-y-2 group-hover:translate-y-0">
-                    <div className="py-1">
-                      <button onClick={() => setSortOrder('manual')} className="block w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">オススメ</button>
-                      <button onClick={() => setSortOrder('price-asc')} className="block w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">価格が安い順</button>
-                      <button onClick={() => setSortOrder('price-desc')} className="block w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">価格が高い順</button>
-                    </div>
-                  </div>
-               </div>
-            </div>
+        {/* Main Content */}
+        <div>
 
             {/* Loading State */}
             {loading && (
@@ -332,7 +275,6 @@ const Category = () => {
                 ))}
               </div>
             )}
-          </div>
         </div>
       </div>
     </div>

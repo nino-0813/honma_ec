@@ -66,9 +66,9 @@ const Blog = () => {
   return (
     <div className="pt-28 pb-24 min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
-        <div className="mb-12 text-center md:text-left">
+        <div className="mb-12 text-center">
           <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-4">BLOG</h1>
-          <div className="w-12 h-px bg-primary mx-auto md:mx-0"></div>
+          <div className="w-12 h-px bg-primary mx-auto"></div>
         </div>
 
         {loading && (

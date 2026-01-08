@@ -110,7 +110,7 @@ const About = () => {
       {/* Introduction / Philosophy */}
       <section className="pt-12 md:pt-16 pb-12 md:pb-20 bg-white relative overflow-hidden">
         {/* Decorative Vertical Text Background */}
-        <div className="absolute top-20 right-10 md:right-20 text-7xl md:text-8xl font-serif opacity-[0.03] vertical-text pointer-events-none hidden md:block">
+        <div className="absolute top-8 md:top-10 right-6 md:right-12 text-6xl md:text-[5.5rem] font-serif opacity-[0.03] vertical-text pointer-events-none hidden md:block">
           自然と共に
         </div>
 
@@ -156,7 +156,7 @@ const About = () => {
          {/* Story 1 */}
          <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center mb-32">
             <FadeInSection className="w-full md:w-2/5 relative">
-               <div className="aspect-[3/4] bg-gray-100 relative z-10 max-w-md mx-auto md:mx-0">
+              <div className="aspect-square bg-gray-100 relative z-10 max-w-md mx-auto md:mx-0">
                  <ScrollGrayscaleImage src="/images/about/hero/retreat_2025_56.jpg" alt="Farmer" />
                </div>
             </FadeInSection>
@@ -169,10 +169,17 @@ const About = () => {
                      イケベジの田んぼではいつもスタッフのルカの大きな歌声が響いています。
                    </p>
                    <p>
-                     作物は作り手の状態を鏡のように映し出すもの。だからこそ、田んぼではまず「自分らしく楽しむこと」を第一に心がけています。
+                     作物は作り手の状態を鏡のように映し出すもの。
                    </p>
                    <p>
-                     そして美味しいお米を作り豊かな生態系を守る。その両立こそが私たちのモチベーションです。
+                     だからこそ、田んぼではまず<br />
+                     「自分らしく楽しむこと」を第一に心がけています。
+                   </p>
+                   <p>
+                     そして美味しいお米を作り、豊かな生態系を守る。
+                   </p>
+                   <p>
+                     その両立こそが私たちのモチベーションです。
                    </p>
                  </div>
                  {/* Desktop: 全文 */}
@@ -184,10 +191,11 @@ const About = () => {
                      作物は作り手の状態を鏡のように映し出すもの。
                    </p>
                    <p>
-                     だからこそ、田んぼではまず「自分らしく楽しむこと」を第一に心がけています。
+                     だからこそ、田んぼではまず<br />
+                     「自分らしく楽しむこと」を第一に心がけています。
                    </p>
                    <p>
-                     そして美味しいお米を作り豊かな生態系を守る。
+                     そして美味しいお米を作り、豊かな生態系を守る。
                    </p>
                    <p>
                      その両立こそが私たちのモチベーションです。
@@ -221,13 +229,24 @@ const About = () => {
                    子どもを育てるように、それぞれの命がのびのびと命を全うする場を創り続けます。
                  </p>
                </div>
+               <div className="mt-8">
+                 <Link href="/blog">
+                   <a className="inline-block text-gray-900 hover:text-gray-700 transition-colors">
+                     <div className="font-serif text-base md:text-lg leading-relaxed">
+                       <p className="mb-2">read more</p>
+                       <p className="mb-2">栽培のヒミツ</p>
+                       <p className="underline underline-offset-4">BLOG</p>
+                     </div>
+                   </a>
+                 </Link>
+               </div>
             </FadeInSection>
          </div>
 
          {/* Story 3 */}
          <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center mb-32">
             <FadeInSection className="w-full md:w-1/2 relative">
-               <div className="aspect-[3/4] bg-gray-100 relative z-10">
+              <div className="aspect-square bg-gray-100 relative z-10">
                  <ScrollGrayscaleImage src="/images/about/stories/about_story_taue_123.jpg" alt="Farmers" />
                </div>
                <div className="absolute -bottom-10 -right-10 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
@@ -260,6 +279,7 @@ const About = () => {
               <a className="inline-block text-gray-900 hover:text-gray-700 transition-colors">
               <div className="font-serif text-base md:text-lg leading-relaxed">
                 <p className="mb-2">read more</p>
+                <p className="mb-2">栽培のヒミツ</p>
                 <p className="underline underline-offset-4">BLOG</p>
               </div>
               </a>

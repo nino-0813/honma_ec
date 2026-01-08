@@ -18,8 +18,10 @@ const Home = () => {
             余計なものは足さない<br />
             らしさの追求
           </h2>
-          <div className="text-sm md:text-base font-medium md:font-normal leading-loose md:leading-relaxed text-gray-600">
-            <p>自然栽培の考えをベースに、品種が秘めた旨みと香りをまっすぐに届けるため、<br />島の有機資源で土を磨き上げ、農薬に頼らず育てました。<br />佐渡ヶ島の森里海とそこで暮らす様々な命が織りなす循環の一粒をご賞味ください。</p>
+          <div className="text-sm md:text-base font-medium md:font-normal leading-loose md:leading-relaxed text-gray-600 space-y-4">
+            <p>自然栽培の考えをベースに、品種が秘めた旨みと香りをまっすぐに届けるため、</p>
+            <p>島の有機資源で土を磨き上げ、農薬に頼らず育てました。</p>
+            <p>佐渡ヶ島の森里海とそこで暮らす様々な命が織りなす循環の一粒をご賞味ください。</p>
           </div>
         </div>
       </div>
