@@ -62,7 +62,7 @@ import {
   Link
 } from 'lucide-react';
 
-export const IconBag = ({ className }: { className?: string }) => <ShoppingBag className={className} strokeWidth={1.5} />;
+export const IconBag = ({ className }: { className?: string }) => <ShoppingCart className={className} strokeWidth={1.5} />;
 export const IconSearch = ({ className }: { className?: string }) => <Search className={className} strokeWidth={1.5} />;
 export const IconMenu = ({ className }: { className?: string }) => <Menu className={className} strokeWidth={1.5} />;
 export const IconClose = ({ className }: { className?: string }) => <X className={className} strokeWidth={1.5} />;

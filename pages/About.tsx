@@ -159,6 +159,7 @@ const About = () => {
               <div className="aspect-square bg-gray-100 relative z-10 max-w-md mx-auto md:mx-0">
                  <ScrollGrayscaleImage src="/images/about/hero/retreat_2025_56.jpg" alt="Farmer" />
                </div>
+               <div className="absolute -bottom-6 -right-2 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
             </FadeInSection>
             <FadeInSection className="w-full md:w-1/2 space-y-8">
                <h3 className="text-2xl md:text-3xl font-serif tracking-widest">作り手が楽しむ</h3>
@@ -207,8 +208,8 @@ const About = () => {
 
          {/* Story 2 (Reverse) */}
          <div className="flex flex-col md:flex-row-reverse gap-12 md:gap-24 items-center mb-32">
-            <FadeInSection className="w-full md:w-1/2 relative">
-               <div className="aspect-square bg-gray-100 relative z-10">
+            <FadeInSection className="w-full md:w-2/5 relative">
+               <div className="aspect-square bg-gray-100 relative z-10 max-w-md mx-auto md:mx-0">
                  <ScrollGrayscaleImage src="/images/about/stories/IMG_8832.jpg" alt="Sunset Rice Field" />
                </div>
                <div className="absolute -top-10 -left-10 w-2/3 h-1/2 bg-secondary z-0 hidden md:block"></div>
@@ -229,27 +230,29 @@ const About = () => {
                    子どもを育てるように、それぞれの命がのびのびと命を全うする場を創り続けます。
                  </p>
                </div>
-               <div className="mt-8">
+               <FadeInSection className="mt-8">
                  <Link href="/blog">
-                   <a className="inline-block text-gray-900 hover:text-gray-700 transition-colors">
+                   <a className="inline-block text-gray-900 hover:text-gray-700 transition-all duration-300 group hover:scale-105">
                      <div className="font-serif text-base md:text-lg leading-relaxed">
                        <p className="mb-2">read more</p>
-                       <p className="mb-2">栽培のヒミツ</p>
-                       <p className="underline underline-offset-4">BLOG</p>
+                       <p className="mb-2 relative inline-block">
+                         栽培のヒミツ
+                         <span className="absolute bottom-0 left-0 w-full h-px bg-primary"></span>
+                       </p>
                      </div>
                    </a>
                  </Link>
-               </div>
+               </FadeInSection>
             </FadeInSection>
          </div>
 
          {/* Story 3 */}
          <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center mb-32">
-            <FadeInSection className="w-full md:w-1/2 relative">
-              <div className="aspect-square bg-gray-100 relative z-10">
+            <FadeInSection className="w-full md:w-2/5 relative">
+              <div className="aspect-square bg-gray-100 relative z-10 max-w-md mx-auto md:mx-0">
                  <ScrollGrayscaleImage src="/images/about/stories/about_story_taue_123.jpg" alt="Farmers" />
                </div>
-               <div className="absolute -bottom-10 -right-10 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
+               <div className="absolute -bottom-6 -right-2 w-2/3 h-1/2 border border-primary z-0 hidden md:block"></div>
             </FadeInSection>
             <FadeInSection className="w-full md:w-1/2 space-y-8">
                <h3 className="text-2xl md:text-3xl font-serif tracking-widest">農へのアクセスを良好に</h3>
@@ -276,11 +279,13 @@ const About = () => {
         <div className="max-w-4xl mx-auto px-6 text-center">
           <FadeInSection>
             <Link href="/blog">
-              <a className="inline-block text-gray-900 hover:text-gray-700 transition-colors">
+              <a className="inline-block text-gray-900 hover:text-gray-700 transition-all duration-300 group hover:scale-105">
               <div className="font-serif text-base md:text-lg leading-relaxed">
                 <p className="mb-2">read more</p>
-                <p className="mb-2">栽培のヒミツ</p>
-                <p className="underline underline-offset-4">BLOG</p>
+                <p className="mb-2 relative inline-block">
+                  BLOG
+                  <span className="absolute bottom-0 left-0 w-full h-px bg-primary"></span>
+                </p>
               </div>
               </a>
             </Link>
