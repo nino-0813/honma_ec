@@ -1,0 +1,310 @@
+
+import React, { useEffect, useState } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import { useProducts } from '../hooks/useProducts';
+import { IconChevronDown } from '../components/Icons';
+import { FadeInImage } from '../components/UI';
+import { Product } from '../types';
+
+const Category = () => {
+  const { pathname } = useLocation();
+  const params = useParams<{ subcategory?: string; category?: string }>();
+  const matchAll = pathname === '/collections';
+  const matchRiceSubcategory = pathname.startsWith('/collections/rice/') && params.subcategory;
+  const paramsRiceSubcategory = params.subcategory ? { subcategory: params.subcategory } : undefined;
+  const matchCategory = params.category !== undefined;
+  const paramsCategory = params.category ? { category: params.category } : undefined;
+  
+  const getFilterNameFromParam = (param: string) => {
+    if (param === 'rice') return 'お米';
+    if (param === 'crescent') return 'Crescentmoon';
+    if (param === 'other') return 'その他';
+    return 'ALL';
+  };
+
+  // URLパラメータを日本語のサブカテゴリー名にマッピング
+  const getSubcategoryNameFromParam = (param: string): string => {
+    const mapping: { [key: string]: string } = {
+      'koshihikari': 'コシヒカリ',
+      'kamenoo': '亀の尾',
+      'nikomaru': 'にこまる',
+      'yearly': '年間契約'
+    };
+    return mapping[param] || param;
+  };
+
+  // 現在のカテゴリーを判定
+  let currentCategory = 'ALL';
+  let currentSubcategory: string | null = null;
+
+  if (matchRiceSubcategory && paramsRiceSubcategory?.subcategory) {
+    // お米のサブカテゴリーページ（例: /collections/rice/koshihikari）
+    currentCategory = 'お米';
+    currentSubcategory = paramsRiceSubcategory.subcategory;
+  } else if (matchCategory && paramsCategory?.category) {
+    // 通常のカテゴリーページ（例: /collections/rice）
+    currentCategory = getFilterNameFromParam(paramsCategory.category);
+  } else if (matchAll) {
+    // オールアイテムページ
+    currentCategory = 'ALL';
+  }
+
+  const { products: supabaseProducts, loading, error } = useProducts();
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [sortOrder, setSortOrder] = useState('manual');
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+
+    let result = [...supabaseProducts];
+    
+    const getProductCategories = (p: Product): string[] => {
+      const cats = (p as any).categories;
+      if (Array.isArray(cats) && cats.length > 0) return cats;
+      return p.category ? [p.category] : [];
+    };
+
+    const getProductSubcategories = (p: Product): string[] => {
+      const subs = (p as any).subcategories;
+      if (Array.isArray(subs) && subs.length > 0) return subs;
+      return p.subcategory ? [p.subcategory] : [];
+    };
+    
+    // Filter by category
+    if (currentCategory !== 'ALL') {
+      if (currentCategory === 'お米') {
+        // お米カテゴリーの場合：category/categoriesに「お米」を含む、またはsubcategoriesに「年間契約」を含む商品を表示
+        result = supabaseProducts.filter(p => {
+          const cats = getProductCategories(p);
+          const subs = getProductSubcategories(p);
+          return cats.includes('お米') || subs.includes('年間契約') || p.title.includes('年間契約');
+        });
+      } else {
+        result = supabaseProducts.filter(p => {
+          const cats = getProductCategories(p);
+          return cats.includes(currentCategory) || p.title.includes(currentCategory);
+        });
+      }
+    }
+    
+    // Filter by subcategory (for rice subcategories)
+    if (currentSubcategory && currentCategory === 'お米') {
+      const subcategoryName = getSubcategoryNameFromParam(currentSubcategory);
+      result = result.filter(p => {
+        const subs = getProductSubcategories(p);
+        if (subs.includes(subcategoryName)) return true;
+
+          // 既存データのためのフォールバック（タイトルで判定）
+        if (currentSubcategory === 'koshihikari') return p.title.includes('コシヒカリ');
+        if (currentSubcategory === 'kamenoo') return p.title.includes('亀の尾');
+        if (currentSubcategory === 'nikomaru') return p.title.includes('にこまる');
+        if (currentSubcategory === 'yearly') return p.title.includes('年間契約');
+        return false;
+      });
+    }
+
+    // 表示順でソート（display_orderが小さい順、nullは最後）
+    result.sort((a, b) => {
+      const orderA = a.display_order ?? 999999;
+      const orderB = b.display_order ?? 999999;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      // display_orderが同じ場合は価格順
+    if (sortOrder === 'price-asc') {
+        return a.price - b.price;
+    } else if (sortOrder === 'price-desc') {
+        return b.price - a.price;
+    }
+      return 0;
+    });
+
+    // 表示/非表示フィルタ（is_visibleがfalseの場合は除外）
+    result = result.filter(p => p.is_visible !== false);
+
+    setFilteredProducts(result);
+  }, [currentCategory, currentSubcategory, sortOrder, supabaseProducts, loading]);
+
+  const SidebarItem = ({ label, path, isActive }: { label: string, path: string, isActive: boolean }) => (
+    <li>
+      <Link to={path} className={`block py-2 text-sm tracking-widest transition-colors duration-300 relative pl-4 border-l-2 ${isActive ? 'border-black text-black font-medium' : 'border-transparent text-gray-500 hover:text-black'}`}>
+        {label}
+      </Link>
+    </li>
+  );
+
+  // ページタイトルの決定
+  const getPageTitle = () => {
+    if (currentCategory === 'お米') {
+      if (currentSubcategory === 'koshihikari') return 'コシヒカリ';
+      if (currentSubcategory === 'kamenoo') return '亀の尾';
+      if (currentSubcategory === 'nikomaru') return 'にこまる';
+      if (currentSubcategory === 'yearly') return '年間契約';
+      return 'お米';
+    }
+    if (currentCategory === 'ALL') return 'ALL ITEM';
+    return currentCategory;
+  };
+
+  // Product Grid View
+  return (
+    <div className="pt-28 pb-32 min-h-screen bg-white overflow-x-hidden w-full">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
+        
+        {/* Page Header */}
+        <div className="text-center mb-8 md:mb-12 animate-fade-in">
+          <h1 className="text-xl md:text-2xl font-serif tracking-[0.15em] font-normal mb-4">{getPageTitle()}</h1>
+          
+          {/* 横スクロールメニュー - タイトルの下に配置 */}
+          <div className="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide w-full">
+              {currentCategory === 'お米' ? (
+              <div className="flex gap-4 min-w-max justify-center md:justify-center">
+                <Link to="/collections" className="px-4 py-2 rounded-full text-xs tracking-widest border transition-colors bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                  ALL
+                </Link>
+                <Link to="/collections/rice/yearly" className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'yearly' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  年間契約
+                </Link>
+                <Link to="/collections/rice/koshihikari" className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'koshihikari' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  コシヒカリ
+                </Link>
+                <Link to="/collections/rice/kamenoo" className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'kamenoo' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  亀の尾
+                </Link>
+                <Link to="/collections/rice/nikomaru" className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentSubcategory === 'nikomaru' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  にこまる
+                </Link>
+              </div>
+                ) : (
+              <div className="flex gap-4 min-w-max justify-center md:justify-center">
+                <Link to="/collections" className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'ALL' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  ALL
+                </Link>
+                <Link to="/collections/rice" className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'お米' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  お米
+                </Link>
+                <Link to="/collections/crescent" className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'Crescentmoon' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  Crescentmoon
+                </Link>
+                <Link to="/collections/other" className={`px-4 py-2 rounded-full text-xs tracking-widest border transition-colors ${currentCategory === 'その他' ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  その他
+                </Link>
+              </div>
+                )}
+              </div>
+            </div>
+
+          {/* Main Content */}
+        <div>
+
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-32">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                  <p className="text-sm text-gray-500">商品を読み込み中...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Error State */}
+            {!loading && error && (
+              <div className="flex items-center justify-center py-32">
+                <div className="text-center max-w-md">
+                  <p className="text-red-500 mb-2 font-medium">エラーが発生しました</p>
+                  <p className="text-sm text-gray-700 mb-2">{error.message}</p>
+                  {error.message.includes('クォータ') || error.message.includes('支払い') ? (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+                      <p className="text-xs text-yellow-800 mb-2">
+                        <strong>対処方法：</strong>
+                      </p>
+                      <ul className="text-xs text-yellow-700 text-left space-y-1 list-disc list-inside">
+                        <li>Supabaseダッシュボードにログインしてプロジェクトの状態を確認</li>
+                        <li>無料プランのクォータを超えている場合は、プランをアップグレード</li>
+                        <li>支払い情報が未設定の場合は、支払い情報を設定</li>
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-2">Supabaseの設定を確認してください</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && filteredProducts.length === 0 && (
+              <div className="flex items-center justify-center py-32">
+                <div className="text-center">
+                  <p className="text-gray-500 mb-2">商品が見つかりませんでした</p>
+                </div>
+              </div>
+            )}
+
+            {/* Product Grid */}
+            {!loading && !error && filteredProducts.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-12 sm:gap-y-16">
+                {filteredProducts.map((product, index) => (
+                <Link
+                  key={product.id}
+                  to={`/products/${product.handle || product.id}`}
+                  className="group block opacity-0 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                >
+                  {/* Image Container */}
+                  <div className="relative aspect-square bg-white border border-gray-100 overflow-hidden mb-5 flex items-center justify-center">
+                    {/* Badges */}
+                    <div className="absolute top-2 left-2 z-20 flex flex-col gap-2">
+                      {product.soldOut && (
+                        <span className="bg-primary text-white px-3 py-1 text-[10px] font-bold tracking-widest uppercase shadow-sm">
+                          Sold Out
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Images with FadeIn (素の public URL のみ使用) */}
+                    <div className="absolute inset-0 z-10 bg-white transition-opacity duration-700 ease-in-out group-hover:opacity-0 flex items-center justify-center p-2">
+                       <FadeInImage
+                         src={product.images && product.images.length > 0 ? product.images[0] : (product.image || '')}
+                         alt={product.title}
+                         className="w-full h-full object-contain"
+                         priority={index < 8}
+                         width={320}
+                         height={320}
+                       />
+                    </div>
+                    
+                    {/* Secondary Image (Hover) - 透過画像でも背景が透けないよう不透明背景を指定 */}
+                    <div className="absolute inset-0 z-0 bg-white transform scale-100 group-hover:scale-105 transition-transform duration-1000 ease-out flex items-center justify-center p-2">
+                       <FadeInImage
+                         src={product.images && product.images.length > 1 ? product.images[1] : (product.images && product.images.length > 0 ? product.images[0] : (product.image || ''))}
+                         alt={product.title}
+                         className="w-full h-full object-contain"
+                         width={320}
+                         height={320}
+                       />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 flex flex-col gap-2 text-center">
+                    <h2 className="text-sm font-medium text-primary leading-relaxed group-hover:text-gray-600 transition-colors line-clamp-2 min-h-[2.8em]">
+                      {product.title}
+                    </h2>
+                    <p className="text-sm text-gray-900 font-serif tracking-wide">
+                      ¥{product.price.toLocaleString()} {product.title.includes('〜') ? '〜' : ''}
+                    </p>
+                  </div>
+                </Link>
+                ))}
+              </div>
+            )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Category;
