@@ -1361,6 +1361,22 @@ const Checkout = () => {
     createPaymentIntent();
   }, [isAuthenticated, cartItems.length, total, subtotal, shippingCost, paymentClientSecret, paymentIntentAmount, paymentIntentId]);
 
+  // 同一 (order_id, product_id) の行を1行に集約（PostgreSQL の ON CONFLICT DO UPDATE で "cannot affect row a second time" を防ぐ）
+  const dedupeOrderItemsByOrderProduct = <T extends { order_id: string; product_id: string; quantity: number; line_total: number }>(items: T[]): T[] => {
+    const map = new Map<string, T>();
+    for (const row of items) {
+      const key = `${row.order_id}:${row.product_id}`;
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, { ...row });
+      } else {
+        (existing as { quantity: number; line_total: number }).quantity += row.quantity;
+        (existing as { quantity: number; line_total: number }).line_total += row.line_total;
+      }
+    }
+    return Array.from(map.values());
+  };
+
   // 注文ドラフトを作成/更新（Webhookが参照するため、決済前にDBへ保存）
   useEffect(() => {
     const upsertOrderDraft = async () => {
@@ -1508,7 +1524,7 @@ const Checkout = () => {
         if (!order?.id) return;
 
         // 注文明細を保存（ユニーク制約に合わせてupsertで冪等化）
-        const orderItems = cartItems.map((item) => {
+        const orderItemsRaw = cartItems.map((item) => {
           const unitPrice = item.finalPrice ?? item.product.price;
           return {
             order_id: order.id,
@@ -1522,6 +1538,9 @@ const Checkout = () => {
             line_total: unitPrice * item.quantity,
           };
         });
+        // 同一 (order_id, product_id) が複数あると PostgreSQL の ON CONFLICT DO UPDATE が
+        // "cannot affect row a second time" を出すため、1行に集約してから upsert する
+        const orderItems = dedupeOrderItemsByOrderProduct(orderItemsRaw);
 
         const { error: upsertItemsErr } = await supabase
           .from('order_items')
@@ -1619,7 +1638,7 @@ const Checkout = () => {
 
     // 注文明細を保存（ユニーク制約に合わせてupsertで冪等化）
     if (orderId) {
-      const orderItems = cartItems.map((item) => {
+      const orderItemsRaw = cartItems.map((item) => {
         const unitPrice = item.finalPrice ?? item.product.price;
         return {
           order_id: orderId,
@@ -1633,10 +1652,11 @@ const Checkout = () => {
           line_total: unitPrice * item.quantity,
         };
       });
+      const orderItems = dedupeOrderItemsByOrderProduct(orderItemsRaw);
 
       // NOTE:
       // - DB側のユニーク制約が `order_id + product_id` のため、それに合わせて onConflict を指定する
-      // - 同一注文で同一商品を複数回保存しても重複エラーにならない
+      // - 同一 (order_id, product_id) は1行に集約してから upsert（重複で "cannot affect row a second time" を防ぐ）
       const { error: upsertItemsErr } = await supabase
         .from('order_items')
         .upsert(orderItems, { onConflict: 'order_id,product_id' });
