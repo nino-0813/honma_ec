@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { IconArrowLeft, IconUpload, IconLoader2, IconTrash, IconX, IconPlus, IconCalendar } from '../../components/Icons';
+import { IconArrowLeft, IconUpload, IconLoader2, IconTrash, IconX, IconPlus, IconCalendar, IconGripVertical } from '../../components/Icons';
 import { convertImageToWebP } from '../../lib/imageUtils';
 import { LoadingButton } from '../../components/UI';
 import { ShippingMethod } from '../../types';
@@ -296,6 +296,47 @@ const ProductEditor = () => {
       newImages.unshift(movedImage);
       return newImages;
     });
+  };
+
+  // 商品画像のドラッグで並び替え
+  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
+  const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null);
+
+  const handleImageDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedImageIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+    e.dataTransfer.setDragImage((e.currentTarget as HTMLElement), 0, 0);
+  };
+
+  const handleImageDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverImageIndex(index);
+  };
+
+  const handleImageDragLeave = () => {
+    setDragOverImageIndex(null);
+  };
+
+  const handleImageDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    setDragOverImageIndex(null);
+    const dragIndex = draggedImageIndex ?? parseInt(e.dataTransfer.getData('text/plain'), 10);
+    setDraggedImageIndex(null);
+    if (dragIndex === dropIndex || Number.isNaN(dragIndex)) return;
+    setImages(prev => {
+      const next = [...prev];
+      const [removed] = next.splice(dragIndex, 1);
+      const toIndex = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
+      next.splice(toIndex, 0, removed);
+      return next;
+    });
+  };
+
+  const handleImageDragEnd = () => {
+    setDraggedImageIndex(null);
+    setDragOverImageIndex(null);
   };
 
   // Variation Logic
@@ -827,12 +868,30 @@ const ProductEditor = () => {
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-slide-up" style={{ animationDelay: '100ms' }}>
              <h3 className="text-base font-medium text-gray-900 mb-4 flex items-center justify-between">
                <span>商品画像</span>
-               <span className="text-xs text-gray-500 font-normal">ドラッグ＆ドロップで追加可能</span>
+               <span className="text-xs text-gray-500 font-normal">ドラッグで並び替え・ドロップで追加可能</span>
              </h3>
              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                {images.map((imgUrl, index) => (
-                 <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                   <img src={imgUrl} alt={`商品画像 ${index + 1}`} className="w-full h-full object-contain" />
+                 <div
+                   key={index}
+                   draggable
+                   onDragStart={(e) => handleImageDragStart(e, index)}
+                   onDragOver={(e) => handleImageDragOver(e, index)}
+                   onDragLeave={handleImageDragLeave}
+                   onDrop={(e) => handleImageDrop(e, index)}
+                   onDragEnd={handleImageDragEnd}
+                   className={`relative group aspect-square rounded-lg overflow-hidden border-2 bg-gray-50 cursor-grab active:cursor-grabbing transition-all ${
+                     draggedImageIndex === index ? 'opacity-50 scale-95' : ''
+                   } ${
+                     dragOverImageIndex === index && draggedImageIndex !== index
+                       ? 'border-blue-500 ring-2 ring-blue-200'
+                       : 'border-gray-200'
+                   }`}
+                 >
+                   <div className="absolute top-2 right-2 z-10 p-1 bg-white/90 rounded shadow-sm pointer-events-none">
+                     <IconGripVertical className="w-4 h-4 text-gray-500" />
+                   </div>
+                   <img src={imgUrl} alt={`商品画像 ${index + 1}`} className="w-full h-full object-contain pointer-events-none" draggable={false} />
                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                      <button 
                        onClick={() => removeImage(index)}
