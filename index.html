@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <!-- Google tag (gtag.js) - defer で初回描画をブロックしない -->
+    <script defer src="https://www.googletagmanager.com/gtag/js?id=G-4QB23KJPWK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-4QB23KJPWK');
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://wlyqannomdudlapsolwp.supabase.co" crossorigin>
+    <!-- Google Fonts: 完全非同期化（FCP改善） -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+    <link rel="icon" type="image/webp" href="/favicon.webp" />
+    <!-- LCP候補: ヒーロー画像を最優先で事前読み込み（レスポンシブ対応） -->
+    <link rel="preload" as="image" 
+      href="/images/home/parallax/sunset_riceplanting_7_400.webp"
+      imagesrcset="/images/home/parallax/sunset_riceplanting_7_400.webp 400w, 
+                   /images/home/parallax/sunset_riceplanting_7_800.webp 800w,
+                   /images/home/parallax/sunset_riceplanting_7_1200.webp 1200w"
+      imagesizes="100vw"
+      fetchpriority="high" />
+    <!-- コレクション画像（レスポンシブ対応） -->
+    <link rel="preload" as="image" 
+      href="/images/home/collections/collection_koshihikari_400.webp"
+      imagesrcset="/images/home/collections/collection_koshihikari_400.webp 400w,
+                   /images/home/collections/collection_koshihikari_600.webp 600w,
+                   /images/home/collections/collection_koshihikari_800.webp 800w,
+                   /images/home/collections/collection_koshihikari_1200.webp 1200w"
+      imagesizes="(max-width: 768px) 100vw, 50vw" />
+    <link rel="preload" as="image" 
+      href="/images/home/collections/collection_kamenoo_400.webp"
+      imagesrcset="/images/home/collections/collection_kamenoo_400.webp 400w,
+                   /images/home/collections/collection_kamenoo_600.webp 600w,
+                   /images/home/collections/collection_kamenoo_800.webp 800w,
+                   /images/home/collections/collection_kamenoo_1200.webp 1200w"
+      imagesizes="(max-width: 768px) 100vw, 50vw" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <title>イケベジ | 佐渡ヶ島のオーガニックファーム</title>
+    <!-- OGP・リンクプレビュー用（検索・LINE・SNSで表示される説明文・アイコン） -->
+    <meta name="description" content="自然栽培の考えをベースに、品種が秘めた旨みと香りをまっすぐに届けるため、島の有機資源で土を磨き上げ、農薬に頼らず育てました。新潟県佐渡産の自然栽培米を販売するIKEVEGE（イケベジ）の公式サイト。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="イケベジ | 佐渡ヶ島のオーガニックファーム" />
+    <meta property="og:description" content="自然栽培の考えをベースに、品種が秘めた旨みと香りをまっすぐに届けるため、島の有機資源で土を磨き上げ、農薬に頼らず育てました。新潟県佐渡産の自然栽培米を販売するIKEVEGE（イケベジ）の公式サイト。" />
+    <meta property="og:image" content="https://ikevege.com/favicon.webp" />
+    <meta property="og:url" content="https://ikevege.com/" />
+    <meta property="og:site_name" content="イケベジ | 佐渡ヶ島のオーガニックファーム" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="イケベジ | 佐渡ヶ島のオーガニックファーム" />
+    <meta name="twitter:description" content="自然栽培の考えをベースに、品種が秘めた旨みと香りをまっすぐに届けるため、島の有機資源で土を磨き上げ、農薬に頼らず育てました。新潟県佐渡産の自然栽培米を販売するIKEVEGE（イケベジ）の公式サイト。" />
+    <style>
+      /* Minimal Premium Scrollbar - Ultra Thin */
+      ::-webkit-scrollbar {
+        width: 3px; /* Ultra thin */
+        height: 3px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d1d1d1;
+        border-radius: 2px;
+        transition: background 0.3s;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      
+      /* Hide scrollbar utility for clean horizontal scrolls */
+      .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+      }
+      .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
+
+      .parallax-bg {
+        background-attachment: fixed;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+      
+      html {
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+        width: 100%;
+      }
+      
+      * {
+        box-sizing: border-box;
+      }
+
+      /* prefers-reduced-motion: アニメーション・トランジションを無効化 */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+        html {
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* Vertical Text Utility */
+      .vertical-text {
+        writing-mode: vertical-rl;
+        text-orientation: upright;
+        letter-spacing: 0.2em;
+        white-space: nowrap;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+    "wouter": "https://esm.sh/wouter@2.11.0?external=react,react-dom",
+    "lucide-react": "https://esm.sh/lucide-react@0.263.1?external=react"
+  }
+}
+</script>
+</head>
+  <body class="bg-white text-primary antialiased font-serif font-medium tracking-widest overflow-x-hidden w-full">
+    <!-- パスワード再設定: メールのリンクがトップ(Site URL)に飛ぶ場合、Supabase がハッシュを消す前に再設定ページへ（RootLayout の useEffect より先に実行） -->
+    <script>
+      (function () {
+        try {
+          var h = window.location.hash || '';
+          if (h.indexOf('type=recovery') !== -1 && window.location.pathname.indexOf('account/reset-password') === -1) {
+            window.location.replace(window.location.origin + '/account/reset-password' + window.location.search + h);
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
