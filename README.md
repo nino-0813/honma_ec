@@ -74,12 +74,17 @@ UPDATE profiles SET is_admin = true WHERE email = 'your@email.com';
 
 #### パスワード再設定（メールログイン）
 
-マイページの「パスワードをお忘れの方」から再設定メールを送るには、Supabase ダッシュボードでリダイレクト URL を許可する必要があります。
+**必須:** **Redirect URLs** に次の **`/recovery`** を入れてください（PKCE 時、メールのリンクはここに戻ります。未設定だと Site URL＝トップに飛び、再設定できません）。
 
 1. **Authentication** → **URL Configuration** を開く
-2. **Redirect URLs** に次を追加（本番ドメインに合わせて変更）
-   - `http://localhost:3009/account/reset-password`（ローカル）
-   - `https://あなたの本番ドメイン/account/reset-password`
+2. **Redirect URLs** に追加（**使うドメインはすべて**。1つでも漏れるとモバイルのメールからトップに飛びます）
+   - `http://localhost:3009/recovery`
+   - `https://honma-ec.vercel.app/recovery`（Vercel プレビューURLで試す場合）
+   - `https://ikevege.com/recovery` / `https://www.ikevege.com/recovery`（本番）
+
+任意で `.../account/reset-password` も追加してよいです。
+
+※ メールが届いている＝そのメールアドレスは登録済みです。届かない場合は未登録か迷惑メールフォルダを確認してください。
 
 ### 4. 開発サーバーの起動
 

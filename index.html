@@ -140,9 +140,22 @@
     <script>
       (function () {
         try {
+          var path = (window.location.pathname || '/').replace(/\/$/, '') || '/';
+          var onRoot = path === '/' || path === '';
           var h = window.location.hash || '';
-          if (h.indexOf('type=recovery') !== -1 && window.location.pathname.indexOf('account/reset-password') === -1) {
-            window.location.replace(window.location.origin + '/account/reset-password' + window.location.search + h);
+          var q = window.location.search || '';
+          if (window.location.pathname.indexOf('account/reset-password') !== -1) return;
+          if (h.indexOf('type=recovery') !== -1) {
+            window.location.replace(window.location.origin + '/account/reset-password' + q + h);
+            return;
+          }
+          // 古いメール等でトップに ?code= のみ付いた場合（再設定送信から45分以内・同一ブラウザ）
+          if (onRoot && q.indexOf('code=') !== -1) {
+            var ts = parseInt(localStorage.getItem('ikevege_pw_reset_expected') || '0', 10);
+            if (ts && Date.now() - ts < 45 * 60 * 1000) {
+              localStorage.removeItem('ikevege_pw_reset_expected');
+              window.location.replace(window.location.origin + '/account/reset-password' + q + h);
+            }
           }
         } catch (e) {}
       })();

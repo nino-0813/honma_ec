@@ -1,10 +1,12 @@
 import path from 'path';
+import fs from 'fs';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    const recoveryHtmlPath = path.resolve(__dirname, 'public/pw-recovery-redirect.html');
     return {
       ssr: {
         noExternal: ['react-helmet-async'],
@@ -21,7 +23,28 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
-      plugins: [react(), tailwindcss()],
+      plugins: [
+        react(),
+        tailwindcss(),
+        {
+          name: 'pw-recovery-static',
+          configureServer(server) {
+            server.middlewares.use((req, res, next) => {
+              const p = req.url?.split('?')[0];
+              if (p === '/recovery' || p === '/recovery/') {
+                try {
+                  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                  res.end(fs.readFileSync(recoveryHtmlPath, 'utf8'));
+                } catch {
+                  next();
+                }
+                return;
+              }
+              next();
+            });
+          },
+        },
+      ],
       build: {
         rollupOptions: {
           output: {

@@ -89,11 +89,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, initialEmail = '' })
     }
 
     try {
-      const redirectTo = `${window.location.origin}/account/reset-password`;
+      // /recovery は Google ログインと被らない専用URL。PKCE でトップに ?code= だけ付く問題を防ぐ（Redirect URLs に追加必須）
+      const redirectTo = `${window.location.origin}/recovery`;
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo,
       });
       if (resetError) throw resetError;
+      try {
+        localStorage.setItem('ikevege_pw_reset_expected', String(Date.now()));
+      } catch (_) {}
       setResetEmailSent(true);
       setMessage(
         'ご入力のメールアドレスが登録されている場合、パスワード再設定用のリンクを送信しました。\nメールをご確認のうえ、記載のリンクから新しいパスワードを設定してください。\nメールが届かない場合は、迷惑メールフォルダもご確認ください。'
@@ -247,6 +251,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, initialEmail = '' })
     }
 
     try {
+      try {
+        localStorage.removeItem('ikevege_pw_reset_expected');
+      } catch (_) {}
       // ログイン後のリダイレクト先を保存
       // 現在のパスが /checkout を含む場合、明示的に保存
       if (typeof window !== 'undefined' && (window.location.pathname || '').includes('checkout')) {
