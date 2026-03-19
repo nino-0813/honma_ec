@@ -780,14 +780,18 @@ const Checkout = () => {
         // 1つの発送方法が「その商品(quantity)」に対していくらになるかを計算
         // sizeの場合は size_fees を使って「箱の分割（混在含む）」まで最小化する
         const getMethodCostForQuantity = (method: ShippingMethod, quantity: number): number => {
+          const qty = Math.max(0, Number(quantity || 0));
+          const cap = Math.max(1, Number((method as any)?.max_items_per_box || 1));
+          const boxes = cap > 0 ? Math.max(1, Math.ceil(qty / cap)) : qty;
+
           if (method.fee_type === 'uniform') {
-            return Number(method.uniform_fee || 0);
+            return boxes * Number(method.uniform_fee || 0);
           }
           if (method.fee_type === 'area') {
-            return getAreaFee(method.area_fees, area as any);
+            return boxes * getAreaFee(method.area_fees, area as any);
           }
           if (method.fee_type === 'size' && method.size_fees) {
-            return getMinPlanForSizeFees(method.size_fees, quantity, area as any).cost;
+            return getMinPlanForSizeFees(method.size_fees, qty, area as any).cost;
           }
           return 0;
         };
@@ -921,10 +925,14 @@ const Checkout = () => {
     );
 
     const getMethodCostForQuantity = (m: ShippingMethod, quantity: number): number => {
-      if (m.fee_type === 'uniform') return Number(m.uniform_fee || 0);
-      if (m.fee_type === 'area') return getAreaFee(m.area_fees, areaKey as any);
+      const qty = Math.max(0, Number(quantity || 0));
+      const cap = Math.max(1, Number((m as any)?.max_items_per_box || 1));
+      const boxes = cap > 0 ? Math.max(1, Math.ceil(qty / cap)) : qty;
+
+      if (m.fee_type === 'uniform') return boxes * Number(m.uniform_fee || 0);
+      if (m.fee_type === 'area') return boxes * getAreaFee(m.area_fees, areaKey as any);
       if (m.fee_type === 'size' && m.size_fees) {
-        return getMinPlanForSizeFees(m.size_fees, quantity, areaKey as any).cost;
+        return getMinPlanForSizeFees(m.size_fees, qty, areaKey as any).cost;
       }
       return 0;
     };
@@ -975,9 +983,13 @@ const Checkout = () => {
       let cost = 0;
       let sizeBreakdownText: string | undefined = undefined;
       if (method.fee_type === 'uniform') {
-        cost = Number(method.uniform_fee || 0);
+        const cap = Math.max(1, Number((method as any)?.max_items_per_box || 1));
+        const boxes = cap > 0 ? Math.max(1, Math.ceil(totalQty / cap)) : totalQty;
+        cost = boxes * Number(method.uniform_fee || 0);
       } else if (method.fee_type === 'area') {
-        cost = getAreaFee(method.area_fees, areaKey as any);
+        const cap = Math.max(1, Number((method as any)?.max_items_per_box || 1));
+        const boxes = cap > 0 ? Math.max(1, Math.ceil(totalQty / cap)) : totalQty;
+        cost = boxes * getAreaFee(method.area_fees, areaKey as any);
       } else if (method.fee_type === 'size' && method.size_fees) {
         const plan = getMinPlanForSizeFees(method.size_fees, totalQty, areaKey as any);
         cost = plan.cost;
@@ -1016,12 +1028,16 @@ const Checkout = () => {
     if (!method) return 0;
 
     const getMethodCostForQuantity = (m: ShippingMethod, quantity: number): number => {
+      const qty = Math.max(0, Number(quantity || 0));
+      const cap = Math.max(1, Number((m as any)?.max_items_per_box || 1));
+      const boxes = cap > 0 ? Math.max(1, Math.ceil(qty / cap)) : qty;
+
       if (m.fee_type === 'uniform') {
-        return Number(m.uniform_fee || 0);
+        return boxes * Number(m.uniform_fee || 0);
       } else if (m.fee_type === 'area') {
-        return getAreaFee(m.area_fees, area as any);
+        return boxes * getAreaFee(m.area_fees, area as any);
       } else if (m.fee_type === 'size' && m.size_fees) {
-        return getMinPlanForSizeFees(m.size_fees, quantity, area as any).cost;
+        return getMinPlanForSizeFees(m.size_fees, qty, area as any).cost;
       }
       return 0;
     };

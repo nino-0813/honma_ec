@@ -109,6 +109,7 @@ const ShippingMethodEditor = () => {
   const [name, setName] = useState('');
   const [feeType, setFeeType] = useState<'uniform' | 'area' | 'size'>('uniform');
   const [uniformFee, setUniformFee] = useState<number | ''>('');
+  const [maxItemsPerBox, setMaxItemsPerBox] = useState<number | ''>('');
   const [areaFees, setAreaFees] = useState<AreaFees>({});
   const [sizeFees, setSizeFees] = useState<SizeFees>({});
 
@@ -256,6 +257,7 @@ const ShippingMethodEditor = () => {
         setAreaFees(loadedAreaFees);
         setSizeFees(loadedSizeFees);
         setUniformFee(data.uniform_fee || '');
+        setMaxItemsPerBox(data.max_items_per_box ?? '');
 
         // 既存データの場合: size_feesに入っているサイズだけ表示（なければ60だけ）
         if ((data.fee_type || 'uniform') === 'size') {
@@ -420,13 +422,20 @@ const ShippingMethodEditor = () => {
         alert('全国一律の送料（円）を入力してください');
         return;
       }
+      if (feeType !== 'size' && maxItemsPerBox !== '' && Number(maxItemsPerBox) < 1) {
+        alert('「1箱に入る数」は1以上で入力してください');
+        return;
+      }
 
       const methodData: any = {
         name,
-        // 基本情報の「ダンボールサイズ / 最大重量 / 1箱に入る最大商品数」は不要のため常にnull
+        // box_size/max_weight_kg は現在未使用
         box_size: null,
         max_weight_kg: null,
-        max_items_per_box: null,
+        // uniform/area は箱数（ceil(qty/cap)）に使う。size は size_fees 側の max_items_per_box を使う。
+        max_items_per_box: feeType === 'size'
+          ? null
+          : (maxItemsPerBox === '' ? null : Number(maxItemsPerBox)),
         fee_type: feeType,
         area_fees: feeType === 'area' ? areaFees : {},
         size_fees: feeType === 'size' ? sizeFees : {},
@@ -548,6 +557,26 @@ const ShippingMethodEditor = () => {
                 <option value="size">サイズ別</option>
               </select>
             </div>
+
+            {feeType !== 'size' ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  1箱に入る数（個）
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  同一発送方法で複数個注文されたとき、箱数（送料）が増える基準です。未入力の場合は「1個=1箱」扱いになります。
+                </p>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={maxItemsPerBox}
+                  onChange={(e) => setMaxItemsPerBox(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  placeholder="例：2（2個で1箱）"
+                />
+              </div>
+            ) : null}
 
             {feeType === 'uniform' ? (
               <div>
