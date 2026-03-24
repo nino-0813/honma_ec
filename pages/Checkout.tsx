@@ -7,7 +7,7 @@ import { FadeInImage } from '../components/UI';
 import Header from '../components/Header';
 import AuthForm from '../components/AuthForm';
 import { supabase, checkStockAvailability } from '../lib/supabase';
-import { ShippingMethod, AreaFees, Product } from '../types';
+import { ShippingMethod, AreaFees, Product, CartItem } from '../types';
 
 // Stripe公開可能キー（環境変数から取得）
 // NOTE: 未設定だとPaymentElementが無言で出ないことがあるため、フォールバック文字列は使わない
@@ -891,6 +891,32 @@ const Checkout = () => {
     const price = item.finalPrice ?? item.product.price;
     return sum + (price * item.quantity);
   }, 0);
+
+  const getCartItemVariantLabel = (item: CartItem): string | undefined => {
+    if (item.variant && String(item.variant).trim()) return String(item.variant).trim();
+    const selected = item.selectedOptions || {};
+
+    // 新形式 variants_config から option value を復元
+    if (item.product.variants_config && item.product.variants_config.length > 0) {
+      const parts = item.product.variants_config
+        .map((type) => {
+          const selectedOptionId = selected[type.id];
+          if (!selectedOptionId) return null;
+          const option = type.options.find((o) => o.id === selectedOptionId);
+          return option?.value || null;
+        })
+        .filter((v): v is string => Boolean(v && String(v).trim()));
+      if (parts.length > 0) return parts.join(' / ');
+    }
+
+    // 旧形式 legacy マッピング
+    if (selected.legacy_migration) {
+      const legacyOption = item.product.variants?.find((v) => String(v) === String(selected.legacy_migration));
+      if (legacyOption) return legacyOption;
+    }
+    if (selected.legacy) return String(selected.legacy);
+    return undefined;
+  };
   
   // カート内の全商品に紐づく発送方法の和集合を取得
   const availableShippingMethods = useMemo(() => {
@@ -938,7 +964,7 @@ const Checkout = () => {
     };
 
     // 1) 各商品を「どの発送方法で送るか」に割り当て（選択されたshippingMethodがあれば優先）
-    const assigned: Record<string, Array<{ title: string; qty: number }>> = {};
+    const assigned: Record<string, Array<{ title: string; variant?: string; qty: number }>> = {};
     for (const item of cartItems) {
       const linkedIds = productShippingMethodIds[item.product.id] || [];
       if (linkedIds.length === 0) continue;
@@ -963,7 +989,12 @@ const Checkout = () => {
       }
 
       if (!assigned[chosenId]) assigned[chosenId] = [];
-      assigned[chosenId].push({ title: item.product.title, qty: item.quantity });
+      const variantLabel = getCartItemVariantLabel(item);
+      assigned[chosenId].push({
+        title: item.product.title,
+        variant: variantLabel,
+        qty: item.quantity
+      });
     }
 
     // 2) 発送方法ごとに送料を計算（sizeは「その方法に割り当てられた数量合計」で箱割り）
@@ -977,7 +1008,7 @@ const Checkout = () => {
       const totalQty = items.reduce((s, it) => s + Number(it.qty || 0), 0);
       const itemsText = items
         .slice(0, 3)
-        .map((it) => `${it.title}×${it.qty}`)
+        .map((it) => `${it.title}${it.variant ? `（${it.variant}）` : ''}×${it.qty}`)
         .join(' / ') + (items.length > 3 ? ` (+${items.length - 3})` : '');
 
       let cost = 0;
@@ -1392,18 +1423,103 @@ const Checkout = () => {
       line_total: number;
     }>
   ) => {
+    const buildLegacyCompatibleRows = (
+      sourceRows: Array<{
+        order_id: string;
+        product_id: string;
+        product_title: string;
+        product_price: number;
+        product_image: string | null | undefined;
+        variant: string | null;
+        selected_options: Record<string, string> | null | undefined;
+        quantity: number;
+        line_total: number;
+      }>
+    ) => {
+      const grouped = new Map<
+        string,
+        {
+          row: {
+            order_id: string;
+            product_id: string;
+            product_title: string;
+            product_price: number;
+            product_image: string | null | undefined;
+            variant: string | null;
+            selected_options: Record<string, any> | null;
+            quantity: number;
+            line_total: number;
+          };
+          byVariant: Map<string, number>;
+        }
+      >();
+
+      for (const r of sourceRows) {
+        const key = `${r.order_id}:${r.product_id}`;
+        const variantLabel = (r.variant && String(r.variant).trim()) || '未指定';
+        const current = grouped.get(key);
+        if (!current) {
+          grouped.set(key, {
+            row: {
+              ...r,
+              selected_options: r.selected_options ?? null,
+            },
+            byVariant: new Map([[variantLabel, r.quantity]]),
+          });
+          continue;
+        }
+
+        current.row.quantity += r.quantity;
+        current.row.line_total += r.line_total;
+        current.byVariant.set(variantLabel, (current.byVariant.get(variantLabel) || 0) + r.quantity);
+      }
+
+      return Array.from(grouped.values()).map(({ row, byVariant }) => {
+        const breakdown = Array.from(byVariant.entries()).map(([name, qty]) => `${name}×${qty}`);
+        return {
+          ...row,
+          // 旧制約環境でも種類が分かるようにテキスト化
+          variant: breakdown.join(' / '),
+          selected_options: {
+            ...(row.selected_options || {}),
+            legacy_variant_breakdown: breakdown,
+          },
+        };
+      });
+    };
+
     const { error: deleteErr } = await supabase
       .from('order_items')
       .delete()
       .eq('order_id', orderId);
-    if (deleteErr) throw deleteErr;
+    if (deleteErr) {
+      // 環境によっては DELETE ポリシー未適用のため、初回保存を優先して継続
+      console.warn('[Checkout] order_items delete failed; continue with insert:', deleteErr);
+    }
 
     if (rows.length === 0) return;
 
     const { error: insertErr } = await supabase
       .from('order_items')
       .insert(rows);
-    if (insertErr) throw insertErr;
+    if (insertErr) {
+      // 旧ユニーク制約 (order_id, product_id) が残っていると、
+      // 同一商品の別種類（玄米/白米）を同時保存できない
+      const code = (insertErr as any)?.code || '';
+      if (code === '23505') {
+        // 互換保存: 商品単位に集約して upsert（旧制約環境でも商品情報を欠落させない）
+        const legacyRows = buildLegacyCompatibleRows(rows);
+        const { error: legacyErr } = await supabase
+          .from('order_items')
+          .upsert(legacyRows, { onConflict: 'order_id,product_id' });
+        if (!legacyErr) return;
+        throw new Error(
+          'order_items の保存に失敗しました。旧制約環境のため互換保存も試しましたが失敗しました。' +
+          ' migration_fix_order_items_variant_constraint.sql を Supabase で実行してください。'
+        );
+      }
+      throw insertErr;
+    }
   };
 
   // 注文ドラフトを作成/更新（Webhookが参照するため、決済前にDBへ保存）
@@ -1561,7 +1677,7 @@ const Checkout = () => {
             product_title: item.product.title,
             product_price: unitPrice,
             product_image: item.product.image,
-            variant: item.variant ?? null,
+            variant: getCartItemVariantLabel(item) ?? null,
             selected_options: item.selectedOptions ?? null,
             quantity: item.quantity,
             line_total: unitPrice * item.quantity,
@@ -1668,7 +1784,7 @@ const Checkout = () => {
           product_title: item.product.title,
           product_price: unitPrice,
           product_image: item.product.image,
-          variant: item.variant ?? null,
+          variant: getCartItemVariantLabel(item) ?? null,
           selected_options: item.selectedOptions ?? null,
           quantity: item.quantity,
           line_total: unitPrice * item.quantity,
@@ -2550,7 +2666,7 @@ const Checkout = () => {
                   {/* カートアイテム */}
                   <div className="space-y-4 max-h-[400px] overflow-y-auto">
                     {cartItems.map((item) => (
-                      <div key={item.product.id} className="flex gap-3 pb-4 border-b border-gray-100 last:border-b-0">
+                      <div key={`${item.product.id}-${item.variant || 'default'}`} className="flex gap-3 pb-4 border-b border-gray-100 last:border-b-0">
                         <Link to={`/products/${item.product.handle || item.product.id}`} className="flex-shrink-0 aspect-square w-16 bg-gray-100 rounded overflow-hidden block">
                           <FadeInImage 
                             src={item.product.images && item.product.images.length > 0 ? item.product.images[0] : (item.product.image || '')} 
@@ -2564,6 +2680,9 @@ const Checkout = () => {
                               {item.product.title}
                             </h3>
                           </Link>
+                          {getCartItemVariantLabel(item) ? (
+                            <div className="text-xs text-gray-500 mt-0.5">種類: {getCartItemVariantLabel(item)}</div>
+                          ) : null}
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-xs text-gray-500">数量: {item.quantity}</span>
                             <span className="text-sm font-serif text-gray-900">

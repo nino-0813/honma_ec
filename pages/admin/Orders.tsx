@@ -104,6 +104,30 @@ const getShippingDisplayName = (o: Order) => {
 
 const getShippingDisplayPhone = (o: Order) => o.shipping_phone || o.phone || null;
 
+const parseInferredItemsFromShippingMethod = (shippingMethod: string | null | undefined) => {
+  const breakdown = safeParseShippingMethod(shippingMethod);
+  if (!breakdown) return [] as Array<{ title: string; variant?: string; quantity: number }>;
+
+  const rows: Array<{ title: string; variant?: string; quantity: number }> = [];
+  for (const b of breakdown) {
+    const segments = String(b.items || '')
+      .split('/')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    for (const seg of segments) {
+      const m = seg.match(/^(.*?)(?:（(.+?)）)?(?:×|x)\s*(\d+)\s*$/i);
+      if (!m) continue;
+      rows.push({
+        title: (m[1] || '').trim(),
+        variant: m[2] ? String(m[2]).trim() : undefined,
+        quantity: Number(m[3]) || 0,
+      });
+    }
+  }
+  return rows;
+};
+
 const safeParseShippingMethod = (value: string | null | undefined): ShippingMethodBreakdown[] | null => {
   if (!value) return null;
   const trimmed = String(value).trim();
@@ -395,20 +419,46 @@ const Orders = () => {
     if (!confirm(`${ids.length}件の注文を削除します。この操作は取り消せません。よろしいですか？`)) return;
 
     try {
-      // 注文を削除（関連するorder_itemsも削除されるようにRLSポリシーを設定する必要がある）
-      const { error } = await supabase
+      // 先に注文明細を削除（既存DBで ON DELETE CASCADE が未適用な環境に対応）
+      const { error: deleteItemsErr } = await supabase
+        .from('order_items')
+        .delete()
+        .in('order_id', ids);
+      if (deleteItemsErr) {
+        // 注文明細削除に失敗した場合も、orders 側の削除結果で最終判定する
+        console.warn('order_items delete failed (will still try orders delete):', deleteItemsErr);
+      }
+
+      // 注文を削除
+      const { data: deletedOrders, error } = await supabase
         .from('orders')
         .delete()
-        .in('id', ids);
+        .in('id', ids)
+        .select('id');
       if (error) throw error;
-      
-      // ローカル状態からも削除
-      setOrders((prev) => prev.filter((o) => !selectedIds.has(o.id)));
+
+      const deletedIds = new Set((deletedOrders || []).map((o: any) => o.id));
+      const deletedCount = deletedIds.size;
+
+      if (deletedCount === 0) {
+        alert('注文を削除できませんでした（権限またはRLS設定の可能性）。');
+        await fetchOrders();
+        return;
+      }
+
+      // ローカル状態は「実際に削除できたID」のみ反映
+      setOrders((prev) => prev.filter((o) => !deletedIds.has(o.id)));
       setSelectedIds(new Set());
-      alert(`${ids.length}件の注文を削除しました。`);
+
+      if (deletedCount < ids.length) {
+        alert(`${ids.length}件中 ${deletedCount}件を削除しました。削除できなかった注文があります。`);
+      } else {
+        alert(`${deletedCount}件の注文を削除しました。`);
+      }
     } catch (e: any) {
       console.error('一括削除に失敗:', e);
       alert(`一括削除に失敗しました: ${e.message}`);
+      await fetchOrders();
     }
   };
 
@@ -461,12 +511,16 @@ const Orders = () => {
     // order_items が空の場合のフォールバック（shipping_methodに保存された「対象: ... ×N」から推定）
     const breakdown = safeParseShippingMethod(order.shipping_method);
     if (!breakdown || breakdown.length === 0) return 0;
-    const text = breakdown.map((b) => b.items || '').join(' ');
-    // "×1" "x1" などを拾う（複数商品があっても合算）
-    const matches = (text.match(/(?:×|x)\s*(\d+)/gi) || []) as string[];
-    if (matches.length === 0) return 0;
-    return matches.reduce((sum: number, m: string) => {
-      const n = Number(String(m).replace(/[^0-9]/g, '')) || 0;
+    // 商品名に含まれる "2合×5個セット" などは数量ではないため、
+    // 各商品セグメント末尾の "×N" のみを数量として合算する。
+    const segments = breakdown
+      .flatMap((b) => String(b.items || '').split('/'))
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (segments.length === 0) return 0;
+    return segments.reduce((sum, seg) => {
+      const m = seg.match(/(?:×|x)\s*(\d+)\s*$/i);
+      const n = m ? Number(m[1]) || 0 : 0;
       return sum + n;
     }, 0);
   };
@@ -1209,20 +1263,28 @@ const Orders = () => {
                   {(detailOrder.order_items || []).length === 0 ? (
                     <div className="p-4 text-sm text-gray-600 space-y-2">
                       <div className="text-gray-500">商品情報がありません（注文明細が未保存の可能性）</div>
-                      {safeParseShippingMethod(detailOrder.shipping_method) ? (
-                        <div className="text-xs text-gray-700">
-                          {safeParseShippingMethod(detailOrder.shipping_method)!.some((b) => b.items) ? (
-                            <div className="space-y-1">
+                      <div className="text-xs text-gray-700">
+                        {(() => {
+                          const inferredItems = parseInferredItemsFromShippingMethod(detailOrder.shipping_method);
+                          if (inferredItems.length === 0) {
+                            return <div>（送料データに対象商品が含まれていません）</div>;
+                          }
+                          return (
+                            <div className="space-y-2">
                               <div className="font-medium text-gray-900">保存データから推定:</div>
-                              {safeParseShippingMethod(detailOrder.shipping_method)!.filter((b) => b.items).map((b, idx) => (
-                                <div key={idx}>- {b.items}</div>
+                              {inferredItems.map((it, idx) => (
+                                <div key={idx} className="border border-gray-100 rounded px-2 py-1">
+                                  <div className="text-gray-900">{it.title}</div>
+                                  <div className="text-gray-500 mt-0.5">
+                                    種類: {it.variant || '（未保存）'}
+                                  </div>
+                                  <div className="text-gray-500 mt-0.5">数量: {it.quantity}</div>
+                                </div>
                               ))}
                             </div>
-                          ) : (
-                            <div>（送料データに対象商品が含まれていません）</div>
-                          )}
-                        </div>
-                      ) : null}
+                          );
+                        })()}
+                      </div>
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-200">
