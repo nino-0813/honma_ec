@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>パスワード再設定</title>
+  <!-- メールアプリ内ブラウザは React 読み込み前に止まることがあるため、即時リダイレクトのみ（外部JSなし） -->
+  <script>
+    (function () {
+      var o = window.location.origin;
+      var q = window.location.search || '';
+      var h = window.location.hash || '';
+      window.location.replace(o + '/account/reset-password' + q + h);
+    })();
+  </script>
+</head>
+<body style="margin:0;font-family:system-ui,sans-serif;font-size:15px;color:#444;text-align:center;padding:3rem 1rem;">
+  パスワード再設定ページへ移動しています…
+  <noscript><p>JavaScriptを有効にするか、<a id="l" href="/account/reset-password">こちら</a>をタップしてください。</p></noscript>
+  <script>document.getElementById('l') && (document.getElementById('l').href = location.origin + '/account/reset-password' + location.search + location.hash);</script>
+</body>
+</html>
