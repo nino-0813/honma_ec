@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>メンテナンス中 | イケベジ</title>
+  <meta name="description" content="サイトメンテナンス中です" />
+  <style>
+    :root {
+      --primary: #1c1d1d;
+      --amber-700: #b45309;
+      --amber-600: #d97706;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      background: #ffffff;
+      color: var(--primary);
+      font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .serif {
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+    }
+    main {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 24px;
+    }
+    .container {
+      max-width: 36rem;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      height: 48px;
+      width: auto;
+      margin: 0 auto 40px;
+      display: block;
+    }
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      color: var(--amber-700);
+      font-weight: 500;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: var(--amber-600);
+      margin: 0 auto 32px;
+    }
+    .restart-block { margin-bottom: 40px; }
+    .restart-label {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: #6b7280;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .restart-date {
+      font-size: 1.125rem;
+    }
+    .lead {
+      font-size: 0.9375rem;
+      color: #374151;
+      line-height: 2;
+      margin-bottom: 32px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 0.875rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 16px 32px;
+      border-radius: 9999px;
+      text-decoration: none;
+      transition: background-color 0.2s ease;
+    }
+    .btn:hover { background: var(--amber-700); }
+    .btn svg { width: 16px; height: 16px; }
+    .footer {
+      margin-top: 48px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .mobile-break { display: none; }
+    @media (min-width: 768px) {
+      .logo { height: 64px; }
+      .eyebrow { font-size: 12px; }
+      h1 { font-size: 1.5rem; }
+      .restart-label, .footer { font-size: 12px; }
+      .restart-date { font-size: 1.25rem; }
+      .lead { font-size: 1rem; }
+      .btn { padding: 16px 40px; }
+      .desktop-break { display: inline; }
+      .mobile-break { display: none; }
+    }
+    @media (max-width: 767px) {
+      .desktop-break { display: none; }
+      .mobile-break { display: inline; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="container">
+      <img class="logo" src="/images/ikevege_logo.png" alt="IKEVEGE" />
+
+      <p class="eyebrow">Under Maintenance</p>
+
+      <h1 class="serif">
+        サイトの更新のため一時的に<br class="mobile-break" />
+        イケベジオンラインサイトを<br />
+        休止しております。
+      </h1>
+
+      <div class="divider"></div>
+
+      <div class="restart-block">
+        <p class="restart-label">再開予定日時</p>
+        <p class="restart-date serif">2026年6月6日（土）10時ごろ</p>
+      </div>
+
+      <p class="lead">
+        現在ご注文いただいている商品の詳細等は<br class="desktop-break" />
+        下記のマイページよりご確認いただけます。
+      </p>
+
+      <a class="btn" href="/mypage">
+        マイページ
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      </a>
+
+      <p class="footer">ご不便をおかけしますが、何卒よろしくお願い申し上げます。</p>
+    </div>
+  </main>
+</body>
+</html>
